@@ -1,0 +1,343 @@
+id: https://neutron.enterprise/schema/events
+name: neutron-events
+title: Neutron Enterprise Event Spine Schema
+description: >-
+  The typed platform event spine (SPEC §4). Every module emits events through
+  this schema: AuditEvent, CorrectionSignal, ApprovalEvent, CostEvent, and
+  ShapeViolation. All events share the PlatformEvent base, which mandates the
+  fields SPEC §4 requires on EVERY event — a SHA-256 config_hash (the answer to
+  "why did the system say X on March 3"), the acting principal, provenance, and
+  an occurred_at timestamp — plus an optional kpi_tag (C8, KPI-first). Events
+  travel via the Postgres outbox (ADR-001 §4.1, ADR-0002); this schema is the
+  wire/payload contract, generated to Pydantic + JSON Schema exactly like the
+  operational schema through the same isolated codegen venv.
+version: 1.1.0
+license: Apache-2.0
+
+prefixes:
+  neev: https://neutron.enterprise/schema/events/
+  linkml: https://w3id.org/linkml/
+default_prefix: neev
+default_range: string
+
+imports:
+  - linkml:types
+
+# ---------------------------------------------------------------------------
+# Classes
+# ---------------------------------------------------------------------------
+classes:
+  ProvenanceEntry:
+    description: >-
+      A single provenance key/value pair. Provenance on an event is a small map
+      (e.g. "source", "pipeline", "commit") recording where the event and the
+      state it describes came from; it is modelled as an inlined collection of
+      these entries so it renders as a plain string map on the generated model.
+    attributes:
+      key:
+        description: Provenance key (unique within one event's provenance map).
+        identifier: true
+        required: true
+        range: string
+      value:
+        description: Provenance value for the key.
+        required: true
+        range: string
+
+  PlatformEvent:
+    abstract: true
+    description: >-
+      Abstract base for every platform event. Carries the fields SPEC §4
+      mandates on EVERY event: identity, type, the process-start config_hash,
+      the acting principal, provenance, and the occurrence timestamp, plus an
+      optional KPI tag and trace correlation id. Concrete events (AuditEvent,
+      CorrectionSignal, ApprovalEvent, CostEvent, ShapeViolation) extend it.
+    attributes:
+      event_id:
+        description: Platform-canonical unique id for this event instance.
+        identifier: true
+        required: true
+        range: string
+      event_type:
+        description: >-
+          Canonical event-type discriminator (e.g. "audit", "correction_signal",
+          "approval", "cost", "shape_violation"). Set by the emitting factory.
+        required: true
+        range: string
+      config_hash:
+        description: >-
+          SHA-256 hex digest of the fully-resolved, canonicalized configuration
+          tree, frozen at process start and stamped on every event (SPEC §4).
+        required: true
+        range: string
+        pattern: ^[0-9a-f]{64}$
+      kpi_tag:
+        description: >-
+          Optional KPI tag associating this event with a tracked KPI (C8,
+          KPI-first). Denormalized onto the outbox row for the reporting path.
+        range: string
+      actor:
+        description: >-
+          The acting principal that caused the event (e.g. "agent://flywheel",
+          "user:ada@acme.com", "system"). Required on every event.
+        required: true
+        range: string
+      provenance:
+        description: >-
+          Where the event and the state it describes came from — a small string
+          map (source, pipeline, commit, …). Required; may be empty.
+        required: true
+        multivalued: true
+        range: ProvenanceEntry
+        inlined: true
+      occurred_at:
+        description: Timestamp the event occurred (UTC).
+        required: true
+        range: datetime
+      trace_id:
+        description: >-
+          Optional OTel/trace correlation id linking this event to a span in the
+          observability backend.
+        range: string
+
+  AuditEvent:
+    is_a: PlatformEvent
+    description: >-
+      An audit-log event: a security- or governance-relevant action taken on a
+      resource, with its outcome. Feeds the tamper-evident audit sink.
+    attributes:
+      action:
+        description: The action performed (e.g. "tool.invoke", "secret.read").
+        required: true
+        range: string
+      resource:
+        description: The resource the action was taken on (e.g. a URN or path).
+        required: true
+        range: string
+      outcome:
+        description: Whether the action succeeded, was denied, or errored.
+        required: true
+        range: AuditOutcome
+      detail:
+        description: Optional free-text detail about the action or its outcome.
+        range: string
+
+  CorrectionSignal:
+    is_a: PlatformEvent
+    description: >-
+      A correction/feedback signal on a system output — the raw material of the
+      improvement flywheel (thumbs, edits, wrong-source flags, re-queries).
+    attributes:
+      signal_kind:
+        description: The kind of correction signal observed.
+        required: true
+        range: CorrectionKind
+      subject_ref:
+        description: >-
+          Reference (id/URN) to the subject the signal is about — the answer,
+          citation, retrieval, or approval the correction targets.
+        required: true
+        range: string
+      value:
+        description: >-
+          Optional numeric magnitude for the signal (e.g. an edit distance or a
+          score); interpretation depends on signal_kind.
+        range: float
+      comment:
+        description: Optional free-text comment accompanying the correction.
+        range: string
+
+  ApprovalEvent:
+    is_a: PlatformEvent
+    description: >-
+      A human-in-the-loop approval-workflow event: a request for approval and
+      its lifecycle transitions (approved/rejected/escalated/expired).
+    attributes:
+      approval_id:
+        description: Id of the approval request this event pertains to.
+        required: true
+        range: string
+      tier:
+        description: >-
+          Approval tier (0–3): the sensitivity/authority level required, 0 being
+          the lowest. Mirrors ne-contracts ApprovalTier.
+        required: true
+        range: integer
+        minimum_value: 0
+        maximum_value: 3
+      decision:
+        description: The approval decision or lifecycle transition this event records.
+        required: true
+        range: ApprovalDecision
+      subject_ref:
+        description: Reference (id/URN) to the action or artifact awaiting approval.
+        required: true
+        range: string
+      sla_deadline:
+        description: Optional SLA deadline by which the approval must be resolved.
+        range: datetime
+
+  CostEvent:
+    is_a: PlatformEvent
+    description: >-
+      A cost/usage accounting event for a model invocation — tokens, dollars,
+      and the lane (frontier API vs private vLLM) the spend occurred on.
+    attributes:
+      model:
+        description: The model identifier the cost is attributed to.
+        required: true
+        range: string
+      provider:
+        description: Optional provider/vendor name (e.g. "anthropic", "self-hosted").
+        range: string
+      lane:
+        description: >-
+          The serving lane the invocation used. Conventionally "frontier-api" or
+          "private-vllm"; kept as a free string so new lanes need no schema bump.
+        required: true
+        range: string
+      input_tokens:
+        description: Number of input (prompt) tokens consumed.
+        range: integer
+        minimum_value: 0
+      output_tokens:
+        description: Number of output (completion) tokens produced.
+        range: integer
+        minimum_value: 0
+      cost_usd:
+        description: Cost of the invocation in US dollars.
+        range: float
+        minimum_value: 0
+      task:
+        description: Optional task/route label the invocation served.
+        range: string
+      latency_ms:
+        description: >-
+          Wall-clock latency of the invocation in whole milliseconds — one
+          monotonic delta from call start to termination, rounded to the
+          nearest integer (B12). OMITTED (None) when not measured: absent
+          means unknown, never zero.
+        range: integer
+        minimum_value: 0
+      ttft_ms:
+        description: >-
+          Time to first token in whole milliseconds — streaming invocations
+          only: the monotonic delta from call start to the first chunk
+          received (B12). OMITTED (None) for non-streaming invocations and
+          for a stream that terminated before any chunk arrived.
+        range: integer
+        minimum_value: 0
+
+  ShapeViolation:
+    is_a: PlatformEvent
+    description: >-
+      A schema/shape-validation failure: a record that did not conform to its
+      declared schema (or SHACL shape), optionally quarantined.
+    attributes:
+      schema_name:
+        description: Name of the schema/shape that was violated.
+        required: true
+        range: string
+      schema_version:
+        description: Version of the schema/shape that was violated.
+        required: true
+        range: string
+      subject_ref:
+        description: Reference (id/URN) to the record that failed validation.
+        required: true
+        range: string
+      message:
+        description: Human-readable description of the violation.
+        required: true
+        range: string
+      severity:
+        description: Severity of the violation.
+        required: true
+        range: ViolationSeverity
+      quarantined:
+        description: Whether the offending record was quarantined as a result.
+        range: boolean
+
+  EventRecordSet:
+    tree_root: true
+    description: >-
+      Top-level container binding a batch of platform events together — the JSON
+      Schema root class. Each slot is an optional list of one event type.
+    attributes:
+      audit_events:
+        description: The AuditEvents in this batch.
+        range: AuditEvent
+        multivalued: true
+        inlined_as_list: true
+      correction_signals:
+        description: The CorrectionSignals in this batch.
+        range: CorrectionSignal
+        multivalued: true
+        inlined_as_list: true
+      approval_events:
+        description: The ApprovalEvents in this batch.
+        range: ApprovalEvent
+        multivalued: true
+        inlined_as_list: true
+      cost_events:
+        description: The CostEvents in this batch.
+        range: CostEvent
+        multivalued: true
+        inlined_as_list: true
+      shape_violations:
+        description: The ShapeViolations in this batch.
+        range: ShapeViolation
+        multivalued: true
+        inlined_as_list: true
+
+# ---------------------------------------------------------------------------
+# Enums
+# ---------------------------------------------------------------------------
+enums:
+  AuditOutcome:
+    description: Outcome of an audited action.
+    permissible_values:
+      success:
+        description: The action completed successfully.
+      denied:
+        description: The action was denied by policy.
+      error:
+        description: The action errored before completing.
+
+  CorrectionKind:
+    description: The kind of a correction/feedback signal.
+    permissible_values:
+      thumbs_up:
+        description: Explicit positive feedback on an output.
+      thumbs_down:
+        description: Explicit negative feedback on an output.
+      edit_distance:
+        description: The user edited the output; magnitude carries the distance.
+      wrong_source:
+        description: A cited source was flagged as wrong or irrelevant.
+      re_query:
+        description: The user re-queried, implying the prior answer was unsatisfactory.
+      approval_rejection:
+        description: An approval was rejected, providing a corrective signal.
+
+  ApprovalDecision:
+    description: The decision or lifecycle transition of an approval.
+    permissible_values:
+      requested:
+        description: An approval was requested and is pending.
+      approved:
+        description: The request was approved.
+      rejected:
+        description: The request was rejected.
+      escalated:
+        description: The request was escalated to a higher tier/authority.
+      expired:
+        description: The request expired without resolution.
+
+  ViolationSeverity:
+    description: Severity of a shape/schema violation.
+    permissible_values:
+      error:
+        description: A hard violation; the record is invalid.
+      warning:
+        description: A soft violation; the record is suspect but usable.

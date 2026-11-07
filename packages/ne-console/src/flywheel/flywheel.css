@@ -1,0 +1,322 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §11 — IMPROVEMENT, screen-local only.
+ *
+ * The table, the toolbar, the pills, the state blocks and the detail pane are
+ * the shared standard (src/styles/table.css); nothing here restyles them. What
+ * is left is what only this screen has: the tab strip, the inert artifact
+ * blocks, the pane's forms, the digest tiles and the row overflow menu.
+ *
+ * Every value resolves through a token. No raw colour, no px font-size. Both
+ * themes come free because nothing here names a colour of its own. */
+
+.ne-fly {
+  display: contents;
+}
+
+/* -------------------------------- the tabs -------------------------------- */
+
+.ne-fly__tabs {
+  display: flex;
+  gap: var(--space-16);
+}
+
+.ne-fly__tab {
+  font: var(--type-cell);
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: var(--space-4) 0;
+  border-bottom: 2px solid transparent;
+}
+
+.ne-fly__tab:hover {
+  color: var(--text);
+}
+
+.ne-fly__tab:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+
+.ne-fly__tab[aria-current="page"] {
+  color: var(--text);
+  border-bottom-color: var(--cherenkov);
+}
+
+/* ------------------------------- the pane -------------------------------- */
+
+.ne-fly__block {
+  padding: var(--space-12) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-fly__blocktitle {
+  margin: var(--space-12) 0 var(--space-8);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.ne-fly__disclosure {
+  margin-top: var(--space-4);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-fly__disclosure summary {
+  cursor: pointer;
+}
+
+.ne-fly__ids {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The sanitized artifact, rendered inert. Scrollable in both axes so a long
+ * hunk neither wraps into unreadability nor widens the pane. */
+.ne-fly__diff,
+.ne-fly__prbody,
+.ne-fly__skilltext {
+  margin: 0 0 var(--space-8);
+  padding: var(--space-8);
+  max-height: 320px;
+  overflow: auto;
+  background: var(--panel-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font: var(--type-cell-mono);
+  color: var(--text);
+  white-space: pre;
+  tab-size: 2;
+}
+
+.ne-fly__prbody {
+  white-space: pre-wrap;
+  color: var(--text-dim);
+}
+
+.ne-fly__skilltext {
+  white-space: pre-wrap;
+  border-color: var(--amber);
+}
+
+/* The one warning line on a skill candidate's text, and the tampered line on a
+ * skill row. Caution-toned, and the word carries the meaning — the glyph and the
+ * sentence both survive a reader who sees no colour at all. */
+.ne-fly__warn {
+  margin: 0 0 var(--space-8);
+  font: var(--type-body);
+  color: var(--amber);
+}
+
+.ne-fly__reviewed {
+  margin: 0 0 var(--space-8);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* ------------------------------- the forms -------------------------------- */
+
+.ne-fly__actions,
+.ne-fly__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-fly__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-fly__fieldlabel {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.ne-fly__input,
+.ne-fly__select {
+  font: var(--type-cell);
+  color: var(--text);
+  background: var(--panel-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 0 var(--space-8);
+  height: var(--nav-row-height);
+}
+
+.ne-fly__input:focus-visible,
+.ne-fly__select:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+
+.ne-fly__fieldset {
+  margin: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-fly__radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-cell);
+  color: var(--text);
+}
+
+.ne-fly__labels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-left: var(--space-24);
+}
+
+.ne-fly__none {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-fly__buttons {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+/* --------------------------- the row overflow menu ------------------------ */
+
+.ne-fly__rowmenu {
+  position: relative;
+  display: inline-block;
+}
+
+.ne-fly__menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  background: var(--panel-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+}
+
+.ne-fly__menuitem {
+  font: var(--type-cell);
+  color: var(--text);
+  background: none;
+  border: none;
+  text-align: left;
+  padding: var(--space-4) var(--space-8);
+  cursor: pointer;
+}
+
+.ne-fly__menuitem:hover {
+  background: var(--panel);
+}
+
+.ne-fly__menuitem:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+
+.ne-fly__statuscell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ------------------------------- the digest ------------------------------- */
+
+.ne-fly__digest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.ne-fly__weeknav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.ne-fly__weekwindow {
+  font: var(--type-cell-mono);
+  color: var(--text-dim);
+}
+
+.ne-fly__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-fly__sectiontitle {
+  margin: 0;
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.ne-fly__tiles {
+  display: flex;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.ne-fly__tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 120px;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-fly__tilelabel {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-fly__tilevalue {
+  font: var(--type-mono-plate);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.ne-fly__latency {
+  margin: 0;
+  font: var(--type-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* 015A0-ENFORCEMENT — the withheld proposal's one sentence. It sits where the
+   diff would have been, so the pane is never blank where content was refused. */
+.ne-fly__withheld {
+  color: var(--text-secondary);
+  font: var(--type-body);
+  padding: var(--space-3);
+}
+
+/* 015A0-ENFORCEMENT — the digest's scope line. */
+.ne-fly__scope {
+  color: var(--text-secondary);
+  font: var(--type-small);
+}

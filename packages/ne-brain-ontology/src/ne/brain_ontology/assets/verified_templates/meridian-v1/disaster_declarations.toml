@@ -1,0 +1,28 @@
+template_id = "disaster-declarations"
+version = 1
+description = "Every FEMA disaster declaration the Meridian pilot operates under, one row per designated county the pilot selected, carrying the declaration's own scope caveat and its FEMA source URL."
+max_rows = 50
+sparql = """
+SELECT ?declaration ?declaration_id ?incident ?declaration_date ?state ?county ?scope_description ?source_url WHERE {
+  #BINDINGS#
+  ?declaration a <https://neutron.enterprise/schema/meridian/DisasterDeclaration> .
+  ?declaration <https://neutron.enterprise/schema/meridian/declaration_id> ?declaration_id .
+  ?declaration <https://neutron.enterprise/schema/meridian/incident> ?incident .
+  ?declaration <https://neutron.enterprise/schema/meridian/declaration_date> ?declaration_date .
+  ?declaration <https://neutron.enterprise/schema/meridian/state> ?state .
+  ?declaration <https://neutron.enterprise/schema/meridian/county> ?county .
+  ?declaration <https://neutron.enterprise/schema/meridian/scope_description> ?scope_description .
+  ?declaration <https://neutron.enterprise/schema/meridian/source_url> ?source_url .
+}
+"""
+
+[scope]
+graph_classes = ["bank.customer.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["declaration", "declaration_id", "incident", "declaration_date", "state", "county", "scope_description", "source_url"]
+citation_var = "declaration"
+contributor_vars = ["declaration"]
+source_status = "source_bearing"
+count_total_rows = true

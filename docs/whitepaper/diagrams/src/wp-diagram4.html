@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#fff;}
+  body{width:1200px;height:880px;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{position:relative;width:1200px;height:880px;}
+
+  .title{position:absolute;top:44px;left:0;width:1200px;text-align:center;
+    font-size:21px;font-weight:600;letter-spacing:.075em;color:#1c333c;}
+
+  .row{position:absolute;left:44px;width:1112px;height:66px;
+    border:1.7px solid #24404a;border-radius:10px;background:#fff;
+    display:flex;align-items:center;}
+  .row.g{border-color:#c08a2e;background:#f7f4ee;border-left-width:6px;}
+
+  .n{width:34px;height:34px;margin-left:18px;border-radius:50%;
+    background:#eef2f4;border:1px solid #c9d4d8;color:#3d5b63;
+    font-size:14px;display:flex;align-items:center;justify-content:center;flex:none;}
+  .row.g .n{background:#f0e4cb;border-color:#d9b871;color:#6f5426;}
+  .t{margin-left:16px;font-size:17px;color:#1c333c;}
+  .m{margin-left:auto;margin-right:22px;font-size:15px;color:#3d5b63;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+
+  .cap{position:absolute;top:826px;left:0;width:1200px;text-align:center;
+    font-size:14px;color:#6b7c82;font-style:italic;}
+  svg{position:absolute;left:0;top:0;width:1200px;height:880px;}
+</style>
+<div class="wrap">
+  <div class="title">A GOVERNED REQUEST, END TO END</div>
+
+  <div class="row"   style="top:112px"><div class="n">1</div><div class="t">User signs on via SSO; agent session begins</div><div class="m">ne-identity → ne-runtime</div></div>
+  <div class="row g" style="top:202px"><div class="n">2</div><div class="t">Deterministic guardrails check spend, rate, input</div><div class="m">ne-govern</div></div>
+  <div class="row"   style="top:292px"><div class="n">3</div><div class="t">Knowledge retrieval, permission-trimmed and cited</div><div class="m">ne-brain + ne-permissions</div></div>
+  <div class="row g" style="top:382px"><div class="n">4</div><div class="t">Policy decision: allow / deny / require-approval</div><div class="m">ne-govern (PDP)</div></div>
+  <div class="row"   style="top:472px"><div class="n">5</div><div class="t">Model call leaves only on its allowlisted, audited lane</div><div class="m">ne-gateway</div></div>
+  <div class="row g" style="top:562px"><div class="n">6</div><div class="t">Immutable audit event written to the hash chain</div><div class="m">ne-audit</div></div>
+  <div class="row"   style="top:652px"><div class="n">7</div><div class="t">Tier-2 action waits for human approval in the console</div><div class="m">approval queue</div></div>
+  <div class="row"   style="top:742px"><div class="n">8</div><div class="t">Governed write-back; correction signal feeds the flywheel</div><div class="m">ne-connect → ne-flywheel</div></div>
+
+  <svg viewBox="0 0 1200 880">
+    <defs><marker id="d" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#0d7168"/></marker></defs>
+    <g stroke="#0d7168" stroke-width="1.8" fill="none">
+      <path d="M600,178 L600,196" marker-end="url(#d)"/>
+      <path d="M600,268 L600,286" marker-end="url(#d)"/>
+      <path d="M600,358 L600,376" marker-end="url(#d)"/>
+      <path d="M600,448 L600,466" marker-end="url(#d)"/>
+      <path d="M600,538 L600,556" marker-end="url(#d)"/>
+      <path d="M600,628 L600,646" marker-end="url(#d)"/>
+      <path d="M600,718 L600,736" marker-end="url(#d)"/>
+    </g>
+  </svg>
+
+  <div class="cap">Every step is policy-checked, audited, and stamped with the configuration fingerprint — no step escapes governance.</div>
+</div>

@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: obs
+description: >-
+  obs subchart — otel-collector ONLY. Langfuse is dev-tier-only and never
+  templated (NE-071c locked decision). Byte-parity with deploy/compose/pilot.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

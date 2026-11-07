@@ -1,0 +1,54 @@
+[project]
+name = "ne-chat"
+version = "0.1.0"
+description = "Chat channel adapters (ChatAdapter contract): Slack v1, Teams v1.1."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-events",
+    "ne-schema",
+    "ne-net",
+    "ne-runtime",
+    "fastapi>=0.139.0,<1",
+    "httpx>=0.28.1,<1",
+    # Starlette needs python-multipart for request.form() on the Slack interactivity
+    # route (approve/deny). FastAPI does NOT pull it transitively → declare it so a
+    # package-only install of ne-chat doesn't 500 on approval clicks (Codex P2).
+    # Already C4-cleared (Apache-2.0) + in the lock via the mcp closure.
+    "python-multipart>=0.0.32,<1",
+    # NE-080 Teams adapter: Bot Framework activity JWT validation. Both are
+    # ALREADY lock-pinned repo-wide via ne-connect/ne-identity (MIT / Apache-2.0
+    # or BSD-3) — no new lock entry, only two already-locked dependency EDGES.
+    "pyjwt>=2.15.0,<3",
+    "cryptography>=50,<51",
+]
+
+[project.entry-points."ne.plugins.chat_adapter"]
+slack = "ne.chat.slack.adapter:SlackChatAdapter"
+teams = "ne.chat.teams.adapter:TeamsChatAdapter"
+
+[dependency-groups]
+dev = [
+    "ne-govern",
+    "ne-identity",
+    "ne-audit",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.chat"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+ne-net = { workspace = true }
+ne-runtime = { workspace = true }
+ne-govern = { workspace = true }
+ne-identity = { workspace = true }
+ne-audit = { workspace = true }

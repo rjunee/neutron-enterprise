@@ -1,0 +1,18 @@
+# Curated SHACL shapes manifest — NE-085a.
+# Hand-written shapes for constraints LinkML cannot express, layered on top of
+# the generated ne.schema `operational.shapes.ttl`. Each entry declares a scope:
+#   * "per-write" — evaluable on a delta + its CBD closure; runs on EVERY write.
+#   * "global"    — non-local (sh:sparql over the whole graph); runs ONLY in the
+#                   nightly full-graph validation job + at ontology reload, never
+#                   per-write (brain-tier3-spec §5.5). A per-write shape carrying
+#                   an sh:sparql predicate FAILS the R2 CI meta-check.
+# Parsed by ne.brain_ontology.shapes.load_compiled_shapes (stdlib tomllib).
+
+[[shapes]]
+file = "global_unique_label.ttl"
+scope = "global"
+
+# NE-085b: per-write shape for the RDF-lift SAME_AS reification (IdentityAssertion).
+[[shapes]]
+file = "identity_assertion.ttl"
+scope = "per-write"

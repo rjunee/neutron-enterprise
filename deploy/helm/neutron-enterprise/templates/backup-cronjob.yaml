@@ -1,0 +1,84 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Optional in-cluster logical backup (design §1.8) — a pg_dumpall CronJob that
+# writes cluster-wide SQL dumps (neutron + keycloak + ne_dbos in ONE run) to the
+# ne-backup-storage PVC and prunes to backup.keep most-recent snapshots. Reuses
+# the chart's ALREADY-PINNED postgres image (matching dump/server client
+# versions; C11 — NO new registry image is introduced). Gated behind
+# backup.enabled (default false) AND profiles.core — the postgres StatefulSet/
+# Service pg_dumpall dials only exist on the core profile, so rendering the job
+# without core would guarantee a failing backup. (The PVC is deliberately NOT
+# core-gated — see templates/backup-pvc.yaml.) The restore
+# runbook lives in deploy/helm/README.md ("Backups & restore"). Velero is the
+# customer-level DR alternative (documented, not templated).
+{{- if and .Values.backup.enabled .Values.profiles.core }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ne-backup
+  labels:
+    app: ne-backup
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: ne-backup
+            app.kubernetes.io/part-of: neutron-enterprise
+        spec:
+          restartPolicy: Never
+          securityContext:
+            # uid 70 = the alpine postgres user (matches the postgres subchart),
+            # so pg_dumpall runs as a non-root, well-defined identity.
+            {{- include "neutron.podSecurityContext" (dict "uid" 70 "gid" 70 "fsGroup" 70 "openshift" .Values.global.openshift) | nindent 12 }}
+          containers:
+            - name: ne-backup
+              image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" (index .Values "postgres").image.repository "tag" (index .Values "postgres").image.tag "digest" (index .Values "postgres").image.digest) }}
+              securityContext:
+                {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 16 }}
+              env:
+                # C12 — the ONLY env, declared first; the password is injected
+                # via secretKeyRef, never a DSN literal. pg_dumpall reads
+                # PGPASSWORD + the -h/-U flags (no connection string on disk).
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.global.secrets.secretName }}
+                      key: NE_PILOT_POSTGRES_PASSWORD
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  ts=$(date -u +%Y%m%dT%H%M%SZ)
+                  pg_dumpall -h postgres -U ne --clean --if-exists > "/backups/ne-${ts}.sql"
+                  # Prune to the most-recent {{ .Values.backup.keep }} snapshots.
+                  # busybox-safe: `tail -n +N` skips the newest N-1, and the
+                  # while-read loop avoids `xargs -r` (absent from busybox).
+                  ls -1t /backups/ne-*.sql | tail -n +{{ add .Values.backup.keep 1 }} | while read -r f; do rm -f "$f"; done
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+                - name: tmp
+                  mountPath: /tmp
+              resources:
+                requests:
+                  memory: 128Mi
+                  cpu: 100m
+                limits:
+                  memory: 512Mi
+                  cpu: "1"
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: ne-backup-storage
+            - name: tmp
+              emptyDir: {}
+{{- end }}

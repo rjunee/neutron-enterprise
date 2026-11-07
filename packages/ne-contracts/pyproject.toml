@@ -1,0 +1,27 @@
+[project]
+name = "ne-contracts"
+version = "1.29.0"
+description = "Protocols, typed events, config framework, and plugin registry."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "pydantic>=2.13.4,<3",
+    "pydantic-settings>=2.14.2,<3",
+]
+
+[project.optional-dependencies]
+testkit = ["pytest>=9.1"]
+
+[project.entry-points."ne.plugins.object_store"]
+memory = "ne.contracts.testing.memory:MemoryObjectStore"
+
+[project.entry-points."ne.plugins.secret_store"]
+memory = "ne.contracts.testing.memory:MemorySecretStore"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.contracts"
+namespace = true

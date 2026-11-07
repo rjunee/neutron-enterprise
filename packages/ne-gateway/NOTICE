@@ -1,0 +1,22 @@
+Neutron Enterprise — ne-gateway
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  litellm            / 1.100.4       / MIT        / https://github.com/BerriAI/litellm
+  sqlalchemy         / >=2.0.51,<2.1 / MIT        / https://github.com/sqlalchemy/sqlalchemy
+  opentelemetry-api  / >=1.43,<2     / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+
+Test-only:
+  opentelemetry-sdk  / >=1.43,<2     / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+    (in-memory span exporter for the NE-014 instrumentation tests; dev-only)
+
+Lifted code:
+  ssrf.py endpoint validation derived from ABI
+  (https://github.com/jupyter-naas/abi),
+  libs/naas-abi/.../apps/nexus/apps/api/app/services/provider_runtime.py
+  — MIT License, Copyright (C) 2025 Naas.ai.
+
+The full transitive dependency closure is covered by the lock-wide license gate
+(`ne check licenses` over uv.lock; C4/C11).

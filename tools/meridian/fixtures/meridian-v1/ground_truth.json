@@ -1,0 +1,409 @@
+{
+  "b1": {
+    "actionable_rows": [
+      {
+        "actionable": true,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-001",
+        "loan_id": "mer-loan-001"
+      },
+      {
+        "actionable": true,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-002",
+        "loan_id": "mer-loan-002"
+      },
+      {
+        "actionable": true,
+        "affected": true,
+        "basis": [
+          "address county Jefferson is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Jefferson",
+        "customer_id": "mer-cus-003",
+        "loan_id": "mer-loan-003"
+      }
+    ],
+    "affected_rows": [
+      {
+        "actionable": true,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-001",
+        "loan_id": "mer-loan-001"
+      },
+      {
+        "actionable": true,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-002",
+        "loan_id": "mer-loan-002"
+      },
+      {
+        "actionable": true,
+        "affected": true,
+        "basis": [
+          "address county Jefferson is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Jefferson",
+        "customer_id": "mer-cus-003",
+        "loan_id": "mer-loan-003"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is paid_off",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-004",
+        "loan_id": "mer-loan-004"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "a prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-005",
+        "loan_id": "mer-loan-005"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Jefferson is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is repossession",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "repossession activity is recorded"
+        ],
+        "county": "Jefferson",
+        "customer_id": "mer-cus-007",
+        "loan_id": "mer-loan-007"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-008",
+        "loan_id": "mer-loan-008"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-010",
+        "loan_id": "mer-loan-010"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Jefferson is in Meridian's selected designated-county subset for DR-4830",
+          "customer has no auto loan"
+        ],
+        "county": "Jefferson",
+        "customer_id": "mer-cus-011",
+        "loan_id": null
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "customer has no auto loan"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-013",
+        "loan_id": null
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "customer has no auto loan"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-015",
+        "loan_id": null
+      }
+    ],
+    "declaration_id": "DR-4830",
+    "distractor_rows": [
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is paid_off",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-004",
+        "loan_id": "mer-loan-004"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "a prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-005",
+        "loan_id": "mer-loan-005"
+      },
+      {
+        "actionable": false,
+        "affected": false,
+        "basis": [
+          "address county McDuffie is outside Meridian's selected three-county pilot subset",
+          "loan status is active",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "McDuffie",
+        "customer_id": "mer-cus-006",
+        "loan_id": "mer-loan-006"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Jefferson is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is repossession",
+          "an unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "repossession activity is recorded"
+        ],
+        "county": "Jefferson",
+        "customer_id": "mer-cus-007",
+        "loan_id": "mer-loan-007"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-008",
+        "loan_id": "mer-loan-008"
+      },
+      {
+        "actionable": false,
+        "affected": false,
+        "basis": [
+          "address county McDuffie is outside Meridian's selected three-county pilot subset",
+          "loan status is active",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "McDuffie",
+        "customer_id": "mer-cus-009",
+        "loan_id": "mer-loan-009"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "loan status is active",
+          "no unpaid scheduled payment is due within the inclusive 14-day window",
+          "no prior hardship offer is recorded",
+          "no repossession activity is recorded"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-010",
+        "loan_id": "mer-loan-010"
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Jefferson is in Meridian's selected designated-county subset for DR-4830",
+          "customer has no auto loan"
+        ],
+        "county": "Jefferson",
+        "customer_id": "mer-cus-011",
+        "loan_id": null
+      },
+      {
+        "actionable": false,
+        "affected": false,
+        "basis": [
+          "address county McDuffie is outside Meridian's selected three-county pilot subset",
+          "customer has no auto loan"
+        ],
+        "county": "McDuffie",
+        "customer_id": "mer-cus-012",
+        "loan_id": null
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Columbia is in Meridian's selected designated-county subset for DR-4830",
+          "customer has no auto loan"
+        ],
+        "county": "Columbia",
+        "customer_id": "mer-cus-013",
+        "loan_id": null
+      },
+      {
+        "actionable": false,
+        "affected": false,
+        "basis": [
+          "address county McDuffie is outside Meridian's selected three-county pilot subset",
+          "customer has no auto loan"
+        ],
+        "county": "McDuffie",
+        "customer_id": "mer-cus-014",
+        "loan_id": null
+      },
+      {
+        "actionable": false,
+        "affected": true,
+        "basis": [
+          "address county Richmond is in Meridian's selected designated-county subset for DR-4830",
+          "customer has no auto loan"
+        ],
+        "county": "Richmond",
+        "customer_id": "mer-cus-015",
+        "loan_id": null
+      }
+    ],
+    "question": "For DR-4830, which affected Meridian auto loans have an unpaid scheduled payment due within 14 days and remain eligible for a new hardship offer?",
+    "window_end": "2026-09-01",
+    "window_start": "2026-08-18"
+  },
+  "b2": {
+    "answers_by_version": [
+      {
+        "answer_dispute_ids": [],
+        "artifact_id": "art-dispute-sop-v3",
+        "basis": [],
+        "current": false,
+        "deadline_business_days": 10,
+        "threshold_cents": null,
+        "version": "3.0"
+      },
+      {
+        "answer_dispute_ids": [
+          "mer-dsp-001"
+        ],
+        "artifact_id": "art-dispute-sop-v4",
+        "basis": [
+          "mer-dsp-001: 6 business days elapsed exceeds 5"
+        ],
+        "current": true,
+        "deadline_business_days": 5,
+        "threshold_cents": 50000,
+        "version": "4.0"
+      }
+    ],
+    "current_answer_dispute_ids": [
+      "mer-dsp-001"
+    ],
+    "current_artifact_id": "art-dispute-sop-v4",
+    "question": "Which open debit-card disputes are overdue for provisional credit under the SOP?"
+  },
+  "b3": {
+    "answerable": false,
+    "contributing_dispute_ids": [
+      "mer-dsp-003",
+      "mer-dsp-005"
+    ],
+    "control_answer_cents": 110000,
+    "control_question": "What is the total recorded amount of Reg E provisional credits?",
+    "expected_response": "Refuse to calculate a late-credit total: provisional-credit issue dates are absent from the source records, so timeliness cannot be determined.",
+    "missing_fields": [
+      "reg_e_disputes.provisional_credit_issue_date"
+    ],
+    "question": "What is the total value of Reg E provisional credits that were issued late?"
+  },
+  "corpus_version": "meridian-v1",
+  "generated_from": [
+    "corpus.customers",
+    "corpus.auto_loans",
+    "corpus.payment_schedules",
+    "corpus.servicing_notes",
+    "corpus.reg_e_disputes",
+    "corpus.disaster_declarations",
+    "corpus.artifacts"
+  ]
+}

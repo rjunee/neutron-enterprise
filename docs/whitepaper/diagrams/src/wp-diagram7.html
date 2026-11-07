@@ -1,0 +1,85 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#fff;}
+  body{width:1376px;height:768px;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{position:relative;width:1376px;height:768px;}
+
+  .title{position:absolute;top:42px;left:56px;font-size:19px;font-weight:600;
+    letter-spacing:.085em;color:#0f766e;}
+  .scope{position:absolute;top:76px;left:56px;width:900px;font-size:13.5px;color:#5c7178;
+    line-height:1.5;}
+  .scope b{color:#3d5b63;font-weight:600;}
+
+  .box{position:absolute;border:1.6px solid #24404a;border-radius:9px;background:#eef2f4;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:15.5px;color:#1c333c;line-height:1.35;}
+  .amber{border-color:#c08a2e;background:#fbf1de;}
+  .teal{border-color:#0d7168;background:#e8f3f2;}
+
+  .draft{left:56px;top:326px;width:196px;height:82px;}
+  .gate{left:330px;top:296px;width:322px;height:142px;font-size:16px;}
+  .src{left:344px;top:552px;width:294px;height:96px;}
+  .pass{left:790px;top:236px;width:236px;height:84px;}
+  .fail{left:790px;top:454px;width:236px;height:84px;}
+  .audit{left:1110px;top:326px;width:212px;height:82px;}
+
+  .sub{position:absolute;font-size:12.5px;color:#5c7178;text-align:center;line-height:1.45;}
+  .sub-gate{left:266px;top:264px;width:450px;}
+  .sub-src{left:314px;top:656px;width:354px;}
+
+  .lbl{position:absolute;font-size:13px;line-height:1.4;}
+  .lbl-pass{left:702px;top:246px;color:#0d7168;}
+  .lbl-fail{left:566px;top:452px;color:#b7791f;width:118px;text-align:right;}
+
+  .note{position:absolute;left:790px;top:566px;width:520px;font-size:12.5px;
+    color:#8a6d3b;line-height:1.55;border-left:3px solid #d9b871;padding-left:12px;}
+  .note b{color:#6f5426;font-weight:600;}
+
+  svg{position:absolute;left:0;top:0;width:1376px;height:768px;overflow:visible;}
+</style>
+<div class="wrap">
+  <div class="title">THE GROUNDING GATE</div>
+  <div class="scope">Runs for agents under the <b>grounded-agent profile</b> — enabled per deployment, over the
+    <b>verified-answer lane</b>. It is not a platform-wide filter on all generation.</div>
+
+  <div class="box draft">Drafted answer</div>
+  <div class="box gate amber">Grounding gate<br>(ne.govern.grounding)<br>deterministic · model-free</div>
+  <div class="sub sub-gate">classifies every token: numeral · identifier (IRI) · citation · prose</div>
+
+  <div class="box src">Verified, cited,<br>permission-trimmed<br>source the agent fetched</div>
+  <div class="sub sub-src">Under this profile, an agent cannot emit a numeral, identifier,<br>or citation absent from the source it actually retrieved.</div>
+
+  <div class="box pass teal">Answer released,<br>with citations</div>
+  <div class="box fail amber">Refused /<br>quarantined for review</div>
+  <div class="box audit">ne-audit — every<br>verdict logged</div>
+
+  <div class="lbl lbl-pass">grounded</div>
+  <div class="lbl lbl-fail">ungrounded fact<br>— fails closed</div>
+
+  <div class="note"><b>Stated boundary.</b> The gate verifies the <i>grounding</i> of factual
+    tokens, not the <i>semantic entailment</i> between them. A draft whose every number is
+    individually grounded can still assert a false relationship.</div>
+
+  <svg viewBox="0 0 1376 768">
+    <defs>
+      <marker id="t" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#0d7168"/></marker>
+      <marker id="a" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#c08a2e"/></marker>
+      <marker id="g" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#5c7178"/></marker>
+    </defs>
+    <!-- draft -> gate -->
+    <path d="M252,367 L330,367" stroke="#5c7178" stroke-width="1.9" fill="none" marker-end="url(#g)"/>
+    <!-- source -> gate -->
+    <path d="M491,552 L491,438" stroke="#5c7178" stroke-width="1.9" fill="none" marker-end="url(#g)"/>
+    <!-- gate -> pass -->
+    <path d="M652,340 L692,340 L692,278 L790,278" stroke="#0d7168" stroke-width="1.9" fill="none" marker-end="url(#t)"/>
+    <!-- gate -> fail -->
+    <path d="M652,394 L692,394 L692,496 L790,496" stroke="#c08a2e" stroke-width="1.9" fill="none" marker-end="url(#a)"/>
+    <!-- both -> audit -->
+    <path d="M1026,278 L1068,278 L1068,352 L1110,352" stroke="#24404a" stroke-width="1.7" fill="none" marker-end="url(#g)"/>
+    <path d="M1026,496 L1068,496 L1068,382 L1110,382" stroke="#24404a" stroke-width="1.7" fill="none" marker-end="url(#g)"/>
+  </svg>
+</div>

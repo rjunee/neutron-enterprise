@@ -1,0 +1,98 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-088 (H2) — the Flowise add-on EGRESS CLAMP. The tightest K8s-ENFORCEABLE
+# network posture for the CVSS-10/KEV-history Flowise workload: a compromised
+# Flowise pod may egress to ONLY the governed ne-api endpoint (:8000) — no
+# lateral movement to other pilot services, no external egress.
+#
+# This file renders TWO policies that together form the ONE governed lane, because
+# a K8s connection is permitted only when BOTH ends allow it: (1) flowise-egress-
+# clamp restricts the Flowise pod's egress to ne-api:8000; (2) allow-ne-api-from-
+# flowise opens the matching ne-api INGRESS from app=flowise (the chart's baseline
+# allow-ne-api admits only the ingress-controller namespace, so the clamp's sole
+# destination would otherwise be unreachable). Both are gated on the same flags.
+#
+# HONEST SCOPE: the umbrella chart ships NO flowise workload (Flowise is a
+# compose-only optional add-on today). This policy therefore PRE-CLAMPS any
+# customer-deployed pod labelled `app: flowise` in the release namespace — the
+# only K8s-enforceable posture until/unless Flowise lands in the chart. It is the
+# NetworkPolicy analogue of the compose overlay's loopback-only publish; compose
+# itself CANNOT enforce per-container egress on a NAT bridge (see
+# deploy/compose/flowise/README.md "Network isolation & the enforcement
+# boundary").
+#
+# Gated behind BOTH networkPolicy.enabled AND profiles.flowise (default false),
+# so it renders NOTHING by default — every NE-071 helm guardian
+# (test_optional_objects_absent_by_default, test_networkpolicy_render_behind_flag,
+# the kubeconform render) stays byte-green because none of them set
+# profiles.flowise. Requires a NetworkPolicy-ENFORCING CNI (Calico/Cilium/etc.);
+# vanilla networking.k8s.io/v1, no cloud dependency (C9).
+{{- if and .Values.networkPolicy.enabled .Values.profiles.flowise }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: flowise-egress-clamp
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: flowise
+  policyTypes:
+    - Ingress
+    - Egress
+  # NO ingress rules: default-deny inbound to Flowise. The UI is reached via
+  # `kubectl port-forward` (which is proxied by the API server, NOT pod-to-pod
+  # traffic, so it is unaffected by this policy). Any in-cluster peer dialing the
+  # Flowise pod is denied.
+  egress:
+    # DNS resolution rides the chart's allow-dns policy (empty podSelector,
+    # rendered when networkPolicy.enabled AND profiles.core) — NetworkPolicies are
+    # additive, so this pod's DNS is already permitted when core is on. The ONLY
+    # application-egress lane opened here is the governed ne-api endpoint.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ne-api
+      ports:
+        - port: 8000
+          protocol: TCP
+---
+# The INGRESS half of the same governed lane. A K8s connection needs BOTH the
+# source's egress AND the destination's ingress to permit it; the clamp above is
+# only the egress half. The chart's allow-ne-api policy (networkpolicy-allow.yaml)
+# permits ne-api ingress ONLY from the ingress-controller namespace, so without
+# this peer a clamped Flowise pod's egress to ne-api:8000 would still be DROPPED
+# at ne-api's ingress and the sole allowed destination would be unreachable.
+#
+# NetworkPolicies are ADDITIVE: this second policy selects the SAME app=ne-api
+# pods and simply UNIONS an "allow ingress from app=flowise on 8000" rule onto
+# allow-ne-api's existing ingress-controller allow — it never removes or narrows
+# any existing ne-api ingress. Declared with policyTypes [Ingress] only, so it
+# adds nothing to ne-api's egress posture. Gated behind the SAME two flags, so it
+# renders only alongside the clamp and nothing by default (NE-071 guardians stay
+# byte-green). Because allow-ne-api is itself gated on profiles.core, this lane is
+# only meaningful when core is also on (ne-api pods exist) — a forward-compatible
+# no-op otherwise, matching the rest of the allow set.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ne-api-from-flowise
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: ne-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: flowise
+      ports:
+        - port: 8000
+          protocol: TCP
+{{- end }}

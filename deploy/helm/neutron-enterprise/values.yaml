@@ -1,0 +1,490 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-071a — core-profile values surface. Every third-party image.digest here is
+# a BYTE-COPY of the pinned digest in deploy/compose/pilot/compose.yaml (C11) —
+# tools/ne-cli/tests/test_helm_chart.py::test_third_party_digests_byte_match_compose
+# enforces it. global.image.digest is the first-party C11 pin, populated by
+# `ne release push` (never hand-edited) — values.schema.json refuses an empty
+# value (fail-closed), matching the compose build-in-seal exception's spirit
+# without reusing its mechanism (a registry digest exists here; it does not in
+# compose's local-build-only path).
+
+global:
+  # Customer registry prefix for THIRD-PARTY images only (postgres/keycloak/
+  # opa). "" = images as pinned below, no prefix. The first-party image never
+  # uses this prefix — `ne release push` writes the FULLY-QUALIFIED repository
+  # (incl. registry) into global.image.repository directly (see _helpers.tpl
+  # neutron.firstPartyImageRef).
+  imageRegistry: ""
+
+  # PRE-009C: the default remains pre-cutover. Only the admitted Kubernetes
+  # bootstrap path sets generation=v1 after its read-only two-database proof.
+  agentTransport:
+    generation: ""
+    emptyBootstrap: false
+
+  # REQUIRED (values.schema.json): the console/API Ingress vhost — the
+  # NE_PILOT_HOSTNAME analogue.
+  hostname: ""
+
+  # REQUIRED (values.schema.json): 64-hex sha256, the composed NE-CKC12
+  # platform config_hash for the promoted bundle. Stamped ONLY by
+  # `ne k8s render` from a verify_bundle-verified manifest — never hand-edited.
+  # Rendered as a pod-template annotation (rollout-on-change).
+  configHash: ""
+
+  # OpenShift restricted-SCC support. When true, _helpers.tpl omits
+  # runAsUser/runAsGroup/fsGroup from every pod securityContext (the restricted
+  # SCC's MustRunAsRange assigns UIDs). NE-071b render-tests this seam
+  # (test_openshift_render_omits_fixed_uids) and adds route.enabled as an
+  # Ingress alternative; a LIVE CRC/OpenShift smoke is still out of scope, and
+  # the bundled postgres:18.6-alpine is NOT arbitrary-UID-safe under
+  # restricted-v2 (see deploy/helm/README.md "OpenShift" for the anyuid-SCC /
+  # external-postgres / CNPG options).
+  openshift: false
+
+  # The ONE first-party image shared by ne-api (and, post-103c, ne-worker).
+  image:
+    repository: ne-app
+    tag: "0.1.0"
+    # REQUIRED (values.schema.json): ^sha256:[0-9a-f]{64}$ — the C11 first-party
+    # pin. Populated by `ne release push --registry <customer-registry>` (see
+    # tools/ne-cli/src/ne/cli/release.py), NEVER by hand. Empty here is
+    # deliberate: a bare `helm template`/`helm lint` on this file MUST fail
+    # closed (the C11 schema + _helpers.tpl `fail` backstop) rather than render
+    # an unpinned first-party workload. CI/guardian invocations always pass
+    # -f deploy/helm/tests/values-ci.yaml, which supplies a fixture digest.
+    digest: ""
+
+  # C12 — installer-mode secrets ONLY in NE-071a. `ne k8s up` creates this
+  # Secret from the bundle SecretStore via `kubectl apply` on STDIN; Helm NEVER
+  # renders a Secret object (external-secrets/csi modes are 071b/072). Nested
+  # under `global` (not top-level) so it is visible from every subchart's own
+  # `.Values` (Helm only auto-propagates the `global:` key to subcharts) — the
+  # ne-api Deployment's secretKeyRef needs this name.
+  secrets:
+    mode: installer
+    secretName: ne-platform-secrets
+
+  # Nested under `global` for the same cross-chart-visibility reason: the
+  # ne-api subchart's NE_IDENTITY_OIDC__ISSUER env needs keycloakHost/hostname,
+  # and only `global.*` is shared into every subchart's own `.Values`.
+  ingress:
+    className: ""
+    keycloakHost: ""
+    tls:
+      secretName: ""
+
+  # PRE-008 immutable declarative Agent catalog, shared byte-for-byte by API/worker.
+  agentRegistry:
+    mountPath: /etc/neutron/agents/registry.toml
+
+  # PRE-011F immutable Skill bundle. Both first-party roots mount the same
+  # ConfigMap bytes; only the worker reconciles them into the shared registry.
+  skillBundle:
+    mountPath: /etc/neutron/skills
+
+# Service-set toggles, 1:1 with the pilot Compose profile matrix
+# (deploy/compose/pilot/README.md). `core` (071a) + the NE-071c full-parity
+# surface: `brain` (qdrant + tei-embed + tei-rerank) rides the DEFAULT deploy,
+# `obs` (otel-collector) and `serve` (vllm) are default-OFF.
+profiles:
+  core: true
+  # NE-088 (H2) hardening surface — default-OFF. This does NOT deploy Flowise
+  # (Flowise is a compose-only optional add-on); it gates ONLY the
+  # flowise-egress-clamp NetworkPolicy (templates/networkpolicy-flowise.yaml),
+  # which pre-clamps any customer-deployed pod labelled app=flowise to egress
+  # only → ne-api:8000. Requires networkPolicy.enabled too.
+  flowise: false
+  # The NE-103c durable ne-worker rides the CORE profile (SPEC §5 row overrides
+  # design §8's 'agents' placement — see Chart.yaml/compose.yaml ne-worker
+  # comments), so there is NO separate `agents` toggle; ne-worker starts/stops
+  # with `core`.
+  #
+  # NE-071c brain services (qdrant + tei-embed + tei-rerank) ride the DEFAULT
+  # deploy — ne-api's retrieval path (NE_API_QDRANT_URL/NE_API_TEI_URL) targets
+  # them in-cluster, so default-ON keeps the default render carrying them exactly
+  # as a literal 'core' condition would. The off-switch exists for sealed/air-gap
+  # installs that have NOT pre-staged TEI weights into the cache PVCs (TEI would
+  # never reach Ready offline; set brain=false OR pre-stage + tei.hfOffline="1").
+  brain: true
+  # NE-071c otel-collector ONLY. Langfuse is DEV-TIER-ONLY (unpinned tags; needs
+  # clickhouse+S3+redis; excluded from the pilot as a C2 invariant) and is NEVER
+  # templated here — see deploy/helm/README.md "Observability".
+  obs: false
+  # NE-071c vllm serving profile — default-OFF, GPU-gated, render-only in CI.
+  # The gpu|cpu mode selector lives at `vllm.mode` (NOT here), because a subchart
+  # only sees its own .Values + global — profiles.serve.mode would be invisible
+  # to charts/vllm.
+  serve:
+    enabled: false
+
+# The promoted config bundle's per-module TOMLs, injected by `ne k8s render`
+# (tools/ne-cli/src/ne/cli/k8s.py). Rendered into the ne-platform-config
+# ConfigMap for IDENTITY/ROLLOUT only (config_hash annotation) — the container
+# env does NOT point at these files (see deploy/helm/README.md, "NE_CONFIG_FILE
+# deviation"). Empty by default so the umbrella chart still template-renders
+# (with an empty ConfigMap) before any bundle is promoted.
+bundle:
+  files: {}
+
+# --- per-subchart values, keyed by CHART NAME (Helm merges these into each
+#     subchart's own .Values at that chart's root) ------------------------
+ne-api:
+  replicas: 2
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: "2"
+    requests:
+      memory: 1Gi
+      cpu: "1"
+  # --- NE-089 HA production-profile surface (default-OFF; ADDITIVE only) ---
+  # These three keys are the whole HA surface this unit ships: a PDB toggle, a
+  # pass-through affinity block, and a pass-through topologySpreadConstraints
+  # list. Every one of them renders NOTHING by default, so the NE-071a
+  # byte-parity guardians (tools/ne-cli/tests/test_helm_chart.py) keep passing
+  # unmodified. See deploy/helm/examples/values-production-ha.yaml for a
+  # populated overlay and deploy/helm/README.md's "HA production profile"
+  # section for the full guidance (incl. the stateful postgres/keycloak/qdrant
+  # notes).
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+  affinity: {}
+  topologySpreadConstraints: []
+  # The compose single private-default model menu entry (compose.yaml
+  # NE_GATEWAY_MODELS), byte-mirrored. NE-071c: the vllm Service IS named
+  # `vllm:8000` now, so this menu's api_base http://vllm:8000/v1 resolves
+  # in-cluster whenever profiles.serve.enabled. The hardcoded model id string
+  # (qwen3.6-35b-a3b == vllm.gpu.servedName) stays byte-parity with compose's
+  # ${NE_VLLM_SERVED_NAME:-qwen3.6-35b-a3b} default. The YAML anchor lets the
+  # ne-worker block below
+  # reuse the SAME menu single-source (anchors resolve in both helm and the
+  # guardian's yaml.safe_load), so the config-hash-parity guardian
+  # (test_ne_worker_shared_env_byte_matches_ne_api) sees byte-equal env.
+  gatewayModels: &neGatewayModels
+    - name: private-default
+      litellm_model: hosted_vllm/qwen3.6-35b-a3b
+      provider: hosted_vllm
+      lane: private-vllm
+      api_base: http://vllm:8000/v1
+      # NE-CTXB-2a: REQUIRED serving window (the deployment's vLLM
+      # --max-model-len). Conservative floor; a deployment serving a larger
+      # window should raise this to the real value.
+      context_window: 32768
+
+# NE-103c durable worker (NE-071b): the SAME first-party ne-app image as ne-api,
+# command ["python","-m","ne.worker"], full ne-api env/hardening parity plus
+# NE_WORKER_DBOS_DATABASE_URL. No Service/Ingress. Keyed by CHART NAME so Helm
+# merges into charts/ne-worker's own .Values.
+ne-worker:
+  # DBOS queue worker_concurrency handles throughput; multi-replica recovery is
+  # DBOS-safe (share-by-storage) but the default stays conservative at 1.
+  replicas: 1
+  # Compose ne-worker parity (deploy/compose/pilot/compose.yaml ne-worker
+  # deploy.resources.limits).
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: "2"
+    requests:
+      memory: 1Gi
+      cpu: "1"
+  # --- NE-089/NE-071b HA production-profile surface (default-OFF; ADDITIVE) ---
+  # ne-worker equivalents of ne-api's HA knobs; each renders NOTHING by default.
+  # See deploy/helm/examples/values-production-ha.yaml for a populated overlay.
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+  affinity: {}
+  topologySpreadConstraints: []
+  # SINGLE-SOURCE with ne-api.gatewayModels (anchor above) — the worker's
+  # NE_GATEWAY_MODELS env must byte-match ne-api's for config_hash parity.
+  gatewayModels: *neGatewayModels
+
+postgres:
+  # Core always retains bundled PostgreSQL because Keycloak uses its in-cluster
+  # Service even when ne-api/ne-worker use externally bootstrapped databases.
+  enabled: true
+  image:
+    repository: postgres
+    tag: 18.6-alpine
+    digest: sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+  storage:
+    size: 64Gi
+    storageClassName: ""
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: "2"
+    requests:
+      memory: 1Gi
+      cpu: "1"
+
+keycloak:
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: 26.7.4
+    digest: sha256:82a77884f3af238beab1e7afd63b5f530e1b5c0590bd7aa60b40a40463e29b2c
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: "2"
+    requests:
+      memory: 1Gi
+      cpu: "1"
+
+opa:
+  image:
+    repository: openpolicyagent/opa
+    tag: 1.18.2-debug
+    digest: sha256:7ee75476b179699061e61e277e1aafa7d13e126034fcdcba4beca8d233c3e865
+  replicas: 2
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: "1"
+    requests:
+      memory: 256Mi
+      cpu: "0.5"
+  # NE-PILOT-OPA-BUNDLE: stamped at install time by `ne k8s render`/`ne k8s up`
+  # from packages/ne-govern/policies (runtime staging — NOT a chart-source
+  # edit). Default-empty keeps a bare `helm template`/`helm install` render
+  # byte-identical to today: the opa-govern-policies ConfigMap and the extra
+  # subPath mounts only render when this is populated by the CLI overlay.
+  governBundle:
+    files: {}
+
+# --- NE-071c brain services (default deploy, profiles.brain) ------------------
+# qdrant + tei ride the DEFAULT render. Every image.digest is a BYTE-COPY of the
+# pilot compose brain-profile pin (deploy/compose/pilot/compose.yaml; C11 —
+# tools/ne-cli/tests/test_helm_chart.py::test_new_subchart_digests_byte_match_compose).
+qdrant:
+  image:
+    repository: qdrant/qdrant
+    tag: v1.18.2
+    digest: sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c
+  storage:
+    size: 16Gi
+    storageClassName: ""
+  resources:
+    limits:
+      memory: 2Gi
+      cpu: "2"
+    requests:
+      memory: 1Gi
+      cpu: "1"
+
+tei:
+  # SHARED image pin for BOTH tei-embed and tei-rerank (mirrors compose: the two
+  # services run the same text-embeddings-inference image, different --model-id).
+  image:
+    repository: ghcr.io/huggingface/text-embeddings-inference
+    tag: cpu-1.9.3
+    digest: sha256:ad950d30878eceb72aaf32024d26fa2b1d04a75304fa0b4776b49aa1941fea07
+  # HF_HUB_OFFLINE — the compose ${NE_PILOT_HF_OFFLINE:-0} analogue. Default "0"
+  # (mirrors the pilot posture: first boot downloads weights). Air-gap/sealed
+  # installs set "1" AFTER pre-staging weights into the cache PVCs (see README).
+  #
+  # NetworkPolicy interaction (C2): when `networkPolicy.enabled=true` on an
+  # ENFORCING CNI, the default-deny egress baseline reopens only DNS + internal
+  # services — it opens NO internet/443 lane (C2 posture), so first-boot TEI pods
+  # cannot reach HuggingFace and would hang un-Ready with hfOffline="0". A
+  # hardened install MUST pre-stage the embed/rerank cache PVCs and set
+  # hfOffline="1" (or set profiles.brain=false). See deploy/helm/README.md
+  # "NetworkPolicy (C2)" + "Brain services".
+  hfOffline: "0"
+  embed:
+    modelId: Qwen/Qwen3-Embedding-0.6B
+    storage:
+      size: 8Gi
+      storageClassName: ""
+    resources:
+      limits:
+        memory: 4Gi
+        cpu: "4"
+      requests:
+        memory: 1Gi
+        cpu: "1"
+  rerank:
+    modelId: BAAI/bge-reranker-v2-m3
+    storage:
+      size: 8Gi
+      storageClassName: ""
+    # C11 parity with deploy/compose/pilot/compose.yaml's tei-rerank: cpu "12",
+    # not "4". The reranker is the ENTIRE cost of a /v1/brain/search on a CPU
+    # lane (measured 2026-08-27: 78.1s -> 31.2s per 20-candidate search when the
+    # limit went 4 -> 12 with a matching rayonNumThreads, ordering unchanged);
+    # the compose comment carries the full table and the MAX_BATCH_TOKENS
+    # negative result. A node with fewer cores should lower BOTH values together.
+    rayonNumThreads: "12"
+    resources:
+      limits:
+        memory: 4Gi
+        cpu: "12"
+      requests:
+        memory: 1Gi
+        cpu: "1"
+
+# --- NE-071c observability (otel-collector ONLY, profiles.obs default-OFF) -----
+# Do NOT bump to 0.156.x — C11 byte-parity to deploy/compose/pilot/compose.yaml
+# is binding (0.156.0 exists upstream; deliberately not taken — PR-body note).
+obs:
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: 0.155.0
+    digest: sha256:4935caa35e9a4cb387e35732e8fb22b2b5759af8d12e7043357f03837f6e8df5
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: "1"
+    requests:
+      memory: 128Mi
+      cpu: "0.25"
+
+# --- NE-071c serving (vllm, profiles.serve.enabled default-OFF, GPU-gated) -----
+# Pins are BYTE-COPIES of deploy/compose/serve/compose.yaml (vllm / vllm-cpu).
+vllm:
+  # gpu | cpu — any other value fails the render (charts/vllm fail-closed).
+  mode: gpu
+  gpu:
+    image:
+      repository: vllm/vllm-openai
+      tag: v0.24.0
+      digest: sha256:251eba5cc7c12fed0b75da22a9240e582b1c9e39f6fbc064f86781b963bd814f
+    # The model dir under /models + served name — compose serve
+    # ${NE_VLLM_MODEL_DIR:-...} / ${NE_VLLM_SERVED_NAME:-...} defaults.
+    modelDir: Qwen/Qwen3.6-35B-A3B
+    servedName: qwen3.6-35b-a3b
+    gpuCount: 1
+  cpu:
+    image:
+      repository: vllm/vllm-openai-cpu
+      tag: v0.24.0
+      digest: sha256:b0e6f8604413a8bfcca8836bb4b57b47f1aa653957e07f8903ece531309981a1
+    modelDir: Qwen/Qwen3-0.6B
+    servedName: qwen3-0.6b
+    kvCacheSpace: "4"
+  # Model weights source. Empty ⇒ emptyDir so `helm template`/lint/CI render
+  # stays green; a REAL GPU deploy MUST point this at a pre-staged RWO PVC of
+  # model weights (HF_HUB_OFFLINE=1 means the pod never downloads). See README.
+  weights:
+    existingClaim: ""
+  shmSize: 16Gi
+  # GPU scheduling is gated by the nvidia.com/gpu resource limit (added in gpu
+  # mode); these pass-throughs render nothing at defaults.
+  nodeSelector: {}
+  tolerations: []
+  # Pass-through — compose sets NO resource limits for vllm; empty by default.
+  resources: {}
+
+# --- NE-071b prod-hardening surface: all THREE blocks default-OFF -------------
+# Each renders ZERO objects at defaults, so the byte-parity guardians stay green
+# (test_optional_objects_absent_by_default). See deploy/helm/README.md.
+
+# C2 network posture — default-deny + least-privilege allows. Requires a CNI
+# that ENFORCES NetworkPolicy (Calico/Cilium/etc.; the objects render on any
+# cluster but are inert without an enforcing CNI). When enabled, the umbrella
+# templates/networkpolicy-*.yaml render a default-deny plus explicit allows.
+networkPolicy:
+  enabled: false
+  # The namespaceSelector.matchLabels identifying the ingress-controller's
+  # namespace (the source of the only sanctioned ingress to ne-api:8000 and
+  # keycloak:8080). Default targets the ingress-nginx namespace's standard
+  # kubernetes.io/metadata.name label; override for a different controller.
+  ingressControllerNamespaceLabels:
+    kubernetes.io/metadata.name: ingress-nginx
+
+# OpenShift Route as the Ingress alternative (mutually exclusive front door).
+# When true, templates/route.yaml renders the console + keycloak Routes and
+# templates/ingress.yaml suppresses itself.
+route:
+  enabled: false
+
+# Optional in-cluster pg_dumpall backup CronJob + PVC (design §1.8). Reuses the
+# chart's ALREADY-PINNED postgres image (matching client/server versions; C11 —
+# no new registry image). When true, templates/backup-cronjob.yaml +
+# backup-pvc.yaml render. See deploy/helm/README.md "Backups & restore".
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  keep: 7
+  storage:
+    size: 8Gi
+    storageClassName: ""
+
+  # Velero half of SPEC NE-071 ("Velero + DB-native backups with RPO/RTO per
+  # profile") — NE-071d. The pg_dumpall CronJob above is the DB-native
+  # (logical) half and is UNCHANGED by this block. This block templates a
+  # velero.io/v1 Schedule (templates/velero-schedule.yaml) covering the
+  # volume + cluster-state half of DR.
+  #
+  # This block NEVER installs or re-provisions Velero itself — it only
+  # REFERENCES the cluster-level Velero already installed by
+  # deploy/terraform-azure/velero.tf (opt-in `install_velero=true`, chart
+  # 12.1.0 / appVersion 1.18.1, namespace `velero`, BackupStorageLocation
+  # `default`). Enabling `velero.enabled` on a cluster where that terraform
+  # was never applied fails a real `helm upgrade --install` (unknown
+  # velero.io/v1 apiVersion) — `helm template`/`helm lint` are unaffected.
+  #
+  # Default-OFF: the base chart render stays byte-identical (byte-parity
+  # guardian) and the first Compose engagement (prod-K8s-tier-only feature)
+  # is unaffected.
+  #
+  # `profile` MUST name a key of `profiles` below — the render FAILS CLOSED
+  # otherwise (mirrors charts/vllm's mode fail-closed pattern).
+  #
+  # Per-profile RPO/RTO (documented here verbatim; see also
+  # deploy/helm/README.md "Backups & restore"):
+  #   pilot:      RPO ≤ 24h  — daily 03:00 UTC, ONE HOUR AFTER the 02:00
+  #               pg_dumpall above so the newest logical dump is already on
+  #               the ne-backup-storage PVC when the volume backup runs.
+  #               TTL 168h ⇒ 7 restore points (mirrors backup.keep=7).
+  #               RTO ≤ 30 min for ≤ 10 GiB corpora (matches the drilled
+  #               bound in deploy/backup/README.md).
+  #   production: RPO ≤ 6h   — every 6 hours, on the hour.
+  #               TTL 336h ⇒ 14 days of restore points.
+  #               RTO ≤ 60 min for ≤ 100 GiB corpora (namespace-scoped
+  #               `velero restore` including PV data; excludes cluster-
+  #               rebuild/terraform time).
+  velero:
+    enabled: false
+    namespace: velero
+    storageLocation: default
+    # NE-DR1 — explicit FALSE kills Velero's dangerous nil=true default; opt-in
+    # enables CSI/managed-disk crash-consistent snapshots of NON-DB PVs via the
+    # infra-layer VSL named `default` (deploy/terraform-{azure,eks}/velero.tf,
+    # install_velero=true). NEVER valid for the DB volume — see
+    # dbSnapshotExclusionConfirmed.
+    snapshotVolumes: false
+    # Must name a VolumeSnapshotLocation of the cluster-level Velero install.
+    snapshotLocation: default
+    # Operator ATTESTATION. The render FAILS CLOSED when snapshotVolumes=true AND
+    # profiles.core=true (in-cluster postgres) without it. Before setting true,
+    # run: kubectl -n <release-ns> label pvc pg-data-postgres-0
+    # velero.io/exclude-from-backup=true --overwrite — the live DB volume must
+    # never be crash-consistently snapshotted (SPEC §11: DB protection =
+    # managed-DB native backup/PITR, or the pg_dumpall CronJob for in-cluster
+    # pilots).
+    dbSnapshotExclusionConfirmed: false
+    profile: production
+    profiles:
+      pilot:
+        schedule: "0 3 * * *"
+        ttl: 168h0m0s
+      production:
+        schedule: "0 */6 * * *"
+        ttl: 336h0m0s
+
+# PRE-009A (A3): the one-shot Agent Run private-payload KEK rotation Job. Default
+# OFF -- rendering it is a deliberate, once-per-rotation act performed with BOTH
+# roots scaled to zero. No key material appears here or in any rendered manifest;
+# the Job reads the bundle SecretStore itself.
+agentPrivatePayloadRotation:
+  enabled: false
+  # Bumped by the operator per rotation so an accidental re-apply is visible.
+  generation: "0"
+  bundlePath: /etc/neutron/bundle
+  ttlSecondsAfterFinished: 3600

@@ -1,0 +1,30 @@
+{
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/drives/drive-1/root/delta?$skiptoken=PAGE2TOKEN",
+  "value": [
+    { "id": "root-item", "name": "root", "root": {} },
+    { "id": "folder-1", "name": "Shared Documents", "folder": { "childCount": 4 } },
+    {
+      "id": "item-user",
+      "name": "Q1 Plan.docx",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Q1%20Plan.docx",
+      "lastModifiedDateTime": "2026-06-01T10:00:00Z",
+      "createdDateTime": "2026-05-01T09:00:00Z",
+      "size": 12345,
+      "eTag": "\"etag-user-v1\"",
+      "file": { "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" },
+      "@microsoft.graph.downloadUrl": "https://contoso.sharepoint.com/download?tempauth=SHORT-LIVED-CREDENTIAL-MUST-NOT-PERSIST"
+    },
+    {
+      "id": "item-group",
+      "name": "Roadmap.xlsx",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Roadmap.xlsx",
+      "lastModifiedDateTime": "2026-06-02T11:30:00Z",
+      "createdDateTime": "2026-05-02T09:00:00Z",
+      "size": 20480,
+      "eTag": "\"etag-group-v1\"",
+      "file": { "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    }
+  ]
+}

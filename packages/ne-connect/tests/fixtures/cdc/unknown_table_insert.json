@@ -1,0 +1,17 @@
+{
+  "before": null,
+  "after": {
+    "id": 7,
+    "sku": "SKU-SYNTHETIC",
+    "acl_group": "g-eng"
+  },
+  "source": {
+    "connector": "postgresql",
+    "db": "appdb",
+    "schema": "public",
+    "table": "orders",
+    "lsn": 1008
+  },
+  "op": "c",
+  "ts_ms": 1720000007000
+}

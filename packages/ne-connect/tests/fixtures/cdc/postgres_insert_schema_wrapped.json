@@ -1,0 +1,25 @@
+{
+  "schema": {
+    "type": "struct",
+    "name": "ne-cdc.public.customers.Envelope",
+    "fields": []
+  },
+  "payload": {
+    "before": null,
+    "after": {
+      "id": 2,
+      "name": "Bob Synthetic",
+      "email": "bob@synthetic.example",
+      "acl_group": "g-sales"
+    },
+    "source": {
+      "connector": "postgresql",
+      "db": "appdb",
+      "schema": "public",
+      "table": "customers",
+      "lsn": 1004
+    },
+    "op": "c",
+    "ts_ms": 1720000002000
+  }
+}

@@ -1,0 +1,761 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * DOCUMENTS — the content-leads composition (design/round3/screens/documents.html).
+ *
+ * The screen used to open on ingestion-pipeline state and reach the document's
+ * own text sixth, in a monospace <pre>. Here the identity band is one strip, the
+ * served text is the hero reading surface directly beneath it, and the pipeline,
+ * stage evidence, version history and comparison — the full evidentiary trail,
+ * nothing removed — sit below it in a demoted "Provenance & versions" region.
+ *
+ * No motion lives in this file. Law 4 spends motion on evidence of change, and
+ * nothing on this screen changes under the reader.
+ */
+
+.ne-documents {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.ne-documents__layout {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-16);
+}
+
+/* ============================ directory column ============================
+ * Search, filters and count live INSIDE the list they narrow. A filter row
+ * spanning both panes reads as page furniture and never says which half it
+ * acted on. */
+.ne-documents__directory {
+  min-width: 0;
+  position: sticky;
+  top: var(--space-12);
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.ne-documents__directory .ne-toolbar {
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border-bottom: 0;
+  background: var(--panel-raised);
+}
+
+.ne-documents__directory .ne-searchwithin__input {
+  width: 100%;
+  min-width: 0;
+}
+
+.ne-documents__directory .ne-toolbar__filters {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ne-documents__directory .ne-filter {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.ne-documents__directory .ne-filter__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* INTERIM (PD-DOC-TITLES): the "Include operational graph records" toggle
+ * sits on its own line under the two facets; it is an opt-in, not a third
+ * facet, and its label runs longer than the facet selects beside it. */
+.ne-documents__directory .ne-chip {
+  flex: 1 1 100%;
+  justify-content: flex-start;
+}
+
+.ne-documents__directory .ne-toolbar__spacer {
+  display: none;
+}
+
+/* The count strip bleeds to the panel edge so it reads as the head of the list
+ * rather than the tail of the toolbar. */
+.ne-documents__directory .ne-toolbar__count {
+  margin: var(--space-4) calc(-1 * var(--space-12)) calc(-1 * var(--space-12));
+  padding: var(--space-8) var(--space-12);
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+  white-space: normal;
+}
+
+.ne-documents__directorybody {
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.ne-documents__documentlist,
+.ne-documents__timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-documents__documentlist {
+  display: flex;
+  max-height: 38rem;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-y: auto;
+}
+
+.ne-documents__document {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ne-documents__document:hover {
+  background: var(--hover-tint);
+}
+
+.ne-documents__document--selected {
+  background: var(--selected-tint);
+  box-shadow: inset 3px 0 0 var(--cherenkov);
+}
+
+.ne-documents__document:focus-visible,
+.ne-documents__stageactivate:focus-visible,
+.ne-documents__compare > summary:focus-visible,
+.ne-documents__contentscroll:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+.ne-documents__document strong {
+  max-width: 100%;
+  font: var(--type-cell);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__document span {
+  max-width: 100%;
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__more {
+  width: calc(100% - (2 * var(--space-8)));
+  margin: var(--space-8);
+}
+
+/* ============================ workspace column ============================
+ * Not a panel: a stack of cards. The band, the reading surface and the
+ * provenance region each carry their own edge. */
+.ne-documents__workspace {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.ne-documents__workspace > .ne-state {
+  padding: var(--space-32) var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+/* =============================== identity band ===========================
+ * ONE strip: name, source, type, served version, lineage, content hash, audit
+ * receipt, version control. The pre-recomposition head spent three stacked
+ * rows on the same facts and pushed the document itself below the fold. */
+.ne-documents__band {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: var(--space-8);
+  column-gap: var(--space-16);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.ne-documents__bandname {
+  margin: 0;
+  min-width: 0;
+  color: var(--text);
+  font: var(--type-section);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__bandmeta,
+.ne-documents__bandabsent {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__bandhash {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ne-documents__bandlabel {
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-documents__bandspacer {
+  flex: 1 1 auto;
+}
+
+.ne-documents__selectorbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+
+.ne-documents__selectorbar label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-documents__selectorbar select,
+.ne-documents__selectorbar input {
+  min-height: 1.75rem;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  box-shadow: var(--well-inset);
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-documents__asof,
+.ne-documents__supersede {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+/* ============================= reading surface =============================
+ * The served text, in reading typography and on its own measure. `pre-wrap`
+ * because this field also carries structured records: every newline the server
+ * sent survives, and nothing here reflows the evidence. */
+.ne-documents__content {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.ne-documents__contenthead,
+.ne-documents__sectionhead {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-documents__contenthead h3,
+.ne-documents__sectionhead h3,
+.ne-documents__sectionhead h4,
+.ne-documents__artifact h4 {
+  margin: 0;
+  color: var(--text);
+  font: var(--type-section);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__contentfacts,
+.ne-documents__sectionhead span,
+.ne-documents__sectionhead p,
+.ne-documents__artifact p,
+.ne-documents__projectiongap {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__contentscroll {
+  max-height: 40rem;
+  padding: var(--space-32) var(--space-48);
+  overflow-y: auto;
+}
+
+.ne-documents__contentlabel {
+  margin: 0 0 var(--space-16);
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-documents__prose {
+  max-width: 68ch;
+  min-width: 0;
+  color: var(--text);
+  font: var(--type-lead);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__prose p {
+  margin: 0 0 var(--space-16);
+}
+
+.ne-documents__prose p:last-child {
+  margin-bottom: 0;
+}
+
+.ne-documents__contentabsent {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-body);
+}
+
+/* ========================== provenance & versions ==========================
+ * Demoted, never deleted. The label sets the region apart from the reading
+ * surface without giving it a card of its own. */
+.ne-documents__provenance {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin-top: var(--space-4);
+}
+
+.ne-documents__provenancehead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  padding: 0 var(--space-4);
+}
+
+.ne-documents__provenancehead h3 {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-documents__provenancehead span {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-documents__section {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+
+.ne-documents__section > .ne-state {
+  padding: var(--space-16);
+}
+
+/* The stage pane is a region INSIDE the pipeline card, so it wears a rule
+   rather than a second border. */
+.ne-documents__stagepane {
+  min-width: 0;
+  padding: 0 0 var(--space-16);
+  border-top: 1px solid var(--rule);
+}
+
+.ne-documents__timeline {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(7rem, 1fr));
+  gap: var(--space-8);
+  padding: var(--space-16);
+  overflow-x: auto;
+}
+
+.ne-documents__stage {
+  position: relative;
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius);
+  color: var(--text);
+}
+
+.ne-documents__stage:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: var(--space-12);
+  right: calc(-1 * var(--space-8));
+  width: var(--space-8);
+  height: 2px;
+  background: var(--rule-strong);
+}
+
+.ne-documents__stage--selected {
+  background: var(--selected-tint);
+  box-shadow: inset 0 -3px 0 var(--cherenkov);
+}
+
+.ne-documents__stageactivate {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ne-documents__stage span:not(.ne-pill),
+.ne-documents__stage a {
+  font: var(--type-small);
+}
+
+.ne-documents__stagelabel {
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-documents__versionlink {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cherenkov);
+  font: var(--type-small);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ne-documents__stagecontext,
+.ne-documents__facts,
+.ne-documents__artifactfacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12) var(--space-16);
+  margin: var(--space-16);
+}
+
+.ne-documents__stagecontext div,
+.ne-documents__facts div,
+.ne-documents__artifactfacts div {
+  min-width: 0;
+}
+
+.ne-documents__stagecontext dt,
+.ne-documents__facts dt,
+.ne-documents__artifactfacts dt {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-documents__stagecontext dd,
+.ne-documents__facts dd,
+.ne-documents__artifactfacts dd {
+  margin: var(--space-4) 0 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__artifacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-12);
+  margin: var(--space-16);
+}
+
+.ne-documents__artifact {
+  min-width: 0;
+  padding: var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+}
+
+.ne-documents__artifact header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.ne-documents__artifactstate {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font: var(--type-small);
+}
+
+.ne-documents__projectiongap {
+  margin: var(--space-16);
+  padding: var(--space-12);
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius);
+}
+
+.ne-documents__graph {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-16);
+  margin: var(--space-16);
+}
+
+.ne-documents__graph section,
+.ne-documents__graph li,
+.ne-documents__graph li > div {
+  min-width: 0;
+}
+
+.ne-documents__graph h4 {
+  margin: 0;
+  color: var(--text);
+}
+
+.ne-documents__graph ol {
+  display: flex;
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  flex-direction: column;
+  list-style: none;
+}
+
+.ne-documents__graph li {
+  display: flex;
+  padding: var(--space-8) 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-documents__graph li > div:first-child,
+.ne-documents__graphlinks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-documents__graph span,
+.ne-documents__graph p,
+.ne-documents__graph a {
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+
+.ne-documents__graph a {
+  color: var(--cherenkov);
+}
+
+/* ============================= version comparison =========================
+ * Collapsed until asked for. A diff answers "what changed?", and a question
+ * nobody asked does not outrank the document. */
+.ne-documents__compare > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.ne-documents__compare > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ne-documents__comparecue {
+  white-space: nowrap;
+}
+
+.ne-documents__comparecue::after {
+  content: " ▾";
+}
+
+.ne-documents__compare[open] .ne-documents__comparecue::after {
+  content: " ▴";
+}
+
+.ne-documents__comparebody {
+  padding: var(--space-16);
+}
+
+.ne-documents__comparebody > p {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.ne-documents__comparebody .ne-documents__stagecontext {
+  margin: 0 0 var(--space-16);
+}
+
+/* ================================ tables ================================= */
+.ne-documents__tableoverflow,
+.ne-documents__diffoverflow {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ne-documents__tableoverflow:focus-visible,
+.ne-documents__diffoverflow:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+.ne-documents__versions,
+.ne-documents__diff {
+  width: 100%;
+  min-width: 44rem;
+  border-collapse: collapse;
+}
+
+.ne-documents__versions th,
+.ne-documents__versions td,
+.ne-documents__diff th,
+.ne-documents__diff td {
+  padding: var(--space-8) var(--space-12);
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ne-documents__versions th:first-child,
+.ne-documents__versions td:first-child {
+  padding-left: var(--space-16);
+}
+
+.ne-documents__versions th,
+.ne-documents__diff th {
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-documents__versions tr:last-child td {
+  border-bottom: 0;
+}
+
+/* The SERVED row, marked where it sits. Position in the table is not the
+   claim — the selected version is. */
+.ne-documents__versionrow--served td {
+  background: var(--selected-tint);
+}
+
+.ne-documents__versionrow--served td:first-child {
+  box-shadow: inset 3px 0 0 var(--cherenkov);
+}
+
+.ne-documents__diff td:first-child,
+.ne-documents__diff td:nth-child(2) {
+  width: 4rem;
+  color: var(--text-dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Added and removed carry a wash AND a second, non-colour signal: the before/
+   after line-number gutters, and a strike through removed text. Nothing on this
+   console is encoded by colour alone. */
+.ne-documents__diffrow--added td {
+  background: var(--green-tint);
+}
+
+.ne-documents__diffrow--removed td {
+  background: var(--red-tint);
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+.ne-documents__diffrow--context td {
+  color: var(--text-dim);
+}
+
+.ne-documents__diffrow--hunk td {
+  background: var(--dim-tint);
+  box-shadow: inset 3px 0 0 var(--cherenkov);
+}
+
+@media (max-width: 64rem) {
+  .ne-documents__layout {
+    grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  }
+
+  .ne-documents__timeline {
+    grid-template-columns: repeat(6, minmax(8rem, 1fr));
+  }
+
+  .ne-documents__contentscroll {
+    padding: var(--space-24) var(--space-16);
+  }
+}
+
+@media (max-width: 48rem) {
+  .ne-documents__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ne-documents__directory {
+    position: static;
+  }
+
+  .ne-documents__documentlist {
+    max-height: 20rem;
+  }
+
+  .ne-documents__band,
+  .ne-documents__contenthead,
+  .ne-documents__sectionhead,
+  .ne-documents__selectorbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ne-documents__stagecontext,
+  .ne-documents__facts,
+  .ne-documents__artifactfacts,
+  .ne-documents__graph {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

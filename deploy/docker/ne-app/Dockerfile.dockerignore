@@ -1,0 +1,20 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# BuildKit picks this up automatically for `-f deploy/docker/ne-app/Dockerfile`
+# (the <Dockerfile>.dockerignore convention). It trims the repo-root build
+# context to just what the three stages need (pyproject/uv.lock + packages/ +
+# tools/ + ne-console sources), keeping *.md INCLUDED (package pyprojects may
+# declare a readme).
+.git
+.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/dist
+deploy
+docs
+demo
+.github
+**/tests

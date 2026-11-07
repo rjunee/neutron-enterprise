@@ -1,0 +1,50 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §17 — Insights. Three grouped tables under one toolbar. Everything structural
+ * (the toolbar, the table, the states) comes from the shared layer; this file
+ * only carries the group heading, the row note and the generated line.
+ * Every value resolves through a tokens.css custom property.
+ */
+
+.ne-kpi__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+}
+
+.ne-kpi__grouphead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.ne-kpi__heading {
+  font: var(--type-section);
+  color: var(--text);
+  margin: 0;
+}
+
+.ne-kpi__groupnote,
+.ne-kpi__generated {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* The metric cell: the name, and under it the row's one-line note. A gap is one
+ * note beside the row it belongs to — never a headline (§17). */
+.ne-kpi__metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-kpi__note {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-kpi__generated {
+  margin: var(--space-16) 0 0;
+}

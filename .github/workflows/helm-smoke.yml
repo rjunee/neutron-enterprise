@@ -1,0 +1,241 @@
+name: helm-smoke
+
+# NE-071a/NE-071c — proves the Helm umbrella chart (deploy/helm/neutron-enterprise)
+# renders kubeconform-valid manifests with the hardening/C11/C12 posture
+# intact (job `render`), AND that it actually installs on a real cluster via
+# the full C11 push-digest + C12 installer-mode secret flow (job
+# `kind-smoke`, the live proof — kind is Kubernetes-in-Docker, no cloud API).
+# NE-071c-FU: kind-smoke installs the chart with the values-kind-nobrain.yaml
+# overlay (profiles.brain=false): two TEI model servers OOM a single
+# GitHub-hosted kind node (tei-rerank exit-137 at its 4Gi limit), so kind-smoke
+# validates the app tier + chart install while the brain data-plane (real
+# qdrant/tei bring-up) is live-validated in the no-egress compose lane; serve
+# (vllm) stays render-only.
+
+on:
+  pull_request:
+    paths:
+      - "deploy/helm/**"
+      - "deploy/docker/**"
+      - "tools/ne-cli/**"
+      - ".github/workflows/helm-smoke.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helm-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      HELM_VERSION: "3.21.2"
+      HELM_SHA256: "0a745198de24545d0055cd8414bc8d2ba10363ef5f5d38369ea1b399671cc083"
+      KUBECONFORM_VERSION: "0.8.0"
+      KUBECONFORM_SHA256: "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Install helm (pinned)
+        run: |
+          set -euo pipefail
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/helm.tar.gz" \
+            "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz"
+          echo "${HELM_SHA256}  $RUNNER_TEMP/helm.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/helm.tar.gz" -C "$RUNNER_TEMP" linux-amd64/helm
+          install -d "$RUNNER_TEMP/bin"
+          mv "$RUNNER_TEMP/linux-amd64/helm" "$RUNNER_TEMP/bin/helm"
+          chmod +x "$RUNNER_TEMP/bin/helm"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Install kubeconform (pinned)
+        run: |
+          set -euo pipefail
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/kubeconform.tar.gz" \
+            "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  $RUNNER_TEMP/kubeconform.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/kubeconform.tar.gz" -C "$RUNNER_TEMP" kubeconform
+          install -d "$RUNNER_TEMP/bin"
+          mv "$RUNNER_TEMP/kubeconform" "$RUNNER_TEMP/bin/kubeconform"
+          chmod +x "$RUNNER_TEMP/bin/kubeconform"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: helm lint (fail-closed on the CI fixture)
+        run: helm lint deploy/helm/neutron-enterprise -f deploy/helm/tests/values-ci.yaml
+      - name: helm template | kubeconform -strict (K8s 1.31.0 schema floor)
+        run: |
+          set -euo pipefail
+          helm template ne deploy/helm/neutron-enterprise -f deploy/helm/tests/values-ci.yaml \
+            | kubeconform -strict -kubernetes-version 1.31.0 -summary
+      - name: Parity guardian executing gate (must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest tools/ne-cli/tests/test_helm_chart.py -q -rs | tee "$RUNNER_TEMP/helm-chart-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/helm-chart-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/helm-chart-gate.txt"; then
+            echo "::error::the Helm chart parity guardian did not fully run — helm-dependent tests skipped"
+            exit 1
+          fi
+      - name: release push / k8s CLI unit tests (docker/kubectl mocked)
+        run: uv run pytest tools/ne-cli/tests/test_release_push.py tools/ne-cli/tests/test_k8s_cli.py -q
+
+  kind-smoke:
+    runs-on: ubuntu-latest
+    # NE-071c-FU: TEI weights no longer downloaded — brain scoped out via values-kind-nobrain.yaml.
+    timeout-minutes: 25
+    needs: render
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      HELM_VERSION: "3.21.2"
+      HELM_SHA256: "0a745198de24545d0055cd8414bc8d2ba10363ef5f5d38369ea1b399671cc083"
+      KIND_VERSION: "0.32.0"
+      KIND_SHA256: "50030de23cf40a18505f20426f6a8506bedf13c6e509244bd1fa9463721b0f54"
+      # kindest/node pin from the kind v0.32.0 release notes — the current
+      # SUPPORTED node image closest to the SPEC/chart K8s 1.31+ floor. kind
+      # v0.32.0 defaults to 1.36.1 node images and no longer ships v1.31.x —
+      # the chart's kubeVersion floor (>=1.31.0-0) is proven by kubeconform's
+      # -kubernetes-version 1.31.0 schema check in the `render` job above;
+      # this live smoke runs on a currently-supported node image (drift noted
+      # in deploy/helm/README.md).
+      KIND_NODE_IMAGE: "kindest/node:v1.34.8@sha256:02722c2dedddcfc00febf5d27fbeb9b7b2c14294c82109ff4a85d89ac9ba3256"
+      REGISTRY_IMAGE: "registry:3@sha256:1be55279f18a2fe1a74edf2664cac61c1bea305b7b4642dab412e7affdcb3e33"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Provision external protected-transport bootstrap databases
+        run: |
+          set -euo pipefail
+          CI_EXTERNAL_POSTGRES_HOST="$(hostname -I | awk '{print $1}')"
+          echo "CI_EXTERNAL_POSTGRES_HOST=$CI_EXTERNAL_POSTGRES_HOST" >> "$GITHUB_ENV"
+          uv run python - <<'PY'
+          import sqlalchemy as sa
+
+          engine = sa.create_engine(
+              "postgresql+psycopg://postgres:postgres@127.0.0.1:5432/postgres",
+              isolation_level="AUTOCOMMIT",
+          )
+          with engine.connect() as conn:
+              for database in ("neutron", "ne_dbos"):
+                  conn.execute(sa.text(f'CREATE DATABASE "{database}"'))
+          engine.dispose()
+          PY
+      - name: Install helm (pinned)
+        run: |
+          set -euo pipefail
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/helm.tar.gz" \
+            "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz"
+          echo "${HELM_SHA256}  $RUNNER_TEMP/helm.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/helm.tar.gz" -C "$RUNNER_TEMP" linux-amd64/helm
+          install -d "$RUNNER_TEMP/bin"
+          mv "$RUNNER_TEMP/linux-amd64/helm" "$RUNNER_TEMP/bin/helm"
+          chmod +x "$RUNNER_TEMP/bin/helm"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Install kind (pinned)
+        run: |
+          set -euo pipefail
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/kind" \
+            "https://github.com/kubernetes-sigs/kind/releases/download/v${KIND_VERSION}/kind-linux-amd64"
+          echo "${KIND_SHA256}  $RUNNER_TEMP/kind" | sha256sum -c -
+          install -d "$RUNNER_TEMP/bin"
+          mv "$RUNNER_TEMP/kind" "$RUNNER_TEMP/bin/kind"
+          chmod +x "$RUNNER_TEMP/bin/kind"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Start local registry (pinned, connected to the kind network later)
+        run: |
+          set -euo pipefail
+          docker run -d --restart=always -p 127.0.0.1:5001:5000 --name kind-registry "$REGISTRY_IMAGE"
+      - name: kind create cluster (pinned node image + local-registry mirror)
+        run: |
+          set -euo pipefail
+          cat <<EOF > "$RUNNER_TEMP/kind-config.yaml"
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          containerdConfigPatches:
+            - |-
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+                endpoint = ["http://kind-registry:5000"]
+          EOF
+          kind create cluster --name ne-helm-smoke --image "$KIND_NODE_IMAGE" --config "$RUNNER_TEMP/kind-config.yaml" --wait 5m
+          docker network connect kind kind-registry || true
+      - name: Build the first-party ne-app image (build-in-seal)
+        run: bash deploy/airgap/scripts/build-ne-app.sh
+      - name: ne release push (LIVE — the C11 push-digest pin)
+        run: |
+          set -euo pipefail
+          uv run ne release push --image ne-app:0.1.0 --registry localhost:5001/neutron --out "$RUNNER_TEMP/digest.json"
+      - name: Make a throwaway promoted bundle (plain SecretStore, CI-shaped)
+        run: |
+          set -euo pipefail
+          uv run python deploy/airgap/scripts/make_ci_bundle.py \
+            --out "$RUNNER_TEMP/bundle" --store-dir "$RUNNER_TEMP/store" \
+            --customer ci-helm --hostname helm.ci.local \
+            --protected-platform-database-url \
+              "postgresql+psycopg://postgres:postgres@${CI_EXTERNAL_POSTGRES_HOST}:5432/neutron" \
+            --protected-dbos-database-url \
+              "postgresql+psycopg://postgres:postgres@${CI_EXTERNAL_POSTGRES_HOST}:5432/ne_dbos"
+      - name: ne k8s up (LIVE — installer-mode C12 secret + helm upgrade --install)
+        run: |
+          set -euo pipefail
+          uv run ne k8s up --bundle "$RUNNER_TEMP/bundle" --namespace neutron --release ne \
+            --admit-protected-transport \
+            -f "$RUNNER_TEMP/digest.json" -f deploy/helm/tests/values-kind.yaml \
+            -f deploy/helm/tests/values-kind-obs.yaml \
+            -f deploy/helm/tests/values-kind-nobrain.yaml \
+            --wait --timeout 20m
+      - name: Verify pods ready + /healthz + pushed-digest imageID
+        run: |
+          set -euo pipefail
+          kubectl -n neutron get pods -o wide
+          kubectl -n neutron wait --for=condition=Ready pod --all --timeout=60s
+          kubectl -n neutron port-forward svc/ne-api 8000:8000 &
+          PF_PID=$!
+          sleep 3
+          curl -fsS http://127.0.0.1:8000/healthz
+          kill "$PF_PID" || true
+          # NE-071c-FU: brain (qdrant/tei) is scoped OUT of kind-smoke (values-kind-nobrain.yaml)
+          # — the brain data-plane is live-validated in no-egress.yml Phases B1/B2 (compose,
+          # pre-staged weights). Guard: prove the overlay actually applied.
+          if kubectl -n neutron get pods -o name | grep -E 'qdrant|tei-'; then
+            echo "::error::brain pods present — values-kind-nobrain.yaml overlay not applied"
+            exit 1
+          fi
+          DIGEST=$(jq -r '.global.image.digest' "$RUNNER_TEMP/digest.json")
+          IMAGE_ID=$(kubectl -n neutron get pod -l app=ne-api -o jsonpath='{.items[0].status.containerStatuses[0].imageID}')
+          echo "pod imageID: $IMAGE_ID"
+          case "$IMAGE_ID" in
+            *"$DIGEST"*) echo "OK: pod imageID carries the pushed digest" ;;
+            *) echo "::error::pod imageID does not contain the pushed digest $DIGEST"; exit 1 ;;
+          esac
+      - name: Debug dump (on failure)
+        if: failure()
+        run: |
+          kubectl get pods -A -o wide || true
+          kubectl -n neutron describe pods || true
+          kubectl -n neutron logs -l app=ne-api --tail=100 || true
+          # NE-071c-FU: obs pod logs + disk (brain scoped out of kind-smoke).
+          kubectl -n neutron logs -l app=otel-collector --tail=100 || true
+          df -h || true

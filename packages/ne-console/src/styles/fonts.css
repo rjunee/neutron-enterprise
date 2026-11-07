@@ -1,0 +1,68 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * NE-130 — self-hosted font faces (design §1.2). Fonts are vendored woff2 under
+ * ../assets/fonts/ (see that dir's README for provenance + sha256). font-display
+ * is block per §1.2. There is NO external/CDN URL anywhere in this file — the
+ * console makes ZERO external font requests (C1/C2). All faces are SIL OFL-1.1.
+ *
+ * The pairing is Source Sans 3 (UI) + Fira Mono (data), per
+ * design/round3/type/RECOMMENDATION.md. Static per-weight faces only — there is
+ * no variable face and no width axis, so nothing here declares font-stretch.
+ */
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../assets/fonts/source-sans-3-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("../assets/fonts/source-sans-3-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url("../assets/fonts/source-sans-3-latin-600-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("../assets/fonts/source-sans-3-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fira Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("../assets/fonts/fira-mono-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fira Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url("../assets/fonts/fira-mono-latin-500-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fira Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url("../assets/fonts/fira-mono-latin-700-normal.woff2") format("woff2");
+}

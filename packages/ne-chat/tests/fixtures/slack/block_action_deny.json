@@ -1,0 +1,22 @@
+{
+  "type": "block_actions",
+  "user": {
+    "id": "U0CAROL000",
+    "username": "carol"
+  },
+  "channel": {
+    "id": "C0APPROVAL0"
+  },
+  "message": {
+    "ts": "1720000000.000100"
+  },
+  "actions": [
+    {
+      "type": "button",
+      "action_id": "ne_deny",
+      "block_id": "ne_approval_actions",
+      "value": "REQUEST_ID_PLACEHOLDER"
+    }
+  ],
+  "response_url": "https://hooks.slack.test/actions/T0/1/def"
+}

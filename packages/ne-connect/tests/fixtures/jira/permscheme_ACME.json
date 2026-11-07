@@ -1,0 +1,44 @@
+{
+  "id": 20001,
+  "name": "Acme permission scheme",
+  "permissions": [
+    {
+      "permission": "BROWSE_PROJECTS",
+      "holder": {
+        "type": "group",
+        "group": {
+          "groupId": "g-eng-001",
+          "name": "engineering"
+        }
+      }
+    },
+    {
+      "permission": "BROWSE_PROJECTS",
+      "holder": {
+        "type": "projectRole",
+        "projectRole": {
+          "id": 10100,
+          "name": "Developers"
+        }
+      }
+    },
+    {
+      "permission": "BROWSE_PROJECTS",
+      "holder": {
+        "type": "user",
+        "user": {
+          "accountId": "u-alice-001"
+        }
+      }
+    },
+    {
+      "permission": "ADMINISTER_PROJECTS",
+      "holder": {
+        "type": "group",
+        "group": {
+          "groupId": "g-admins-999"
+        }
+      }
+    }
+  ]
+}

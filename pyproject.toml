@@ -1,0 +1,51 @@
+[project]
+name = "neutron-enterprise"
+version = "0.1.0"
+description = "Neutron Enterprise platform monorepo"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*", "apps/*", "tools/*"]
+exclude = ["apps/console"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.15.20",
+    "pyright>=1.1.411",
+    "pre-commit>=4.6.0",
+    "import-linter>=2.13",
+    "pytest-xdist>=3.8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["packages/*/tests", "tools/*/tests"]
+addopts = "-ra --import-mode=importlib"
+consider_namespace_packages = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["packages/*/src", "tools/*/src"]
+# Generated code (LinkML codegen, NE-004) is owned by the generator + its
+# staleness gate, NOT hand-formatted — exclude from ruff so the format gate and
+# the codegen determinism gate don't fight (NE-CKB4, 2026-07-05).
+extend-exclude = ["**/generated"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ne"]
+
+[tool.pyright]
+include = ["packages", "tools"]
+extraPaths = ["deploy/inference-operator/lib"]
+typeCheckingMode = "standard"
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"

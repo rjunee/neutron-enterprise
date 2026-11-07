@@ -1,0 +1,816 @@
+{
+  "realm": "ne-pilot",
+  "enabled": true,
+  "accessTokenLifespan": 900,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      {
+        "name": "entra-groups-overage",
+        "description": "Marker role granted by the entra overage IdP mappers when Entra omits the groups claim (overage indicator). Never read by ne-identity; exists only so the entra post-broker-login flow can deny login instead of silently under-authorizing."
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "all-employees",
+      "path": "/all-employees"
+    },
+    {
+      "name": "approver",
+      "path": "/approver"
+    },
+    {
+      "name": "steward",
+      "path": "/steward"
+    },
+    {
+      "name": "ops",
+      "path": "/ops"
+    },
+    {
+      "name": "meridian-ops",
+      "path": "/meridian-ops"
+    },
+    {
+      "name": "meridian-frontline",
+      "path": "/meridian-frontline"
+    },
+    {
+      "name": "bank.customer.read",
+      "path": "/bank.customer.read"
+    },
+    {
+      "name": "bank.account-summary.read",
+      "path": "/bank.account-summary.read"
+    },
+    {
+      "name": "bank.servicing.read",
+      "path": "/bank.servicing.read"
+    },
+    {
+      "name": "bank.dispute.read",
+      "path": "/bank.dispute.read"
+    },
+    {
+      "name": "sharepoint.frontline.read",
+      "path": "/sharepoint.frontline.read"
+    },
+    {
+      "name": "sharepoint.operations.read",
+      "path": "/sharepoint.operations.read"
+    },
+    {
+      "name": "department:servicing",
+      "path": "/department:servicing"
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "basic",
+      "description": "OpenID Connect scope for add all basic claims to the token",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "auth_time",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "AUTH_TIME",
+            "id.token.claim": "true",
+            "introspection.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "auth_time",
+            "jsonType.label": "long"
+          }
+        },
+        {
+          "name": "sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "roles",
+      "description": "OpenID Connect scope for add user roles to the access token",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "consent.screen.text": "${rolesScopeConsentText}",
+        "display.on.consent.screen": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "client roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "foo",
+            "introspection.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "resource_access.${client_id}.roles",
+            "jsonType.label": "String",
+            "multivalued": "true"
+          }
+        },
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "foo",
+            "introspection.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true"
+          }
+        },
+        {
+          "name": "audience resolve",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-resolve-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "web-origins",
+      "description": "OpenID Connect scope for add allowed web origins to the access token",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "consent.screen.text": "",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "allowed web origins",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-allowed-origins-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "description": "OpenID Connect built-in scope: profile",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "consent.screen.text": "${profileScopeConsentText}",
+        "display.on.consent.screen": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "birthdate",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "birthdate",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "birthdate",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "website",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "website",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "website",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "family name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "lastName",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "family_name",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "gender",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "gender",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "gender",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "nickname",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "nickname",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "nickname",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "middle name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "middleName",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "middle_name",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "profile",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "profile",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "profile",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "full name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-full-name-mapper",
+          "consentRequired": false,
+          "config": {
+            "id.token.claim": "true",
+            "introspection.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "username",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "locale",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "locale",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "locale",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "zoneinfo",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "zoneinfo",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "zoneinfo",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "picture",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "picture",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "picture",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "given name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "firstName",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "given_name",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "updated at",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "updatedAt",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "updated_at",
+            "jsonType.label": "long"
+          }
+        }
+      ]
+    },
+    {
+      "name": "email",
+      "description": "OpenID Connect built-in scope: email",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "consent.screen.text": "${emailScopeConsentText}",
+        "display.on.consent.screen": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "email verified",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "emailVerified",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email_verified",
+            "jsonType.label": "boolean"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "user.attribute": "email",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "email",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "name": "acr",
+      "description": "OpenID Connect scope for add acr (authentication context class reference) to the token",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "acr loa level",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-acr-mapper",
+          "consentRequired": false,
+          "config": {
+            "id.token.claim": "true",
+            "introspection.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ne-groups",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "ne-identity-provider",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "identity_provider",
+            "id.token.claim": "true",
+            "introspection.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "identity_provider",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ne-console-audience",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "ne-console-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "ne-console",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ne-department",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "ne-department",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "department",
+            "claim.value": "engineering",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "ne-console",
+      "name": "Neutron Enterprise console (public SPA)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://${NE_PILOT_HOSTNAME}/##https://${NE_PILOT_HOSTNAME}:443/"
+      },
+      "redirectUris": [
+        "https://${NE_PILOT_HOSTNAME}/auth/callback",
+        "https://${NE_PILOT_HOSTNAME}/auth/compare-callback",
+        "https://${NE_PILOT_HOSTNAME}:443/auth/callback",
+        "https://${NE_PILOT_HOSTNAME}:443/auth/compare-callback"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "defaultClientScopes": [
+        "basic",
+        "profile",
+        "email",
+        "roles",
+        "web-origins",
+        "acr",
+        "ne-groups",
+        "ne-console-audience",
+        "ne-department"
+      ]
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "entra",
+      "displayName": "Sign in with Microsoft Entra ID",
+      "providerId": "oidc",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "postBrokerLoginFlowAlias": "entra post broker login",
+      "config": {
+        "issuer": "https://login.microsoftonline.com/${NE_PILOT_ENTRA_TENANT_ID}/v2.0",
+        "authorizationUrl": "https://login.microsoftonline.com/${NE_PILOT_ENTRA_TENANT_ID}/oauth2/v2.0/authorize",
+        "tokenUrl": "https://login.microsoftonline.com/${NE_PILOT_ENTRA_TENANT_ID}/oauth2/v2.0/token",
+        "jwksUrl": "https://login.microsoftonline.com/${NE_PILOT_ENTRA_TENANT_ID}/discovery/v2.0/keys",
+        "clientId": "${NE_PILOT_ENTRA_BROKER_CLIENT_ID}",
+        "clientSecret": "${NE_PILOT_ENTRA_BROKER_CLIENT_SECRET}",
+        "clientAuthMethod": "client_secret_post",
+        "defaultScope": "openid profile email",
+        "syncMode": "FORCE",
+        "validateSignature": "true",
+        "useJwksUrl": "true"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "entra-groups-approver",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-advanced-group-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claims": "[{\"key\":\"groups\",\"value\":\"REPLACE-ENTRA-GROUP-ID-approver\"}]",
+        "are.claim.values.regex": "false",
+        "group": "/approver"
+      }
+    },
+    {
+      "name": "entra-groups-steward",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-advanced-group-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claims": "[{\"key\":\"groups\",\"value\":\"REPLACE-ENTRA-GROUP-ID-steward\"}]",
+        "are.claim.values.regex": "false",
+        "group": "/steward"
+      }
+    },
+    {
+      "name": "entra-groups-ops",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-advanced-group-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claims": "[{\"key\":\"groups\",\"value\":\"REPLACE-ENTRA-GROUP-ID-ops\"}]",
+        "are.claim.values.regex": "false",
+        "group": "/ops"
+      }
+    },
+    {
+      "name": "entra-groups-overage-indicator",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-advanced-role-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claims": "[{\"key\":\"_claim_names.groups\",\"value\":\".+\"}]",
+        "are.claim.values.regex": "true",
+        "role": "entra-groups-overage"
+      }
+    },
+    {
+      "name": "entra-groups-overage-hasgroups",
+      "identityProviderAlias": "entra",
+      "identityProviderMapper": "oidc-advanced-role-idp-mapper",
+      "config": {
+        "syncMode": "FORCE",
+        "claims": "[{\"key\":\"hasgroups\",\"value\":\"true\"}]",
+        "are.claim.values.regex": "true",
+        "role": "entra-groups-overage"
+      }
+    }
+  ],
+  "authenticationFlows": [
+    {
+      "alias": "entra post broker login",
+      "description": "Fail-loud on Entra groups-overage: deny the login instead of silently resolving to zero platform groups (design §4.2-2).",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticatorFlow": true,
+          "autheticatorFlow": true,
+          "requirement": "CONDITIONAL",
+          "priority": 10,
+          "flowAlias": "entra groups overage check",
+          "userSetupAllowed": false
+        }
+      ]
+    },
+    {
+      "alias": "entra groups overage check",
+      "description": "Conditional subflow: if the entra-groups-overage marker role is present, deny access.",
+      "providerId": "basic-flow",
+      "topLevel": false,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "conditional-user-role",
+          "authenticatorConfig": "entra-overage-condition",
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "authenticatorFlow": false,
+          "autheticatorFlow": false,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "deny-access-authenticator",
+          "authenticatorConfig": "entra-overage-deny",
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "authenticatorFlow": false,
+          "autheticatorFlow": false,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ],
+  "authenticatorConfig": [
+    {
+      "alias": "entra-overage-condition",
+      "config": {
+        "condUserRole": "entra-groups-overage",
+        "negate": "false"
+      }
+    },
+    {
+      "alias": "entra-overage-deny",
+      "config": {
+        "denyErrorMessage": "Sign-in blocked: Microsoft Entra omitted your groups claim (group overage), so your platform roles cannot be determined. Contact your administrator to assign your platform groups to the broker app registration (Entra broker runbook, 'Group overage')."
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "approver",
+      "email": "approver@ne-pilot.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "approver-demo",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/approver"
+      ],
+      "requiredActions": [],
+      "firstName": "Approver",
+      "lastName": "Pilot"
+    },
+    {
+      "username": "steward",
+      "email": "steward@ne-pilot.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "steward-demo",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/steward"
+      ],
+      "requiredActions": [],
+      "firstName": "Steward",
+      "lastName": "Pilot"
+    },
+    {
+      "username": "ops",
+      "email": "ops@ne-pilot.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "ops-demo",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/all-employees",
+        "/ops",
+        "/meridian-ops",
+        "/bank.customer.read",
+        "/bank.servicing.read",
+        "/bank.dispute.read",
+        "/sharepoint.operations.read",
+        "/department:servicing"
+      ],
+      "requiredActions": [],
+      "firstName": "Ops",
+      "lastName": "Pilot"
+    },
+    {
+      "username": "meridian-frontline",
+      "email": "meridian-frontline@ne-pilot.local",
+      "emailVerified": true,
+      "enabled": true,
+      "groups": [
+        "/all-employees",
+        "/meridian-frontline",
+        "/bank.customer.read",
+        "/bank.account-summary.read",
+        "/sharepoint.frontline.read"
+      ],
+      "requiredActions": [],
+      "firstName": "Meridian",
+      "lastName": "Frontline"
+    }
+  ],
+  "requiredActions": [
+    {
+      "alias": "VERIFY_PROFILE",
+      "name": "Verify Profile",
+      "providerId": "VERIFY_PROFILE",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 90,
+      "config": {}
+    }
+  ]
+}

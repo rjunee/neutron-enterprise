@@ -1,0 +1,111 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# CI-shaped resource-shape overlay for the NE-073 no-egress harness, applied
+# ON TOP of deploy/compose/pilot/compose.yaml (which itself `include`s
+# deploy/compose/serve/compose.yaml) via `docker compose -f pilot/compose.yaml
+# -f airgap/compose.ci.yaml` (see deploy/airgap/scripts/compose-ci.sh).
+#
+# SCOPE DISCIPLINE (guardian-enforced by
+# deploy/airgap/tests/test_static_harness.py): this overlay overrides ONLY
+# resource shape for the private-repo GitHub-hosted runner (2 vCPU / 7 GB RAM)
+# — it NEVER touches `image`, `ports`, `security_opt`, or `cap_drop` on any
+# service, and the `vllm-cpu` command below is the BASE command
+# (deploy/compose/serve/compose.yaml) with an ADDITIONAL trailing
+# `--max-model-len 2048` flag appended, never a replacement (model-drift
+# guard: the served model / structured-outputs backend must stay identical to
+# the pilot's real serve tier).
+#
+# guardian = deploy/airgap/tests/test_static_harness.py
+
+services:
+  # The pilot tier pins tei-embed/tei-rerank to cpus "4" / memory 4g (production
+  # single-VM tuning, where all services share one big box). The GitHub-hosted
+  # runner has only 2 vCPUs + 7 GB RAM, so two shape overrides are needed:
+  #
+  #   cpus "4" -> "2": dockerd rejects any single container whose cpus limit
+  #   exceeds the host CPU count outright ("range of CPUs is from 0.01 to 2.00,
+  #   as there are only 2 CPUs available") — the brain pre-warm can't even
+  #   create the container otherwise.
+  #
+  #   memory 4g -> 6g: the CPU TEI models load in fp32 (Qwen3-Embedding-0.6B ~=
+  #   2.4 GB of weights; bge-reranker-v2-m3 similar), and peak RSS during the
+  #   safetensors load exceeds steady state — under the 4g cap the container was
+  #   OOM-killed (exit 137) and crash-looped, so `up --wait` reported it
+  #   unhealthy. The no-egress harness pre-warms these ONE AT A TIME (up --wait,
+  #   then stop) and the heaviest later co-run is qdrant + tei-embed, so 6g fits
+  #   the 7 GB runner with headroom for the OS/dockerd. A LIMIT is a ceiling,
+  #   not a reservation. (Production sizing of 4g for a 0.6B fp32 model is itself
+  #   tight — flagged to NE-070-FOLLOWUP; out of this unit's scope.)
+  #
+  #   healthcheck.start_period 180s: the deep-merge keeps the base
+  #   test/interval/timeout/retries and only adds a grace window so healthcheck
+  #   failures during the (download + fp32 load) startup don't mark the
+  #   container unhealthy before it can bind :80. `--wait` still returns the
+  #   instant it goes healthy — a generous grace has no latency cost.
+  #
+  # Resource/timing shape only — image/ports/security_opt/cap_drop untouched
+  # (guardian: test_static_harness.py).
+  #
+  #   MAX_BATCH_TOKENS 16384 (default) -> 2048: the REAL blocker. TEI's startup
+  #   "warming up model" pass allocates an attention buffer that is QUADRATIC in
+  #   the batch's sequence length — for the default 16384 max-batch-tokens the
+  #   Qwen3 warm-up tried a single 16 GiB allocation (16 heads x 16384^2 x 4 B)
+  #   and aborted ("memory allocation of 17179869184 bytes failed", exit 139) —
+  #   unfixable by any RAM bump on a 7 GB box. Capping to 2048 cuts the warm-up
+  #   attention ~64x (to ~256 MiB); embeddings stay correct, only the max batch
+  #   shrinks (fine for the CI liveness proof — mirrors the vllm-cpu
+  #   --max-model-len 2048 CI cap). Set via the documented MAX_BATCH_TOKENS env
+  #   var (deep-merges with the base HF_* env; no command-replace / model drift).
+  tei-embed:
+    environment:
+      MAX_BATCH_TOKENS: "2048"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 6g
+    healthcheck:
+      start_period: 180s
+  tei-rerank:
+    environment:
+      MAX_BATCH_TOKENS: "2048"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 6g
+    healthcheck:
+      start_period: 180s
+
+  vllm-cpu:
+    environment:
+      VLLM_CPU_KVCACHE_SPACE: "1"
+    command:
+      - "--model"
+      - "/models/${NE_VLLM_CPU_MODEL_DIR:-Qwen/Qwen3-0.6B}"
+      - "--served-model-name"
+      - "qwen3-0.6b"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--structured-outputs-config.backend"
+      - "xgrammar"
+      - "--default-chat-template-kwargs"
+      - '{"enable_thinking":false}'
+      - "--max-model-len"
+      - "2048"
+    shm_size: "2gb"
+    deploy:
+      resources:
+        limits:
+          memory: 5g
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "python3 -c 'import urllib.request,sys; sys.exit(0 if urllib.request.urlopen(\"http://127.0.0.1:8000/health\", timeout=3).status==200 else 1)'"
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 180s

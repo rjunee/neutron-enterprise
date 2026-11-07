@@ -1,0 +1,506 @@
+[importlinter]
+root_packages =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+include_external_packages = True
+
+[importlinter:contract:c3-provider-sdk-chokepoint]
+name = C3: provider SDKs / litellm only via ne.gateway._litellm
+type = forbidden
+source_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+forbidden_modules =
+    litellm
+    openai
+    anthropic
+    mistralai
+    cohere
+    groq
+    ollama
+    together
+    replicate
+ignore_imports =
+    ne.gateway._litellm -> litellm
+
+[importlinter:contract:ne-api-decoration-free]
+name = NE-103c: ne-api never imports the worker/durable-decorated modules
+# Keeps ne-api's import graph decoration-free so BOTH processes can safely run
+# NE_RUNTIME_DURABILITY=dbos: the @ne_workflow/@ne_step decorators fire at
+# import/decoration time, and ne-api must never pull a decorated module into its
+# graph (it enqueues by NAME via DBOSClient — design §6.2(i)). ne.worker.* and
+# ne.runtime.approvals_durable are the decorated modules.
+type = forbidden
+source_modules =
+    ne.api
+forbidden_modules =
+    ne.worker
+    ne.runtime.approvals_durable
+
+[importlinter:contract:c3-mcp-sdk-chokepoint]
+name = C3: mcp SDK only via ne.mcp._sdk
+type = forbidden
+source_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+forbidden_modules =
+    mcp
+ignore_imports =
+    ne.mcp._sdk -> mcp
+
+[importlinter:contract:c3-openfga-sdk-chokepoint]
+name = C3: openfga SDK only via ne.permissions_rebac._client
+type = forbidden
+source_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+forbidden_modules =
+    openfga_sdk
+ignore_imports =
+    ne.permissions_rebac._client -> openfga_sdk
+
+[importlinter:contract:c3-psycopg-chokepoint]
+name = C3: psycopg only via the _pg chokepoints (ne.brain_graph._pg, ne.brain.pgvector._pg)
+type = forbidden
+source_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+forbidden_modules =
+    psycopg
+ignore_imports =
+    ne.brain_graph._pg -> psycopg
+    ne.brain.pgvector._pg -> psycopg
+
+[importlinter:contract:ne-net-leaf]
+name = ne-net is a stdlib-only leaf (no first-party or provider imports)
+type = forbidden
+source_modules =
+    ne.net
+forbidden_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.mcp
+    ne.memory_graph
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    httpx
+    requests
+
+[importlinter:contract:ne-chat-interface-lane]
+name = ne-chat is an interface adapter (no heavy-plane imports)
+type = forbidden
+# Direct-import check only: ne.chat legitimately depends on ne.runtime (gate
+# types/errors), and ne.runtime transitively pulls ne.govern/ne.envbuild — that
+# indirect chain is fine. What must never happen is ne.chat DIRECTLY importing a
+# heavy plane (esp. litellm-dragging ne.gateway); the model path is ONLY the
+# frozen ModelGateway injected inside ne-runtime sessions.
+allow_indirect_imports = True
+source_modules =
+    ne.chat
+forbidden_modules =
+    ne.api
+    ne.gateway
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.connect
+    ne.serve
+    ne.mcp
+    ne.eval
+    ne.flywheel
+    ne.cli
+    ne.envbuild
+
+[importlinter:contract:ne-envbuild-leaf]
+name = ne-envbuild is a filelock-only leaf (no first-party or provider imports)
+type = forbidden
+source_modules =
+    ne.envbuild
+forbidden_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.mcp
+    ne.memory_graph
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    httpx
+    requests
+
+[importlinter:contract:t2-sidecars-out-of-process]
+name = C4: Tier-2 sidecar libs (splink/duckdb/igraph/lightrag/pipmaster) run OUT-OF-PROCESS only
+type = forbidden
+source_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+forbidden_modules =
+    splink
+    duckdb
+    igraph
+    lightrag
+    lightrag_hku
+    pipmaster
+
+[importlinter:contract:memory-graph-sidecar-out-of-process]
+name = C4: Graphiti/neo4j/posthog closure (ne-memory-graph) runs OUT-OF-PROCESS only
+type = forbidden
+source_modules =
+    ne.acme
+    ne.acme_seed
+    ne.meridian
+    ne.meridian_seed
+    ne.api
+    ne.audit
+    ne.backup
+    ne.brain
+    ne.brain_graph
+    ne.brain_ontology
+    ne.chat
+    ne.cli
+    ne.connect
+    ne.contracts
+    ne.envbuild
+    ne.eval
+    ne.events
+    ne.flywheel
+    ne.gateway
+    ne.govern
+    ne.identity
+    ne.inference_operator
+    ne.mcp
+    ne.memory_graph
+    ne.model_export
+    ne.net
+    ne.obs
+    ne.permissions
+    ne.permissions_rebac
+    ne.runtime
+    ne.schema
+    ne.schema_bootstrap
+    ne.secrets
+    ne.serve
+    ne.skills
+    ne.skills_cc
+    ne.storage
+    ne.worker
+forbidden_modules =
+    graphiti_core
+    graphiti
+    neo4j
+    posthog
+
+[importlinter:contract:brain-ontology-lane]
+name = C3: ne.brain_ontology imports only ne.contracts/ne.schema/ne.events/ne.net (T3 additive lane)
+type = forbidden
+source_modules =
+    ne.brain_ontology
+forbidden_modules =
+    ne.brain
+    ne.brain_graph
+    ne.runtime
+    ne.permissions
+    ne.permissions_rebac
+    ne.govern
+    ne.api
+    ne.gateway
+    ne.connect
+    ne.mcp
+    ne.chat
+    ne.serve
+    ne.eval
+    ne.flywheel
+    ne.cli
+    ne.identity
+    ne.secrets
+    ne.audit
+    ne.obs
+    ne.memory_graph
+    ne.acme
+    ne.acme_seed
+
+[importlinter:contract:ne162-gateway-redactor-protocol-seam]
+name = NE-162: ne-gateway consumes the frozen Redactor protocol only (no ne.govern import)
+type = forbidden
+source_modules =
+    ne.gateway
+forbidden_modules =
+    ne.govern
+
+[importlinter:contract:runtime-verified-lane]
+name = C3: ne.runtime never imports ne.brain_ontology (verified router consumes injected Protocols only)
+type = forbidden
+source_modules =
+    ne.runtime
+forbidden_modules =
+    ne.brain_ontology

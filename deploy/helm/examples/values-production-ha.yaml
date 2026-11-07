@@ -1,0 +1,88 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-089 HA production profile — an OVERLAY, not a standalone values file.
+# Apply it ON TOP OF a real, promoted values file (the one `ne k8s render`
+# produces, which still carries the required global.hostname/configHash/
+# image.digest — this overlay does NOT supply those):
+#
+#   helm upgrade --install ne deploy/helm/neutron-enterprise \
+#     -f /tmp/overlay.json \
+#     -f deploy/helm/examples/values-production-ha.yaml
+#
+# See deploy/helm/README.md's "HA production profile (NE-089)" section for the
+# full guidance, including the STATEFUL postgres/keycloak/qdrant notes this
+# overlay deliberately does NOT attempt to fix (those need an operator/backup
+# strategy change, not a values bump).
+
+ne-api:
+  # Stateless (ADR-001 — sticky state lives in Postgres), so scaling replicas
+  # and adding a PodDisruptionBudget + anti-affinity/spread is safe as-is.
+  replicas: 3
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+  # Prefer spreading pods across nodes (soft — a single-node dev/test cluster
+  # still schedules successfully; only a real multi-node cluster gets the
+  # anti-affinity benefit).
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: ne-api
+            topologyKey: kubernetes.io/hostname
+
+  # A zone-aware spread on top of the above node-level anti-affinity —
+  # ScheduleAnyway so a zone-imbalanced cluster still schedules (never blocks
+  # a rollout), just prefers balance.
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: ne-api
+
+ne-worker:
+  # DBOS-safe at N>1 (share-by-storage; NE-103c design) — in-flight turns
+  # re-run from the top on pod loss, so extra replicas add throughput/recovery
+  # headroom without split-brain. Kept conservative (2) vs. ne-api's 3 since a
+  # single worker already saturates via DBOS worker_concurrency.
+  replicas: 2
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+  # Prefer spreading worker pods across nodes (soft — a single-node cluster
+  # still schedules; only a real multi-node cluster gets the anti-affinity
+  # benefit).
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: ne-worker
+            topologyKey: kubernetes.io/hostname
+
+  # Zone-aware spread on top of the node-level anti-affinity — ScheduleAnyway
+  # so a zone-imbalanced cluster still schedules (never blocks a rollout).
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app: ne-worker
+
+opa:
+  # OPA is per-deployment stateless — bump replicas freely (no PDB/affinity
+  # surface needed; the existing Deployment already tolerates N replicas).
+  replicas: 3

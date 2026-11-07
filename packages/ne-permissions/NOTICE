@@ -1,0 +1,12 @@
+Neutron Enterprise — ne-permissions
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+pipeshub-ai/pipeshub-ai v0.5.0 (commit 018084a6) — Apache License 2.0 —
+https://github.com/pipeshub-ai/pipeshub-ai — Entra ID group-synchronization
+algorithm (Microsoft Graph groups/delta + transitiveMembers, delta-link-before-
+full-sync ordering) and source-ACL entity-type vocabulary adapted into
+ne.permissions.entra and ne.permissions.models. Algorithm and vocabulary only;
+no PipesHub source code (Arango/Mongo/Redis-coupled) is copied. This attribution
+satisfies Apache-2.0 §4(d).

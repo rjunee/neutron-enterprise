@@ -1,0 +1,84 @@
+{
+  "cases": [
+    {
+      "id": "all-supported",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3"],
+      "faithfulness": {"statements": ["s1", "s2", "s3"], "verdicts": [1, 1, 1]},
+      "context_precision": {"verdicts": [1, 1, 1]},
+      "context_recall": {"statements": ["r1", "r2", "r3"], "attributed": [1, 1, 1]}
+    },
+    {
+      "id": "none-supported",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3"],
+      "faithfulness": {"statements": ["s1", "s2", "s3"], "verdicts": [0, 0, 0]},
+      "context_precision": {"verdicts": [0, 0, 0]},
+      "context_recall": {"statements": ["r1", "r2", "r3"], "attributed": [0, 0, 0]}
+    },
+    {
+      "id": "mixed-2of3",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3"],
+      "faithfulness": {"statements": ["s1", "s2", "s3"], "verdicts": [1, 0, 1]},
+      "context_precision": {"verdicts": [1, 0, 1]},
+      "context_recall": {"statements": ["r1", "r2", "r3"], "attributed": [1, 1, 0]}
+    },
+    {
+      "id": "single-statement",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1"],
+      "faithfulness": {"statements": ["only"], "verdicts": [1]},
+      "context_precision": {"verdicts": [1]},
+      "context_recall": {"statements": ["only"], "attributed": [1]}
+    },
+    {
+      "id": "precision-111",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3"],
+      "faithfulness": {"statements": ["s1", "s2"], "verdicts": [1, 1]},
+      "context_precision": {"verdicts": [1, 1, 1]},
+      "context_recall": {"statements": ["r1", "r2"], "attributed": [1, 1]}
+    },
+    {
+      "id": "precision-0101",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3", "c4"],
+      "faithfulness": {"statements": ["s1", "s2"], "verdicts": [1, 0]},
+      "context_precision": {"verdicts": [0, 1, 0, 1]},
+      "context_recall": {"statements": ["r1", "r2"], "attributed": [1, 0]}
+    },
+    {
+      "id": "precision-10010",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3", "c4", "c5"],
+      "faithfulness": {"statements": ["s1", "s2", "s3"], "verdicts": [1, 1, 0]},
+      "context_precision": {"verdicts": [1, 0, 0, 1, 0]},
+      "context_recall": {"statements": ["r1", "r2", "r3"], "attributed": [1, 0, 1]}
+    },
+    {
+      "id": "precision-000",
+      "question": "q",
+      "answer": "a",
+      "reference": "r",
+      "contexts": ["c1", "c2", "c3"],
+      "faithfulness": {"statements": ["s1", "s2"], "verdicts": [0, 0]},
+      "context_precision": {"verdicts": [0, 0, 0]},
+      "context_recall": {"statements": ["r1", "r2"], "attributed": [0, 0]}
+    }
+  ]
+}

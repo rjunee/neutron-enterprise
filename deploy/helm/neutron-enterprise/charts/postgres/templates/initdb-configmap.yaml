@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Byte-copy of deploy/compose/pilot/initdb/01-databases.sql — guardian-asserted
+# (tools/ne-cli/tests/test_helm_chart.py::test_bundled_files_byte_match_pilot).
+# `.Files.Get` cannot cross chart boundaries, so the file is vendored here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: neutron-enterprise
+data:
+  01-databases.sql: |
+{{ .Files.Get "files/01-databases.sql" | indent 4 }}

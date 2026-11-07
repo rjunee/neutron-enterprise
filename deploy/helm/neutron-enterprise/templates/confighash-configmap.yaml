@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# The promoted bundle's per-module TOMLs, injected by `ne k8s render`
+# (design §3, config_hash promotion). Mounted read-only at
+# /etc/neutron/config for IDENTITY/ROLLOUT ONLY — see deploy/helm/README.md
+# "NE_CONFIG_FILE deviation" for why the container env does NOT point at these
+# files (no per-module *_CONFIG_FILE env exists in the settings loaders).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ne-platform-config
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+  annotations:
+    neutron.dev/config-hash: {{ .Values.global.configHash | quote }}
+data:
+  {{- range $name, $content := .Values.bundle.files }}
+  {{ $name }}: |
+{{ $content | indent 4 }}
+  {{- end }}

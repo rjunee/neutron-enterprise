@@ -1,0 +1,44 @@
+[project]
+name = "ne-identity"
+version = "0.1.0"
+description = "OIDC middleware and Keycloak broker glue."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "cryptography>=50,<51",
+    "fastapi>=0.139.0,<1",
+    "ne-contracts",
+    "ne-events",
+    "ne-schema",
+    "pyjwt>=2.15.0,<3",
+]
+
+[project.entry-points."ne.plugins.token_verifier"]
+keycloak-oidc = "ne.identity.verifier:OidcTokenVerifier"
+
+[project.entry-points."ne.plugins.principal_resolver"]
+jit = "ne.identity.provisioning:JitPrincipalResolver"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1,<1",
+    "ne-govern",
+    "ne-runtime",
+    "ne-secrets",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.identity"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-events = { workspace = true }
+ne-govern = { workspace = true }
+ne-runtime = { workspace = true }
+ne-schema = { workspace = true }
+ne-secrets = { workspace = true }

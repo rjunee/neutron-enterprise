@@ -1,0 +1,29 @@
+# Isolated model-export env (C4 / SPEC §11 heavy-ML-closure principle): the
+# torch/optimum/onnxruntime/transformers/sentence-transformers closure needed
+# to export + parity-gate the Qwen3-Embedding-0.6B ONNX graph is confined here
+# (tools/model-export/.export-venv) and NEVER enters the platform lock/SBOM.
+# Same isolation pattern as packages/ne-govern/presidio_env and
+# packages/ne-brain/parser_env (docling). Compile with:
+#
+#   uv pip compile tools/model-export/export_env/requirements.in \
+#       --universal --python-version 3.12 --generate-hashes \
+#       -o tools/model-export/export_env/requirements.txt
+#
+# Pins re-verified live (PyPI JSON API + HF API) 2026-07-17 — all four CURRENT
+# latest at pin time, all permissive-license (Apache-2.0 / MIT / BSD-3-Clause
+# multi-license), no C4 license-gate exposure:
+#   optimum-onnx==0.1.0        Apache-2.0  (2025-12-23; registers qwen3 for
+#                               feature-extraction export, huggingface/optimum-onnx#97)
+#   onnxruntime==1.27.0        MIT
+#   torch==2.13.0              BSD-3-Clause core (permissive multi-license expr)
+#   sentence-transformers==5.6.0  Apache-2.0  (reference embedder for the
+#                               parity gate only; 5.6.0 is the CVE-2026-68770
+#                               fixed release — do not substitute without flagging)
+# transformers/huggingface_hub/numpy resolve transitively (transformers lands
+# on the 4.57.x line, Apache-2.0, under optimum-onnx 0.1.0's <4.58 ceiling).
+#
+# NEVER hand-edit requirements.txt.
+optimum-onnx==0.1.0
+onnxruntime==1.27.0
+torch==2.13.0
+sentence-transformers==5.6.0

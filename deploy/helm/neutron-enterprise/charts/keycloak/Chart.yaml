@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: keycloak
+description: The keycloak subchart (core profile, byte-parity with deploy/compose/pilot).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

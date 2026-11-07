@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# The otel-collector config, sourced from a BYTE-COPY of
+# deploy/compose/pilot/otel/otel-collector-config.yaml (guardian-enforced:
+# test_helm_chart.py::test_obs_otel_config_byte_matches_pilot). Mounted via
+# subPath in the Deployment (same technique as charts/opa's policies bundle).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  labels:
+    app: otel-collector
+    app.kubernetes.io/part-of: neutron-enterprise
+data:
+  config.yaml: |
+{{ .Files.Get "files/otel-collector-config.yaml" | indent 4 }}

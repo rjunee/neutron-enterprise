@@ -1,0 +1,223 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The guided tour panel: a fixed strip at the foot of the viewport, never page
+ * content. The page reserves height beneath it through the data-ne-tour flag
+ * (styles/primitives.css), so it covers nothing that cannot be scrolled clear of.
+ * Every value resolves through a tokens.css custom property.
+ */
+
+.ne-demo {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-height: min(52vh, 520px);
+  padding: var(--space-12) var(--space-16);
+  background: var(--panel);
+  border-top: 1px solid var(--rule-strong);
+  color: var(--text);
+}
+
+.ne-demo--motion {
+  animation: ne-demo-rise var(--motion-settle) var(--ease-damped) both;
+}
+
+@keyframes ne-demo-rise {
+  from {
+    transform: translateY(var(--space-16));
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ne-demo--reduced {
+  animation: none;
+}
+
+.ne-demo__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.ne-demo__barlabel,
+.ne-demo__intro,
+.ne-demo__livelabel,
+.ne-demo__checked,
+.ne-demo__checknote {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-demo__intro {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.ne-demo__scroll {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.ne-demo__main {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+
+.ne-demo__numeral {
+  font: var(--type-title);
+  font-stretch: var(--stretch-signage);
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.ne-demo__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 84ch;
+}
+
+.ne-demo__heading {
+  font: var(--type-section);
+  color: var(--text);
+  margin: 0;
+}
+
+/* The station brief: label / value pairs, label in the small caps the rest of
+   the product uses for a field name, value on a prose measure. */
+.ne-demo__brief {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: var(--space-16);
+  row-gap: var(--space-4);
+  margin: 0;
+}
+
+.ne-demo__brieflabel {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.ne-demo__briefvalue {
+  font: var(--type-body);
+  color: var(--text);
+  margin: 0;
+}
+
+.ne-demo__briefvalue--dim {
+  color: var(--text-dim);
+}
+
+/* A narrow viewport cannot carry a label column beside a prose measure; the
+   pairs stack rather than squeezing the sentence into a gutter. */
+@media (max-width: 40rem) {
+  .ne-demo__brief {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+
+  .ne-demo__briefvalue {
+    margin-bottom: var(--space-8);
+  }
+}
+
+.ne-demo__live {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  padding: var(--space-8);
+  background: var(--panel-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.ne-demo__livevalue {
+  font: var(--type-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.ne-demo__livehosts {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-demo__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.ne-demo__link {
+  font: var(--type-body);
+  color: var(--cherenkov);
+}
+
+.ne-demo__checked {
+  margin: 0;
+}
+
+.ne-demo__strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-8);
+}
+
+.ne-demo__stations {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.ne-demo__stationbtn {
+  min-width: 24px;
+  height: 24px;
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font: var(--type-small);
+  cursor: pointer;
+}
+
+.ne-demo__stationbtn:hover {
+  border-color: var(--rule-strong);
+}
+
+.ne-demo__stationbtn:focus-visible {
+  outline: 2px solid var(--cherenkov);
+}
+
+.ne-demo__stationbtn--current {
+  border-color: var(--cherenkov);
+  color: var(--text);
+}
+
+.ne-demo__stationbtn--done {
+  color: var(--text);
+  border-color: var(--state-affirm);
+}
+
+.ne-demo__controls {
+  display: flex;
+  gap: var(--space-8);
+  margin-left: auto;
+}

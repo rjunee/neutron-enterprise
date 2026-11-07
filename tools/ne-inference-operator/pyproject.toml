@@ -1,0 +1,23 @@
+[project]
+name = "ne-inference-operator"
+version = "0.1.0"
+description = "Confined host operator for governed inference target lifecycle."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = ["ne-contracts", "pydantic>=2.12.5,<3"]
+
+[project.scripts]
+ne-inference-operator = "ne.inference_operator.cli:main"
+ne-inference-provider-broker = "ne.inference_operator.provider_cli:main"
+ne-inference-provider-air-gap-condition = "ne.inference_operator.air_gap_condition:main"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.inference_operator"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }

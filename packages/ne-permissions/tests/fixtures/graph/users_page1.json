@@ -1,0 +1,4 @@
+{
+  "value": [{"id": "u-ada", "displayName": "Ada Lovelace", "userPrincipalName": "ada@contoso.example"}],
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$select=id,displayName,userPrincipalName&$skiptoken=UPAGE2"
+}

@@ -1,0 +1,4 @@
+{ "value": [
+  { "id": "perm-user-1", "roles": ["read"],
+    "grantedToV2": { "user": { "id": "u-ada", "displayName": "Ada Lovelace" } } }
+] }

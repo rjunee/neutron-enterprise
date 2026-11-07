@@ -1,0 +1,309 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# The first-party ne-worker Deployment (NE-103c). Reproduces
+# deploy/compose/pilot/compose.yaml's ne-worker service 1:1: the SAME ne-app
+# image as ne-api, the "one image, diff command" seam (command
+# ["python","-m","ne.worker"] — the NE-103a no-ENTRYPOINT exec-CMD contract),
+# the SAME hardening (uid 10001, RO rootfs + /tmp emptyDir, cap_drop ALL,
+# no-new-privileges), the SAME shared env keys, plus NE_WORKER_DBOS_DATABASE_URL.
+# NO Service/Ingress (the worker exposes no port; run_admin_server=False).
+#
+# DELIBERATE COPY, NOT A REFACTOR: the shared env block below is byte-copied
+# from charts/ne-api/templates/deployment.yaml rather than hoisted into a shared
+# helper. ne-api's template is intentionally left untouched (byte-parity), and
+# tools/ne-cli/tests/test_helm_chart.py::test_ne_worker_shared_env_byte_matches_ne_api
+# asserts the rendered shared-env entries are byte-equal between ne-api and
+# ne-worker, so config_hash parity is guardian-enforced and drift cannot land.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ne-worker
+  labels:
+    app: ne-worker
+    app.kubernetes.io/name: ne-worker
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: ne-worker
+  template:
+    metadata:
+      labels:
+        app: ne-worker
+        app.kubernetes.io/name: ne-worker
+        app.kubernetes.io/part-of: neutron-enterprise
+      annotations:
+        neutron.dev/config-hash: {{ .Values.global.configHash | quote }}
+        neutron.dev/agent-registry-sha256: {{ .Files.Get "files/agents/registry.toml" | sha256sum | quote }}
+        neutron.dev/skill-bundle-sha256: {{ .Files.Get "files/skills/meridian-hardship-draft/SKILL.md" | sha256sum | quote }}
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 10001 "gid" 10001 "openshift" .Values.global.openshift) | nindent 8 }}
+      # NE-089 HA production-profile pass-throughs — gated OFF by default
+      # (empty dict / empty list render nothing via `with`), so the default
+      # render stays byte-identical to the guardian's expectations. These read
+      # the ne-worker subchart's OWN .Values (see deploy/helm/neutron-enterprise/values.yaml
+      # `ne-worker:` block and deploy/helm/examples/values-production-ha.yaml).
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: ne-worker
+          image: {{ include "neutron.firstPartyImageRef" . }}
+          # The "one image, diff command" seam (NE-103c): the ne-app image has
+          # no ENTRYPOINT so this exec-form command overrides the default
+          # ["python","-m","ne.api"] CMD. Bare `python` resolves via the image
+          # PATH=/app/.venv/bin (SPEC row is explicit on this literal).
+          command: ["python", "-m", "ne.worker"]
+          # NO ports — the worker has no inbound HTTP surface (run_admin_server
+          # =False); no Service/Ingress render for this subchart.
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 12 }}
+          env:
+            # --- BYTE-COPY of ne-api's env (see the header note) ---------------
+            # FIRST: K8s $(VAR) interpolation only sees earlier-declared vars,
+            # so the password must precede every DSN that references it.
+            - name: NE_PILOT_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_PILOT_POSTGRES_PASSWORD
+            - name: NE_AGENT_TRANSPORT_GENERATION
+              value: {{ .Values.global.agentTransport.generation | quote }}
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_RUNTIME_SESSION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_API_DBOS_SYSTEM_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_API_DBOS_SYSTEM_DATABASE_URL
+            {{- end }}
+            # PRE-009A (A3) Agent Run private payloads — the SAME two keys of the
+            # SAME installer Secret that ne-worker references, byte for byte. The
+            # two roots must never hold different keys, so this block is asserted
+            # identical across both deployments by the focused Helm test.
+            #
+            # optional: true so a Secret provisioned before A2 does not crash-loop
+            # the pod. That is NOT a weakening: the composition root itself refuses
+            # to become ready if any retained private row exists without a matching
+            # current key, so absence is enforced where it can be enforced honestly
+            # (in-process) rather than by a kubelet that cannot see the database.
+            - name: NE_AGENT_PRIVATE_PAYLOAD_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_AGENT_PRIVATE_PAYLOAD_KEY_ID
+                  optional: true
+            - name: NE_AGENT_PRIVATE_PAYLOAD_KEK_B64
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_AGENT_PRIVATE_PAYLOAD_KEK_B64
+                  optional: true
+            # 015A0-AUTHORITY-CORE: the source-authority continuation HMAC key.
+            # SAME installer Secret and SAME block in both deployments, asserted
+            # byte-identical across them by the focused Helm test.
+            #
+            # optional: true — an absent Secret entry leaves continuation not
+            # ready on this replica, which is a serving deployment with one
+            # surface unavailable, not a crash-loop.
+            - name: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_ID
+                  optional: true
+            - name: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_B64
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_B64
+                  optional: true
+            # 015A0-AUTHORITY-M365: the sub-SLA permission sweep plan. NON-SECRET
+            # plain values, and byte-identical in both deployments — the API
+            # projects the same contract descriptor the worker admits under, so a
+            # per-root value here is how the two come to disagree about an epoch.
+            - name: NE_M365_AUTHORITY_ENABLED
+              value: "false"
+            - name: NE_M365_AUTHORITY_SWEEP_CADENCE_SECONDS
+              value: "120"
+            - name: NE_M365_AUTHORITY_SWEEP_BATCH_SIZE
+              value: "50"
+            - name: NE_M365_AUTHORITY_SWEEP_MAX_BATCH_DURATION_SECONDS
+              value: "60"
+            - name: NE_M365_AUTHORITY_SWEEP_MAX_POINTS_PER_SCOPE
+              value: "500"
+            # Glibc allocator tunable, NOT a setting: it has no NE_ prefix, so
+            # pydantic-settings (NeSettings env_prefix="NE_", extra="forbid")
+            # cannot bind it to any field and it stays outside the frozen
+            # config_hash preimage. Kept byte-identical with the pilot compose
+            # x-ne-app-env anchor and between both app roots — see the
+            # derivation in deploy/compose/pilot/compose.yaml.
+            - name: MALLOC_ARENA_MAX
+              value: "2"
+            - name: NE_API_BIND_HOST
+              value: "0.0.0.0"
+            - name: NE_API_QDRANT_URL
+              value: http://qdrant:6333
+            - name: NE_API_QDRANT_COLLECTION
+              value: ne_chunks
+            - name: NE_API_TEI_URL
+              value: http://tei-embed:80
+            - name: NE_API_AGENT_MANIFEST_PATH
+              value: {{ .Values.global.agentRegistry.mountPath | quote }}
+            - name: NE_SKILLS_BUNDLE_DIR
+              value: {{ .Values.global.skillBundle.mountPath | quote }}
+            - name: NE_SKILL_BUNDLE_RAW_SHA256
+              value: {{ .Files.Get "files/skills/meridian-hardship-draft/SKILL.md" | sha256sum | quote }}
+            - name: NE_GATEWAY_MODELS
+              value: {{ .Values.gatewayModels | toJson | quote }}
+            - name: NE_GOVERN_OPA_URL
+              value: http://opa:8181
+            - name: NE_IDENTITY_OIDC__ISSUER
+              value: https://{{ include "neutron.keycloakHost" . }}/realms/ne-pilot
+            - name: NE_IDENTITY_OIDC__AUDIENCE
+              value: ne-console
+            - name: NE_API_SERVE_CONSOLE_DIST
+              value: /app/console-dist
+            - name: NE_IDENTITY_OIDC__JWKS_URI
+              value: http://keycloak:8080/realms/ne-pilot/protocol/openid-connect/certs
+            - name: NE_IDENTITY_OIDC__ALLOW_INSECURE_HTTP
+              value: "true"
+            - name: NE_RUNTIME_DURABILITY
+              value: "dbos"
+            - name: NE_API_TURN_EXECUTION
+              value: "enqueue"
+            - name: NE_API_TURN_TIMEOUT_S
+              value: "300"
+            {{- if not .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_API_DBOS_SYSTEM_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/ne_dbos
+            {{- end }}
+            - name: NE_API_APPROVER_ROLES
+              value: '["approver"]'
+            - name: NE_API_OPS_ROLES
+              value: '["ops"]'
+            - name: NE_API_STEWARD_ROLES
+              value: '["steward"]'
+            {{- if not .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_RUNTIME_SESSION_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            {{- end }}
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_AUDIT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_PERMISSIONS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_FLYWHEEL_SIGNAL_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_API_EVAL_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            {{- else }}
+            - name: NE_AUDIT_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            - name: NE_PERMISSIONS_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            - name: NE_FLYWHEEL_SIGNAL_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            - name: NE_API_EVAL_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            {{- end }}
+            # --- END byte-copy; worker-only tail entry below ------------------
+            # The DBOS system database the worker launches its schema in. MUST
+            # equal ne-api's NE_API_DBOS_SYSTEM_DATABASE_URL (both point at
+            # ne_dbos — the NE-103c alignment; guardian-enforced by
+            # test_ne_worker_dbos_url_aligned).
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_WORKER_DBOS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_WORKER_DBOS_DATABASE_URL
+            {{- else }}
+            - name: NE_WORKER_DBOS_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/ne_dbos
+            {{- end }}
+            # P2-21 day-one SIEM export (worker-only NE_WORKER_ placement keys, byte-
+            # matching the pilot compose ne-worker service). The drain ships outbox
+            # events as OTel logs to the in-cluster otel-collector; C2: in-cluster sink
+            # only. profiles.obs stays default-OFF (zarf air-gap posture), so a default
+            # install drains against a not-yet-present collector and FAIL-OPENS (cursor
+            # unmoved, rows retained, throttled warning) — enable profiles.obs or clear
+            # NE_WORKER_OUTBOX_CONSUMER (see docs/DEPLOYMENT.md §3).
+            - name: NE_WORKER_OUTBOX_CONSUMER
+              value: siem-otel
+            - name: NE_WORKER_OUTBOX_OTLP_ENDPOINT
+              value: http://otel-collector:4318
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: platform-config
+              mountPath: /etc/neutron/config
+              readOnly: true
+            - name: agent-registry
+              mountPath: {{ .Values.global.agentRegistry.mountPath | quote }}
+              subPath: registry.toml
+              readOnly: true
+            - name: skill-bundle
+              mountPath: {{ .Values.global.skillBundle.mountPath | quote }}
+              readOnly: true
+          # The worker has NO HTTP server (run_admin_server=False), so the probes
+          # exec the NE-103c fast heartbeat check (packages/ne-worker/src/ne/
+          # worker/settings.py heartbeat_path -> /tmp/ne-worker.health on the
+          # emptyDir), NOT an httpGet. startupProbe gives a 300s boot window
+          # (60 * 5s) covering the litellm-import boot (compose start_period 90s)
+          # on a CPU-limited node and gates Ready/`helm --wait` on a real boot.
+          startupProbe:
+            exec:
+              command: ["python", "-m", "ne.worker", "--health"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          # NO readinessProbe — the worker takes no traffic, so there is nothing
+          # to gate; the startupProbe already holds Ready until a successful boot.
+          livenessProbe:
+            exec:
+              command: ["python", "-m", "ne.worker", "--health"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: platform-config
+          configMap:
+            name: ne-platform-config
+        - name: agent-registry
+          configMap:
+            name: ne-agent-registry
+        - name: skill-bundle
+          configMap:
+            name: ne-skill-bundle
+            items:
+              - key: meridian-hardship-draft.SKILL.md
+                path: meridian-hardship-draft/SKILL.md

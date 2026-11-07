@@ -1,0 +1,9 @@
+{
+  "value": [
+    { "id": "C0STD", "displayName": "General", "membershipType": "standard" },
+    { "id": "C0PRIV", "displayName": "Leadership", "membershipType": "private" },
+    { "id": "C0SHARED", "displayName": "Partner Shared", "membershipType": "shared" },
+    { "id": "C0WEIRD", "displayName": "Future", "membershipType": "unknownFutureValue" },
+    { "id": "role:forged", "displayName": "Forged", "membershipType": "standard" }
+  ]
+}

@@ -1,0 +1,67 @@
+# ABI vendor manifest — NE-085-spike (2026-07-09).
+#
+# Records the reviewed ABI pin the Brain-T3 lift is anchored to (C11 discipline
+# applied to vendored source: pin to ONE reviewed commit, never track upstream —
+# teardown §7 trigger 8) plus the keep/rewrite/drop triage of the six mandated
+# lift targets.
+#
+# pinned_commit = build-time HEAD, chosen after diffing the lift targets against
+# the adversarially-reviewed 4b0d12f3 baseline: the two SPIKE lift targets
+# (oxigraph_server.py, validate_bfo_ontology.py) are BYTE-IDENTICAL between
+# 4b0d12f3 and HEAD, so HEAD inherits the 4b0d12f3 review. Only ApacheJenaTDB2.py
+# (planned-085a, not lifted here) moved (+85/-7, an improvement + new tests).
+# source_sha256 is over the raw file bytes at pinned_commit.
+
+[abi]
+repo = "https://github.com/jupyter-naas/abi"
+pinned_commit = "a3e15eff03902091f23acfd9edbc95dc9695183f"
+pinned_date = "2026-07-09T10:24:19Z"
+reviewed_against = "4b0d12f3"
+license = "MIT"
+license_line = "MIT License, Copyright (C) 2025 Naas.ai"
+
+# -- The two files LIFTED in this spike -------------------------------------
+
+[[lift]]
+source_path = "libs/naas-abi-core/naas_abi_core/services/triple_store/oxigraph_server.py"
+source_sha256 = "5d49964e3f37dfe024ccf7a2a5aac1f3e923426f00fd793c98c271f9314f4923"
+ne_path = "src/ne/brain_ontology/store/oxigraph.py"
+status = "lifted"
+notes = "pyoxigraph.Store wrapping patterns (open, query, bulk_load, RdfFormat/QueryResultsFormat selection, QueryTriples handling) derived into an in-process async OxigraphTripleStore satisfying the frozen ne.contracts.knowledge.TripleStore. The ABI HTTP/FastAPI server shell is DROPPED (spike is in-process, no-docker); SELECT/ASK-only surface per the frozen Protocol."
+
+[[lift]]
+source_path = "libs/naas-abi-core/naas_abi_core/utils/validate_bfo_ontology.py"
+source_sha256 = "395a410e5c197bec2c0994978dcc2f1a283b9f969ed4538e44f34dfebf08aac7"
+ne_path = "src/ne/brain_ontology/lint/validate_bfo.py"
+status = "lifted"
+notes = "rdflib-only BFO 7-Buckets static lint (1,785 LOC). LIFTED: the ~24 check_* rule functions + helpers verbatim-adapted. DROPPED (C2 + spike scope): the urllib owl:imports network resolver, the filesystem project-root scanner, and the argparse CLI. Rewritten thin: run_bfo_lint(graph) -> LintReport over an already-parsed in-memory graph (no network). See addendum triage table for kept/dropped LOC."
+
+# -- The four mandated targets NOT lifted in the spike (triaged) -------------
+
+[[lift]]
+source_path = "libs/naas-abi-core/naas_abi_core/services/triple_store/adaptors/secondary/ApacheJenaTDB2.py"
+source_sha256 = "8be0b8e315226cf5d5f1252b02f95d58a92774135c0b2333f2cf172c1e5ff227"
+ne_path = "src/ne/brain_ontology/store/fuseki.py"
+status = "lifted"
+notes = "Fuseki/TDB2 production adapter (641 LOC). Re-reviewed the +85/-7 delta vs 4b0d12f3 at 085a: the added code is the distributed-lock KeyValueService path + boot-probe retries + a domain RequestError body — all ABI service-container plumbing we DROP. Because extraction proved >50% ABI plumbing (sync requests + naas config/exceptions/KeyValueService + SPARQL-Update writes), the sanctioned R1 fallback was taken: the OPERATIONAL KNOWLEDGE is cribbed (MRSW single-writer 500/503 transient retry with exponential backoff+jitter; 4xx non-retryable; GSP endpoints) and the adapter written fresh as an async httpx Graph Store Protocol client. Attribution header + this manifest note retained per SPEC §8."
+
+[[lift]]
+source_path = "libs/naas-abi-core/naas_abi_core/services/triple_store/TripleStoreService.py"
+source_sha256 = "8e2ac77f98620696d8492246c4e8014546593b8cae6c5c0b6f6316235a38fe39"
+ne_path = "src/ne/brain_ontology/store/sync.py"
+status = "lifted"
+notes = "TripleStoreService.py:436-604 sha256 hash-diff idempotent ontology hot-reload. LIFTED the sync ALGORITHM (store a content hash per schema graph; on reload compare and rewrite only changed graphs) → store/sync.py. De-naased: ABI's base64-in-graph content store, ThreadPoolExecutor, event-bus publish, and per-file mtime bookkeeping are dropped; state is one (graph_iri, sha256) triple per corpus graph in a bookkeeping named graph, driven by the vendored-corpus manifest. The 714-LOC facade itself is NOT lifted (bus/event coupling violates ADR-001; NE's facade is the SHACL gateway ABI lacks) — see spec §4.4. Unchanged since 4b0d12f3."
+
+[[lift]]
+source_path = "libs/naas-abi-core/naas_abi_core/modules/templatablesparqlquery/workflows/TemplatableSparqlQueryLoader.py"
+source_sha256 = "6bfc9d6674c67ab3a38aafa91e8bf9a717fba13164a421f7f7d08a3ad49d0977"
+ne_path = "src/ne/brain_ontology/verified/"
+status = "pattern-lifted"
+notes = "SPARQL-templates-as-governed-tools loader (209 LOC). NE-085c: the 'SPARQL template → governed agent tool with typed argument validation' DESIGN is ported; the implementation is a REWRITE off LangChain (ABI built LangChain StructuredTools) onto ToolSpec-based, runtime-free tool defs converted to governed bindings at the ne-api composition seam (the package may not import ne.runtime/ne.govern — brain-ontology-lane, C3). No LangChain dependency is introduced and no ABI code is vendored verbatim; the attribution header + pin sit on verified/tools.py. Templates are moved OUT of the graph into git/TOML per brain-tier3-spec §11.2 (deliberate divergence from ABI: graph-resident templates make the governed tool surface mutable by graph writes). Unchanged since 4b0d12f3."
+
+[[lift]]
+source_path = "libs/naas-abi-core/naas_abi_core/services/triple_store/tests/triple_store__secondary_adapter__generic_test.py"
+source_sha256 = "841885d66434db4db47375cf1b5daa2f88ba880df74b631e1dcfdac3580481d5"
+ne_path = "tests/test_conformance_kit.py"
+status = "pattern-lifted"
+notes = "Dual-backend conformance suite. PATTERN-ONLY CRIB (entangled with naas_abi_core service classes — crib cases, not code) → the ne-brain two-lane local/LIVE-PARKED conformance kit (oxigraph always in-process; Fuseki LIVE-PARKED via NE_FUSEKI_URL). Cases cribbed: named-graph CRUD, SELECT/ASK parity, construct round-trip, unicode/datatype, large-batch, dataset scoping. Unchanged since 4b0d12f3."

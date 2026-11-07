@@ -1,0 +1,17 @@
+{
+  "golden_set_hash": "64f8c0d151817c5599176cf9133237ec74ba2b5c385810654a0c5d7080832186",
+  "judge_model_id": "ne-lexical-judge-v1",
+  "metrics": {
+    "context_precision": 0.8336,
+    "context_recall": 0.99,
+    "faithfulness": 1.0,
+    "recall_at_10": 0.98
+  },
+  "suite": "rag-public",
+  "tolerances": {
+    "context_precision": 0.03,
+    "context_recall": 0.03,
+    "faithfulness": 0.03,
+    "recall_at_10": 0.02
+  }
+}

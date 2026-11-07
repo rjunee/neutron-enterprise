@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "ts": "1720000000.000100",
+      "user": "U00000ADA",
+      "text": "kickoff thread",
+      "thread_ts": "1720000000.000100",
+      "reply_count": 1
+    },
+    {
+      "type": "message",
+      "subtype": "channel_join",
+      "ts": "1720000002.000110",
+      "user": "U00000BOB",
+      "text": "<@U00000BOB> has joined the channel"
+    },
+    {
+      "type": "message",
+      "ts": "1720000010.000200",
+      "user": "U00000BOB",
+      "text": "plain message"
+    }
+  ],
+  "response_metadata": {"next_cursor": "HCUR2"}
+}

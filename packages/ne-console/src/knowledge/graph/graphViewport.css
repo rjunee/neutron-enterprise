@@ -1,0 +1,81 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.ne-chamber__viewport {
+  position: absolute;
+  inset: 0;
+  outline: none;
+  touch-action: none;
+}
+
+.ne-chamber__viewport:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+/* Zoom bottom-left (screens/graph.html §canvas): the legend claims the
+ * top-right corner and the server's cap notice the top-left, so the view
+ * controls settle at the opposite corner from both. */
+.ne-chamber__viewport-controls {
+  position: absolute;
+  z-index: 2;
+  bottom: var(--space-12);
+  left: var(--space-12);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.ne-chamber__viewport-controls button {
+  min-width: var(--space-32);
+  min-height: var(--space-32);
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  font: var(--type-label);
+  cursor: pointer;
+}
+
+.ne-chamber__viewport-controls button:hover,
+.ne-chamber__viewport-controls button:focus-visible {
+  border-color: var(--cherenkov);
+}
+
+.ne-chamber__viewport-controls button:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+.ne-chamber__viewport-zoom {
+  min-width: 5ch;
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-align: center;
+}
+
+@media (max-width: 48rem) {
+  .ne-chamber__viewport-controls {
+    bottom: var(--space-8);
+    left: var(--space-8);
+    max-width: calc(100% - var(--space-16));
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-chamber__viewport,
+  .ne-chamber__viewport * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

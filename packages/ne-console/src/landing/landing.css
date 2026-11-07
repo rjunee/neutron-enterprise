@@ -1,0 +1,183 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §4 — HOME, recomposed (CR-B5, screens/home.html). The queue leads; the four
+ * standing facts are demoted from the page's opening band to a 288px margin
+ * column beside it. Everything resolves through styles/tokens.css, so light and
+ * dark are one declaration set and the palette changes in exactly one file.
+ *
+ * TABLE, PILL and SKELETON classes are NOT redefined here — they are owned by
+ * styles/table.css and styles/system.css and emitted by primitives/DataTable and
+ * primitives/StatePill. This file styles only Home's own composition plus the two
+ * table modifiers the render adds (the breached-row edge and the deadline cell). */
+
+/* ---------------------------- the two-column floor --------------------------- */
+
+.ne-home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  gap: 20px;
+  align-items: start;
+}
+
+.ne-home__main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ------------------------------- the card ----------------------------------- *
+ * The card wrapper and its head are the shared recomposition primitive Home
+ * lands first; the other recomposed screens reuse the same class once it exists.
+ * Values track screens/home.html. */
+
+.ne-card {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  overflow: hidden;
+}
+
+.ne-cardhead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  padding: 13px var(--space-16) 11px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-cardhead__title {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+
+/* The served count summary — tabular so the digits do not jitter as it updates. */
+.ne-cardhead__count {
+  color: var(--text-dim);
+  font: var(--type-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-cardhead__spacer {
+  flex: 1 1 auto;
+}
+
+.ne-cardhead a {
+  font: var(--type-small);
+}
+
+/* ------------------------ the standing-facts margin ------------------------- */
+
+.ne-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ne-factcard {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-12) 14px 11px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.ne-factcard:hover {
+  text-decoration: none;
+  border-color: var(--rule-strong);
+  background: var(--panel-raised);
+}
+
+.ne-factcard__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+
+/* The affordance is drawn, not written: a chevron that the row is a link. */
+.ne-factcard__label::after {
+  content: "›";
+  margin-left: auto;
+  color: var(--text-dim);
+  font: 400 13px/16px var(--font-ui);
+}
+
+.ne-factcard__value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  font: 600 15px/22px var(--font-ui);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-factcard__sub {
+  font: var(--type-small);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A failed fact reads as quiet, not alarming: the em dash in dim text, never red. */
+.ne-factcard--error .ne-factcard__value {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+/* The loading skeleton sits in the value slot at the value's own height. Static:
+ * nothing animates while the reader waits (the perceived-speed bar). */
+.ne-factcard__shimmer {
+  width: 72px;
+  height: 12px;
+}
+
+/* --------------------------- Home's two table marks ------------------------- *
+ * DataTable emits the row; these two classes are the render's marks for a
+ * breached deadline. Only Home's queue produces them today. */
+
+.ne-tr--urgent {
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+
+.ne-due {
+  font-family: var(--font-mono);
+}
+
+.ne-due--overdue {
+  color: var(--amber);
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
+
+/* ----------------------------- narrow viewport ------------------------------ *
+ * One column: the queue keeps the lead, the facts fold to a 2×2 grid below it. */
+
+@media (max-width: 1180px) {
+  .ne-home {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ne-home__main {
+    order: 1;
+  }
+  .ne-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    order: 2;
+  }
+}

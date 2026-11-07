@@ -1,0 +1,21 @@
+{
+  "name": "fixture",
+  "snapshots": [
+    {
+      "is_full": true,
+      "principals": [
+        {"principal_id": "u-ada", "kind": "user", "display_name": "Ada"},
+        {"principal_id": "u-bob", "kind": "user", "display_name": "Bob"},
+        {"principal_id": "g-eng", "kind": "group", "display_name": "Engineering"}
+      ],
+      "edges": [
+        {"member_id": "u-ada", "group_id": "g-eng"},
+        {"member_id": "u-bob", "group_id": "g-eng"}
+      ],
+      "replaced_groups": ["g-eng"],
+      "replaced_members": [],
+      "removed_principal_ids": [],
+      "state": {}
+    }
+  ]
+}

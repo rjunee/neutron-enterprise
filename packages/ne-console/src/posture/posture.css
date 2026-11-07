@@ -1,0 +1,452 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §14 — POSTURE, recomposed (CR-B8, screens/posture.html). The answer leads:
+ * a claim strip of three served facts answers "is the deployment configured
+ * the way we claim" before any table, and the twelve constraints become a true
+ * annunciator panel — id, name, state, on a hairline 4x3 grid, quiet at rest.
+ *
+ * TABLE, PILL, HASHCHIP and DETAIL classes are NOT redefined here — they are
+ * owned by styles/table.css and styles/system.css and emitted by DataTable,
+ * StatePill and HashChip. `.ne-card`/`.ne-cardhead` are this recomposition's
+ * shared section wrapper, following the copy CR-B5 (landing.css) already
+ * established for the same two classes — each recomposed screen keeps its own
+ * copy rather than reaching into another screen's stylesheet.
+ *
+ * Every value resolves through styles/tokens.css, so light and dark are one
+ * declaration set and nothing here themes a colour of its own.
+ */
+
+.ne-posturepage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ------------------------------- the card ----------------------------------
+ * Matches landing.css's `.ne-card`/`.ne-cardhead` exactly (values track
+ * screens/posture.html, which specifies the same section-wrapper vocabulary). */
+
+.ne-card {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  overflow: hidden;
+}
+
+.ne-posturesection {
+  margin: 0 0 var(--space-16);
+}
+
+.ne-cardhead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  padding: 13px var(--space-16) 11px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-cardhead__title {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+
+.ne-cardhead__count {
+  color: var(--text-dim);
+  font: var(--type-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-cardhead__spacer {
+  flex: 1 1 auto;
+}
+
+.ne-cardhead a {
+  font: var(--type-small);
+}
+
+/* evidence-class line: one sentence naming what kind of proof a section is. */
+.ne-evclass {
+  margin: 0 0 var(--space-12);
+  font: var(--type-small);
+  color: var(--text-dim);
+  max-width: 860px;
+}
+
+.ne-evclass strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ne-posturesection__lede {
+  padding: var(--space-8) var(--space-16) 0;
+}
+
+/* ------------------------------ the claim strip -----------------------------
+ * The screen's whole question, answered in one row of three served facts,
+ * before any table. A compliance instrument at rest is quiet. */
+
+.ne-claims {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 0 var(--space-16);
+}
+
+.ne-claim {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 14px var(--space-16) 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+}
+
+.ne-claim__label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+
+.ne-claim__value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  font: 600 17px/24px var(--font-ui);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.ne-claim__sub {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-claim__sub time {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1180px) {
+  .ne-claims {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The egress claim's value: SEALED earns the one affirm colour on this strip;
+ * OPEN carries no colour override at all (the hard rule this screen exists to
+ * keep — a sanctioned allowlist is a configured state, never an alarm). */
+.ne-egressvalue--sealed {
+  color: var(--state-affirm);
+}
+
+/* --------------------------- the annunciator grid ---------------------------
+ * Twelve constraints as one instrument panel. At rest every tile is
+ * panel-quiet; state is a glyph plus a word, never a lit block. */
+
+.ne-annunciator {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border-top: 1px solid var(--rule);
+}
+
+@media (max-width: 1280px) {
+  .ne-annunciator {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .ne-annunciator {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* THE TILE NAMES ITS OWN SURFACE — ALL THREE PROPERTIES, ON PURPOSE.
+ *
+ * This rule used to declare `background` and nothing else, so the tile's
+ * BORDER and COLOUR came from the global bare-`button` element rule in
+ * styles.css — a rule `.ne-ann` does not name and whose authors did not know
+ * it was a client. When that rule was retuned the twelve tiles of the
+ * instrument panel silently changed outline colour with it, on a scan that had
+ * enumerated BARE buttons and concluded "no shipped delta". A classed element
+ * inherits the element rule PROPERTY BY PROPERTY for every property its own
+ * rules omit; counting bare buttons never could have seen this.
+ *
+ * `border: none` is the value, and it is a decision rather than the residue of
+ * one. The grid already draws every edge this tile has: `.ne-annunciator` is
+ * `gap: 1px` over `background: var(--rule)`, so the 1px between two tiles IS
+ * the hairline, and the enclosing `.ne-card` (1px solid var(--rule),
+ * overflow: hidden) draws the outer box. A per-tile border does not add a rule
+ * to that, it TRIPLES every internal one — border + gap + border — and it is
+ * the "lit block" the comment above and AnnunciatorRow's own header both say
+ * this panel must never draw.
+ *
+ * `color` is the tile's own text colour. Every word on it today sits in a span
+ * that sets its own (`__id`, `__name`, `__state--*`), so this paints nothing
+ * yet; it is here so that the day one does not, the answer is this rule's and
+ * not an element rule's. */
+.ne-ann {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 14px 10px;
+  border: none;
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ne-ann:hover {
+  background: var(--hover-tint);
+}
+
+.ne-ann:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+
+.ne-ann[aria-selected="true"] {
+  background: var(--selected-tint);
+  box-shadow: inset 2px 0 0 var(--cherenkov);
+}
+
+.ne-ann__id {
+  font: 500 11.5px/16px var(--font-mono);
+  color: var(--text-dim);
+}
+
+.ne-ann__name {
+  font: 600 12.5px/17px var(--font-ui);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ne-ann__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font: 600 10.5px/15px var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ne-ann__state--pass {
+  color: var(--green);
+}
+
+.ne-ann__state--fail {
+  color: var(--red);
+}
+
+.ne-ann__state--manual {
+  color: var(--state-gated);
+}
+
+/* The one fault-coloured mark on this screen — a failed tile earns it TWICE
+ * (state word + edge), because it is deliberately the only state with two. */
+.ne-ann--fail {
+  box-shadow: inset 2px 0 0 var(--red);
+  background: var(--red-tint);
+}
+
+/* ------------------------- split: grid + docked pane ------------------------
+ * The record pane is docked and persistent, not a route change: a tile click
+ * fills it, the grid never moves. Collapses to one column while nothing is
+ * selected — a quiet instrument reserves no furniture for a pane with nothing
+ * in it. */
+
+.ne-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--detail-width);
+  align-items: stretch;
+}
+
+.ne-split--nopane {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ne-split__table {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+@media (max-width: 1280px) {
+  .ne-split {
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+  }
+
+  .ne-record {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--detail-width);
+    z-index: 5;
+    box-shadow: var(--shadow-pane);
+  }
+}
+
+/* the docked record pane — bespoke to this screen (NOTES.md: "the panel never
+ * moves"), unlike the app-wide overlay <DetailPane>, which is always a fixed
+ * overlay regardless of viewport. This pane is in-flow at wide viewports and
+ * only becomes an overlay below the split's own breakpoint. */
+.ne-record {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--rule-strong);
+  background: var(--panel);
+  min-width: 0;
+}
+
+.ne-record__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: 14px var(--space-16) 12px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-raised);
+}
+
+.ne-record__title {
+  margin: 0;
+  font: 600 16px/22px var(--font-ui);
+  color: var(--text);
+}
+
+.ne-record__subtitle {
+  margin: var(--space-4) 0 0;
+  font: 400 12px/16px var(--font-mono);
+  color: var(--text-dim);
+}
+
+.ne-record__close {
+  flex: none;
+  color: var(--text-dim);
+  font: var(--type-section);
+  line-height: 1;
+  padding: 2px var(--space-4);
+  border-radius: var(--radius);
+}
+
+.ne-record__close:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+
+.ne-record__close:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+
+.ne-record__body {
+  flex: 1 1 auto;
+  padding: var(--space-16);
+  overflow-y: auto;
+}
+
+.ne-fields {
+  margin: 0 0 var(--space-16);
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  row-gap: var(--space-8);
+  column-gap: var(--space-12);
+}
+
+.ne-fields dt {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  padding-top: 2px;
+}
+
+.ne-fields dd {
+  margin: 0;
+  font: 400 13px/19px var(--font-ui);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ne-fields dd.ne-mono {
+  font: 400 12px/19px var(--font-mono);
+}
+
+/* ----------------------- network + configuration facts ----------------------
+ * A definition list, not the old label/value rows — matches the render's
+ * `.ne-kv` vocabulary exactly. */
+
+.ne-kv {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.ne-kv > div {
+  display: contents;
+}
+
+.ne-kv dt {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  padding: 11px var(--space-16);
+  border-top: 1px solid var(--rule);
+}
+
+.ne-kv dd {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text);
+  padding: 10px var(--space-16) 10px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.ne-kv > div:first-child dt,
+.ne-kv > div:first-child dd {
+  border-top: none;
+}
+
+/* The allowed-host table takes the width it needs, not the page's. */
+.ne-kv .ne-table__wrap {
+  max-width: var(--palette-width);
+}
+
+.ne-plate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: 12px var(--space-16);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-plate .ne-hashchip {
+  font: var(--type-cell-mono);
+  padding: var(--space-4) 10px;
+}
+
+.ne-plate__since {
+  font: var(--type-small);
+  color: var(--text-dim);
+}

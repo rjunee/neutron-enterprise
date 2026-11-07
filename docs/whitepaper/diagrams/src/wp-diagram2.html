@@ -1,0 +1,133 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:#fff;}
+  body{width:1376px;height:768px;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{position:relative;width:1376px;height:768px;}
+
+  .title{position:absolute;top:26px;left:36px;font-size:17px;font-weight:600;
+    letter-spacing:.07em;color:#1c333c;}
+
+  .band{position:absolute;left:36px;width:1304px;border-radius:10px;
+    border:1px solid #cdd8dc;display:flex;align-items:center;}
+  .b-grey{background:#e6ebee;}
+  .b-teal{background:#e2eeed;}
+  .b-know{background:linear-gradient(90deg,#dfeceb 0%,#e4efee 100%);}
+
+  .lname{width:196px;flex:none;padding-left:20px;font-size:13.5px;font-weight:600;
+    letter-spacing:.045em;color:#0f766e;line-height:1.3;}
+  .lname span{display:block;font-weight:400;font-size:12px;color:#4d6a72;letter-spacing:.02em;}
+
+  .cells{display:flex;gap:14px;flex:1;padding-right:20px;}
+  .cell{flex:1;height:42px;border:1.4px solid #24404a;border-radius:7px;background:#fff;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:13.5px;color:#1c333c;line-height:1.25;padding:0 6px;}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;}
+  .gov{border-color:#c08a2e;}
+
+  svg{position:absolute;left:0;top:0;width:1376px;height:768px;}
+</style>
+<div class="wrap">
+  <div class="title">NEUTRON ENTERPRISE — LAYERED ARCHITECTURE</div>
+
+  <div class="band b-grey" style="top:60px;height:70px">
+    <div class="lname">INTERFACES</div>
+    <div class="cells">
+      <div class="cell">Web Console</div>
+      <div class="cell">Slack / Teams adapters</div>
+    </div>
+  </div>
+
+  <div class="band b-grey" style="top:146px;height:70px">
+    <div class="lname">AGENT RUNTIME</div>
+    <div class="cells">
+      <div class="cell mono">ne-runtime</div>
+      <div class="cell">sub-agent dispatch</div>
+      <div class="cell">scheduler</div>
+      <div class="cell">HITL approval tiers 0–3</div>
+      <div class="cell">agent memory</div>
+    </div>
+  </div>
+
+  <div class="band b-grey" style="top:232px;height:70px">
+    <div class="lname">GOVERNANCE</div>
+    <div class="cells">
+      <div class="cell gov mono">ne-govern (PDP)</div>
+      <div class="cell gov">deterministic guardrails</div>
+      <div class="cell gov" style="flex-direction:column;line-height:1.15">grounding gate<span style="font-size:10.5px;color:#8a6d3b;margin-top:2px">profile-scoped</span></div>
+      <div class="cell gov">PII redaction</div>
+      <div class="cell gov mono">ne-audit (hash-chained)</div>
+    </div>
+  </div>
+
+  <div class="band b-know" style="top:318px;height:70px">
+    <div class="lname">KNOWLEDGE<span>(read + write)</span></div>
+    <div class="cells">
+      <div class="cell mono">ne-brain — T1 hybrid RAG</div>
+      <div class="cell mono">ne-brain-graph — T2</div>
+      <div class="cell mono">ne-brain-ontology — T3</div>
+      <div class="cell mono">ne-schema</div>
+      <div class="cell mono">ne-permissions</div>
+    </div>
+  </div>
+
+  <div class="band b-grey" style="top:404px;height:70px">
+    <div class="lname">INTEGRATION</div>
+    <div class="cells">
+      <div class="cell mono">ne-connect</div>
+      <div class="cell mono">ne-mcp</div>
+      <div class="cell">governed write-back</div>
+    </div>
+  </div>
+
+  <div class="band b-teal" style="top:490px;height:70px">
+    <div class="lname">MODEL PLANE</div>
+    <div class="cells">
+      <div class="cell mono">ne-gateway</div>
+      <div class="cell mono">ne-serve (open-weight)</div>
+    </div>
+  </div>
+
+  <div class="band b-teal" style="top:576px;height:70px">
+    <div class="lname">PLATFORM</div>
+    <div class="cells">
+      <div class="cell mono">ne-identity</div>
+      <div class="cell mono">ne-secrets</div>
+      <div class="cell mono">ne-eval</div>
+      <div class="cell mono">ne-obs</div>
+      <div class="cell mono">ne-flywheel</div>
+    </div>
+  </div>
+
+  <div class="band b-grey" style="top:662px;height:70px">
+    <div class="lname">DEPLOY</div>
+    <div class="cells">
+      <div class="cell">Compose — pilot</div>
+      <div class="cell">Helm / Terraform — prod</div>
+      <div class="cell">air-gap bundle</div>
+    </div>
+  </div>
+
+  <svg viewBox="0 0 1376 768">
+    <defs><marker id="v" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#0d7168"/></marker></defs>
+    <g stroke="#0d7168" stroke-width="1.5" fill="none" opacity=".85">
+      <path d="M420,130 L420,140" marker-end="url(#v)"/>
+      <path d="M700,130 L700,140" marker-end="url(#v)"/>
+      <path d="M420,216 L420,226" marker-end="url(#v)"/>
+      <path d="M700,216 L700,226" marker-end="url(#v)"/>
+      <path d="M980,216 L980,226" marker-end="url(#v)"/>
+      <path d="M420,302 L420,312" marker-end="url(#v)"/>
+      <path d="M700,302 L700,312" marker-end="url(#v)"/>
+      <path d="M980,302 L980,312" marker-end="url(#v)"/>
+      <path d="M560,388 L560,398" marker-end="url(#v)"/>
+      <path d="M840,388 L840,398" marker-end="url(#v)"/>
+      <path d="M560,474 L560,484" marker-end="url(#v)"/>
+      <path d="M840,474 L840,484" marker-end="url(#v)"/>
+      <path d="M560,560 L560,570" marker-end="url(#v)"/>
+      <path d="M840,560 L840,570" marker-end="url(#v)"/>
+      <path d="M560,646 L560,656" marker-end="url(#v)"/>
+      <path d="M840,646 L840,656" marker-end="url(#v)"/>
+    </g>
+  </svg>
+</div>

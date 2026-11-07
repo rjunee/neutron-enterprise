@@ -1,0 +1,428 @@
+name: no-egress
+
+# NE-073 — the C1/C2 no-egress CI harness. Installs the FULL NE-070 pilot
+# stack inside a sealed, no-egress network namespace and proves: the frontier
+# model lane is dead (both by policy AND by network topology) while the
+# open-weight CPU-vLLM lane keeps serving real inference — fully air-gapped.
+# See deploy/airgap/README.md for the full mechanism + threat model.
+#
+# Two lanes, one job (NE-CI-NOEGRESS-VLLM-FLAKE):
+#   PR lane (blocking): stage, seal, prove-dead, Phase A (install + TLS smoke
+#   + fail-closed container canary), B1, B2, re-assert seal.
+#   Full lane (push to main on every merge, weekly cron, workflow_dispatch):
+#   adds Phase C (vLLM-CPU open-weight bring-up), moved off PR-blocking by
+#   NE-CI-NOEGRESS-VLLM-FLAKE because its EngineCore/determine_available_memory
+#   bring-up flake (~18% first-attempt failure on GitHub-hosted runners, PRs
+#   #319/#320/#328/#331, always green on re-run) was training reviewers to
+#   distrust the gate.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "deploy/**"
+      - "packages/ne-gateway/**"
+      - "packages/ne-serve/**"
+      - "packages/ne-secrets/**"
+      - "tools/ne-cli/**"
+      - ".github/workflows/no-egress.yml"
+  schedule:
+    - cron: "23 5 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: no-egress-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-egress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      # The ONE cross-boundary channel this design accepts: a unix control
+      # socket for the inner dockerd (unix sockets bypass netns routing —
+      # this is control-plane only, never a data-plane egress path).
+      NE_AIRGAP_DOCKER_HOST: unix:///mnt/ne-airgap/run/docker.sock
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      # `ne up`'s preflight requires >= 10 GiB free on `/` (up.py: a sound
+      # production check — a single-VM install keeps docker's data-root on `/`).
+      # This harness instead points the inner dockerd's data-root at /mnt (the
+      # runner's big ephemeral disk), so `/` only carries the uv venv + caches
+      # and was down to ~2 GiB free by Phase A. Reclaim the large preinstalled
+      # toolchains we never use (Android SDK ~10 GiB, .NET, GHC) so `/` clears
+      # the preflight. (Followup NE-070-FOLLOWUP: make the preflight stat the
+      # docker data-root's filesystem rather than `/` unconditionally.)
+      - name: Free disk space on / (for the ne up >=10 GiB preflight)
+        run: |
+          set -uo pipefail
+          echo "before:"; df -h / | tail -1
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+            /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          docker image prune --all --force >/dev/null 2>&1 || true
+          echo "after:"; df -h / | tail -1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+
+      - name: Static harness guardian
+        run: uv run pytest deploy/airgap/tests/test_static_harness.py -q
+
+      - name: Type/lint harness
+        run: |
+          set -euo pipefail
+          uv run pyright deploy/airgap
+          uv run ruff check deploy/airgap
+
+      - name: Make CI bundle
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /mnt/ne-airgap
+          sudo chown "$USER" /mnt/ne-airgap
+          uv run python deploy/airgap/scripts/make_ci_bundle.py \
+            --out /mnt/ne-airgap/bundle \
+            --store-dir /mnt/ne-airgap/secret-store
+
+      - name: "Stage: netns + inner dockerd"
+        run: deploy/airgap/scripts/netns-stage.sh
+
+      - name: "Stage: anti-vacuous canary (must SUCCEED)"
+        run: |
+          set -euo pipefail
+          docker -H "$NE_AIRGAP_DOCKER_HOST" pull \
+            curlimages/curl@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+          deploy/airgap/scripts/canary.sh expect-reachable https://api.anthropic.com
+
+      # Build the first-party ne-app image INSIDE the staging window (egress up),
+      # BEFORE the seal and BEFORE `compose pull`. The image has no registry
+      # digest (owner dec ii build-in-seal); its local image id is captured to
+      # ne-app.iid and later asserted against the running container in Phase A
+      # (the local-digest pin). Ordered before the pull so `compose pull` —
+      # combined with the service's pull_policy: never — cleanly skips ne-api.
+      - name: "Stage: build ne-app image"
+        run: |
+          set -euo pipefail
+          DOCKER_HOST="$NE_AIRGAP_DOCKER_HOST" deploy/airgap/scripts/build-ne-app.sh \
+            --iidfile /mnt/ne-airgap/ne-app.iid
+
+      - name: "Stage: build admitted PostgreSQL + AGE image"
+        run: |
+          set -euo pipefail
+          # The admitted image source is pinned by its git tree hash: any change
+          # under deploy/docker/ne-postgres-age fails here until re-admitted.
+          # The same tree hash is the image's source-rev label, which `ne up`
+          # admits as its CI identity (_CI_NE_POSTGRES_AGE_SOURCE_REVISION).
+          admitted_tree="8b60ae265b5d08a794a489492e7709f0da775734"
+          test "$(git rev-parse HEAD:deploy/docker/ne-postgres-age)" = "$admitted_tree"
+          DOCKER_HOST="$NE_AIRGAP_DOCKER_HOST" \
+            NE_POSTGRES_AGE_SOURCE_REV="$admitted_tree" \
+            deploy/airgap/scripts/build-ne-postgres-age.sh \
+              --iidfile /mnt/ne-airgap/ne-postgres-age.iid
+          image_id="$(cat /mnt/ne-airgap/ne-postgres-age.iid)"
+          [[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test "$image_id" = "$(docker -H "$NE_AIRGAP_DOCKER_HOST" image inspect \
+            --format='{{.Id}}' ne-postgres-age:18.6-1.7.0)"
+          test "$admitted_tree" = "$(docker -H "$NE_AIRGAP_DOCKER_HOST" image inspect \
+            --format='{{ index .Config.Labels "org.neutron.ne-postgres-age.source-rev" }}' \
+            "$image_id")"
+          test "linux/amd64" = "$(docker -H "$NE_AIRGAP_DOCKER_HOST" image inspect \
+            --format='{{.Os}}/{{.Architecture}}' "$image_id")"
+
+      - name: "Stage: pull stack images"
+        run: |
+          set -euo pipefail
+          DOCKER_HOST="$NE_AIRGAP_DOCKER_HOST" deploy/airgap/scripts/compose-ci.sh \
+            --profile core --profile brain --profile obs --profile cpu pull
+          docker -H "$NE_AIRGAP_DOCKER_HOST" pull \
+            curlimages/curl@sha256:7c12af72ceb38b7432ab85e1a265cff6ae58e06f95539d539b654f2cfa64bb13
+
+      - name: "Stage: pre-stage tei-embed hub cache (NE-TEI-GEN)"
+        run: |
+          set -euo pipefail
+          # NE-TEI-GEN model (owner decision 2026-07-19 — nothing is hosted): the
+          # fast-ort ONNX pair is a regenerable, parity-gated build artifact, not a
+          # release asset. Egress-OK consumers generate-on-demand + cache it; a
+          # sealed deploy carries it in the bundle. The REAL heavy export (~2.3 GB
+          # download + fp32 export) is deliberately too heavy for this 7 GB runner,
+          # so this workflow stages SNAPSHOT-ONLY (--no-generate) — tei-embed stays
+          # on the candle CPU fallback, and the ORT-log assertion below + the
+          # phase-B1 parity smoke both self-deselect (the /mnt/ne-airgap/.onnx-staged
+          # marker is absent). The generate+cache WIRING is proven cheaply by the
+          # mocked phase-A assertion in the next step (no real export in CI).
+          uv run python -m ne.serve stage-tei Qwen/Qwen3-Embedding-0.6B \
+            --dest /mnt/ne-airgap/tei-cache --no-generate
+          uv run python -m ne.serve stage-tei-verify --dest /mnt/ne-airgap/tei-cache
+
+          # Pre-create the named tei-embed-cache volume WITH compose's labels — a
+          # bare `docker volume create` would leave it unlabeled and a later
+          # `compose up` would refuse to treat it as the project's own volume.
+          deploy/airgap/scripts/compose-ci.sh --profile brain create tei-embed
+
+          TEI_IMAGE="$(deploy/airgap/scripts/compose-ci.sh --profile brain config --format json \
+            | jq -r '.services["tei-embed"].image')"
+          docker -H "$NE_AIRGAP_DOCKER_HOST" run --rm \
+            -v ne-pilot_tei-embed-cache:/data \
+            -v /mnt/ne-airgap/tei-cache:/staged:ro \
+            --entrypoint /bin/cp "$TEI_IMAGE" -a /staged/. /data/
+
+      - name: "Assert: TEI-ONNX generate+cache wiring (mocked)"
+        run: |
+          set -euo pipefail
+          # NE-TEI-GEN: the real generate+cache path is too heavy to run in CI
+          # (~2.3 GB download + fp32 export), so the staging step above stages
+          # snapshot-only. This cheap, fully-mocked assertion proves the wiring —
+          # cache probe/generate/AIR_GAP fail-close + ne-serve's ensure-cached
+          # subprocess seam — stands in for that skipped heavy export.
+          uv run pytest \
+            packages/ne-serve/tests/test_stage_tei_generate.py \
+            tools/model-export/tests/test_cache.py -q
+
+      - name: "Stage: pre-warm TEI weights (sequential, 7GB runner)"
+        run: |
+          set -euo pipefail
+          # The TEI weight download from the HF hub is done HERE, while staging
+          # egress is still up, so the later SEALED phases can run fully offline.
+          # HF's Xet/CDN backend intermittently drops the content-range header on
+          # a ranged safetensors fetch ("Could not download model.safetensors:
+          # Header content-range is missing" → TEI then 404s on the pytorch_model
+          # fallback and aborts) — a transient network flake, not a config error
+          # (the very same fetch succeeds on a retry). Retry the bring-up up to 3x;
+          # the named tei-*-cache volume persists partial progress across attempts.
+          prewarm() {
+            local svc="$1" attempt
+            for attempt in 1 2 3; do
+              echo "== pre-warm ${svc}: attempt ${attempt}/3 =="
+              if NE_PILOT_HF_OFFLINE=0 deploy/airgap/scripts/compose-ci.sh \
+                   --profile brain up -d --wait "${svc}"; then
+                return 0
+              fi
+              echo "== pre-warm ${svc}: attempt ${attempt} failed (likely a transient HF weight-download hiccup) — resetting container (cache volume kept) and retrying =="
+              deploy/airgap/scripts/compose-ci.sh rm -sf "${svc}" || true
+              sleep 5
+            done
+            echo "ERROR: pre-warm ${svc} failed after 3 attempts" >&2
+            return 1
+          }
+          prewarm tei-embed
+          # NE-TEI-ONNX: positive-Ready + absence-of-candle-fallback-line log
+          # assertion — never a vacuous pass. The positive ORT-start string is
+          # TEI-version-specific and NOT asserted directly; only the documented
+          # rehearsal failure signature (Could not start ORT backend / Starting
+          # Qwen3 model on Cpu) is asserted absent, and ONLY when an ONNX cache
+          # was actually staged this run (the manifest-absent path legitimately
+          # stays on candle).
+          TEI_EMBED_LOG="$(deploy/airgap/scripts/compose-ci.sh logs --no-color tei-embed)"
+          if ! echo "$TEI_EMBED_LOG" | grep -q Ready; then
+            echo "::error::tei-embed never reported Ready" >&2
+            exit 1
+          fi
+          # Only assert the fast-ORT backend when the ONNX artifact was ACTUALLY
+          # staged this run (marker set by the staging step iff a real ONNX pair
+          # was staged — not in this workflow — heavy export skipped with
+          # --no-generate). Snapshot-only, tei-embed legitimately runs on candle.
+          if [ -f /mnt/ne-airgap/.onnx-staged ]; then
+            if echo "$TEI_EMBED_LOG" | grep -q 'Could not start ORT backend'; then
+              echo "::error::tei-embed logged the ORT-backend-start failure despite a staged ONNX cache" >&2
+              exit 1
+            fi
+            if echo "$TEI_EMBED_LOG" | grep -q 'Starting Qwen3 model on Cpu'; then
+              echo "::error::tei-embed fell back to the candle CPU backend despite a staged ONNX cache" >&2
+              exit 1
+            fi
+          fi
+          deploy/airgap/scripts/compose-ci.sh stop tei-embed
+          prewarm tei-rerank
+          deploy/airgap/scripts/compose-ci.sh stop tei-rerank
+
+      - name: "Stage: pre-stage vLLM weights"
+        run: |
+          set -euo pipefail
+          uv run python -m ne.serve download Qwen/Qwen3-0.6B --dest /mnt/ne-airgap/models
+          uv run python -m ne.serve verify Qwen/Qwen3-0.6B --dest /mnt/ne-airgap/models
+
+      - name: "SEAL (point of no return)"
+        run: deploy/airgap/scripts/netns-seal.sh
+
+      - name: "Prove egress dead (must FAIL closed)"
+        run: |
+          set -euo pipefail
+          deploy/airgap/scripts/canary.sh expect-dead https://api.anthropic.com
+          deploy/airgap/scripts/canary.sh expect-dead https://api.openai.com
+          # Raw-IP probe MUST be plain HTTP: expect-dead treats any nonzero curl
+          # rc as "blocked", but https://<bare-ip> fails TLS cert validation (rc 60)
+          # even when egress is OPEN — a false pass on the core no-egress proof
+          # (Codex NE-073 P2). Plain HTTP can only fail on connectivity.
+          deploy/airgap/scripts/canary.sh expect-dead http://1.1.1.1
+
+      - name: "Phase A: air-gapped install via real installer"
+        run: |
+          set -euo pipefail
+          sudo ip netns exec ne-airgap sudo -u "$(id -un)" env \
+            HOME="$HOME" PATH="$PATH" DOCKER_HOST="$NE_AIRGAP_DOCKER_HOST" \
+            NE_AIRGAP_DOCKER_HOST="$NE_AIRGAP_DOCKER_HOST" NE_AIRGAP_CI=1 \
+            CI=true GITHUB_ACTIONS=true NE_PILOT_HF_OFFLINE=1 \
+            "$PWD/.venv/bin/ne" up --profile core --profile obs \
+              --ci-age-iidfile /mnt/ne-airgap/ne-postgres-age.iid \
+              --bundle /mnt/ne-airgap/bundle
+          deploy/airgap/scripts/run-airgap-pytest.sh deploy/airgap/tests/test_airgap_phase_a.py
+
+      - name: "Phase A: in-namespace TLS smoke"
+        run: >
+          sudo ip netns exec ne-airgap curl -ks
+          --resolve airgap.ci.local:443:127.0.0.1
+          https://airgap.ci.local/ -o /dev/null
+
+      - name: "Phase A: container canary via the inner dockerd default bridge (must FAIL closed)"
+        run: deploy/airgap/scripts/canary.sh expect-dead https://api.anthropic.com
+
+      - name: "Phase A: tear down core+obs (keep volumes)"
+        run: |
+          set -euo pipefail
+          sudo ip netns exec ne-airgap sudo -u "$(id -un)" env \
+            HOME="$HOME" PATH="$PATH" DOCKER_HOST="$NE_AIRGAP_DOCKER_HOST" NE_PILOT_HF_OFFLINE=1 \
+            "$PWD/.venv/bin/ne" down --bundle /mnt/ne-airgap/bundle
+
+      - name: "Phase B1: brain qdrant + tei-embed (sealed, offline)"
+        run: |
+          set -euo pipefail
+          NE_PILOT_HF_OFFLINE=1 deploy/airgap/scripts/compose-ci.sh --profile brain up -d --wait qdrant tei-embed
+          # NE-TEI-ONNX anti-vacuous deselect: the parity smoke FAILS (never
+          # skips) if selected while the golden vectors are unpublished — so it
+          # is deselected at the WORKFLOW level, with an echoed reason, ONLY
+          # while that file is absent. 'deselected' does not trip
+          # run-airgap-pytest.sh's fail-on-'skipped' gate; a pytest.skip would.
+          DESELECT_ARGS=""
+          if [ ! -f tools/model-export/golden/qwen3-embedding-0.6b.json ]; then
+            echo "::warning::golden vectors not committed (tools/model-export/golden/qwen3-embedding-0.6b.json — generate at an egress-OK staging window via \`ne-model-export export qwen3-embedding-0.6b\` and commit them) — deselecting test_tei_embed_parity_smoke with reason; it FAILS (never skips) if ever selected while unstaged."
+            DESELECT_ARGS="--deselect deploy/airgap/tests/test_airgap_phase_b1.py::test_tei_embed_parity_smoke"
+          fi
+          deploy/airgap/scripts/run-airgap-pytest.sh deploy/airgap/tests/test_airgap_phase_b1.py $DESELECT_ARGS
+          deploy/airgap/scripts/compose-ci.sh stop tei-embed
+
+      - name: "Phase B2: brain tei-rerank (sealed, offline)"
+        run: |
+          set -euo pipefail
+          NE_PILOT_HF_OFFLINE=1 deploy/airgap/scripts/compose-ci.sh --profile brain up -d --wait tei-rerank
+          deploy/airgap/scripts/run-airgap-pytest.sh deploy/airgap/tests/test_airgap_phase_b2.py
+          deploy/airgap/scripts/compose-ci.sh --profile brain down
+
+      - name: "Phase C: open-weight lane (sealed)"
+        # NE-CI-NOEGRESS-VLLM-FLAKE: this step no longer runs on pull_request.
+        # vLLM CPU engine-core init intermittently exits(1) inside the sealed
+        # netns (SPEC §12 tracked flake — PRs #89/#101/…, ~18% first-attempt
+        # failure on GitHub-hosted runners per PRs #319/#320/#328/#331) and
+        # always clears on a re-run of the byte-identical commit — a
+        # resource-constraint artifact of the runner, not a code fault. A
+        # REQUIRED gate that cries wolf trains reviewers to wave it through,
+        # so this nondeterministic bring-up is scoped OFF the PR-blocking
+        # lane and onto every push to main, the weekly cron, and manual
+        # dispatch (`gh workflow run no-egress.yml --ref <branch>` gives
+        # reviewers an on-demand full-lane run on any PR branch). The retry
+        # budget below is FROZEN AT 5 — NE-071c-FU already raised it 3→5
+        # without curing the flake; raising it again is an explicitly
+        # rejected fix (see deploy/airgap/tests/test_static_harness.py::
+        # test_phase_c_retry_budget_frozen_at_five).
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          # Bounded bring-up retry mirroring the TEI pre-warm retry above:
+          # reset the container between attempts; the pre-staged weights
+          # under /mnt/ne-airgap/models are a read-only bind mount and survive.
+          # The Phase-C pytest proof below is UNCHANGED — retry the bring-up,
+          # never the assertion.
+          export NE_VLLM_WEIGHTS_ROOT=/mnt/ne-airgap/models
+          for attempt in 1 2 3 4 5; do
+            echo "== vllm-cpu bring-up: attempt ${attempt}/5 =="
+            if deploy/airgap/scripts/compose-ci.sh --profile cpu up -d --wait vllm-cpu; then
+              break
+            fi
+            if [ "${attempt}" -eq 5 ]; then
+              # Annotation-only classifier (NE-CI-NOEGRESS-VLLM-FLAKE): grep
+              # the final attempt's logs for the tracked signature so a human
+              # can triage without re-reading raw logs. This NEVER changes
+              # the outcome — both branches fall through to the unchanged
+              # `exit 1` below, so an UNKNOWN failure (a real regression)
+              # stays exactly as loud as today, and even a signature-matching
+              # failure is still a FAILED run, never auto-dismissed.
+              FINAL_LOGS="$(deploy/airgap/scripts/compose-ci.sh --profile cpu logs --no-color --tail 200 vllm-cpu 2>&1 || true)"
+              # Conjunctive match ONLY (Argus NE-CI-NOEGRESS-VLLM-FLAKE round-1
+              # P1): a bare 'EngineCore' alternative was dropped because it is
+              # a generic per-line log prefix ("(EngineCore_DP0 pid=...)")
+              # that any vLLM startup emits, including a genuine config
+              # regression's failure log — matching it alone would classify
+              # almost every Phase C failure as "known flake". The tracked
+              # signature is specifically the determine_available_memory
+              # probe raising RuntimeError: cancelled via shm_broadcast, so
+              # both halves must be present together.
+              if echo "$FINAL_LOGS" | grep -q 'determine_available_memory' && echo "$FINAL_LOGS" | grep -qE 'shm_broadcast|RuntimeError: cancelled'; then
+                echo "::warning title=vllm-cpu bring-up exhausted 5 attempts::signature matches the SPEC-tracked runner-resource flake (EngineCore death in determine_available_memory); still a failed run — re-triage, do not auto-dismiss"
+              else
+                echo "::error title=vllm-cpu bring-up exhausted 5 attempts::UNKNOWN failure signature — does NOT match the tracked flake; treat as a real regression"
+              fi
+              echo "ERROR: vllm-cpu bring-up failed after 5 attempts" >&2
+              exit 1
+            fi
+            echo "== vllm-cpu attempt ${attempt} failed (known transient engine-core init flake) — resetting container (weights kept) and retrying =="
+            # Capture the failing container's state + engine-core logs BEFORE the
+            # reset destroys them. Without this, a retry that eventually SUCCEEDS
+            # leaves no trace of why the earlier attempts died, so the flake stays
+            # un-root-caused (SPEC §11 NE-071c-FU / task #26). The prime suspect —
+            # EngineCore subprocess exit(1) vs OOM(137) vs shm-exhaustion — is only
+            # distinguishable from these logs. Diagnostics only; never gates.
+            echo "-- vllm-cpu state (attempt ${attempt}) --"
+            deploy/airgap/scripts/compose-ci.sh --profile cpu ps -a vllm-cpu 2>&1 | sed "s/^/[a${attempt}] /" || true
+            echo "-- vllm-cpu logs, last 150 (attempt ${attempt}) --"
+            deploy/airgap/scripts/compose-ci.sh --profile cpu logs --no-color --tail 150 vllm-cpu 2>&1 | sed "s/^/[a${attempt}] /" || true
+            deploy/airgap/scripts/compose-ci.sh rm -sf vllm-cpu || true
+            sleep 10
+          done
+          deploy/airgap/scripts/run-airgap-pytest.sh deploy/airgap/tests/test_airgap_phase_c.py
+
+      - name: "Phase C: deselected on pull_request (open-weight lane runs on push/schedule/dispatch)"
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "::notice::Phase C (vLLM-CPU open-weight bring-up) is deselected on pull_request per NE-CI-NOEGRESS-VLLM-FLAKE — its EngineCore/determine_available_memory bring-up flake (~18% first-attempt failure on GitHub-hosted runners) was training reviewers to distrust this REQUIRED gate. The open-weight lane still runs on every push to main, the weekly cron, and manual dispatch. Deterministic open-weight coverage (cpu-profile image pull, vLLM weight download + hash verify) already ran above and still blocks this PR. To force the full lane on this branch: gh workflow run no-egress.yml --ref <branch>"
+
+      - name: "Re-assert seal + report counters"
+        run: |
+          set -euo pipefail
+          deploy/airgap/scripts/netns-assert-sealed.sh
+          sudo ip netns exec ne-airgap nft list table inet ne_airgap_seal
+
+      # Capture per-container app logs BEFORE teardown removes the containers —
+      # dockerd.log alone can't explain an in-container failure (e.g. a TEI
+      # model OOM/crash, exit 137). Runs on failure only, before Teardown.
+      - name: Container logs (on failure, before teardown)
+        if: failure()
+        run: |
+          set +e
+          echo "== container inventory =="
+          docker -H "$NE_AIRGAP_DOCKER_HOST" ps -a
+          for cid in $(docker -H "$NE_AIRGAP_DOCKER_HOST" ps -aq); do
+            name=$(docker -H "$NE_AIRGAP_DOCKER_HOST" inspect --format '{{.Name}} state={{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$cid")
+            echo "==== logs: $name ($cid) ===="
+            docker -H "$NE_AIRGAP_DOCKER_HOST" logs --tail 120 "$cid" 2>&1
+          done
+          true
+
+      - name: Teardown (always)
+        if: always()
+        run: deploy/airgap/scripts/netns-down.sh
+
+      - name: Diagnostics (on failure)
+        if: failure()
+        run: |
+          docker -H "$NE_AIRGAP_DOCKER_HOST" ps -a || true
+          tail -n 200 /mnt/ne-airgap/dockerd.log || true
+          dmesg | tail -n 50 || true

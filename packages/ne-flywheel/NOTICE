@@ -1,0 +1,8 @@
+Neutron Enterprise — ne-flywheel
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  sqlalchemy / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+  greenlet (transitive, platform-conditional) / MIT / https://github.com/python-greenlet/greenlet

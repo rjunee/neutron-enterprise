@@ -1,0 +1,967 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * THE TRANSCRIPT — one turn is one legible unit.
+ * Composed from design/round3/transcript/ask.html; the render governs.
+ *
+ * Reading order the design enforces, loudest to quietest:
+ *   1. the answer      — unboxed prose at --type-lead. Nothing else in a turn
+ *                        is unboxed prose; that is the whole of its emphasis.
+ *   2. a promoted gate — the only card that may carry a hue: a step pending a
+ *                        human decision, or refused. Never folds.
+ *   3. the question    — raised bubble, the turn's opening edge.
+ *   4. the work band   — routine allowed steps, demoted into one quiet row.
+ *   5. the receipt     — one hairline-anchored footer, and the turn boundary.
+ *
+ * THREE DELIBERATE DIVERGENCES FROM THE RENDER, each forced by a guardian the
+ * render's standalone :root does not answer to. Named here so review checks the
+ * reason, not the resemblance:
+ *
+ *   (a) --text-faint is never a text colour. The render draws the chevron and
+ *       the "·" separators in it; measured, it is 3.59:1 dark / 3.07:1 light and
+ *       fails AA (contrast-guardian.test.ts bans `color: var(--text-faint)`
+ *       outright). They draw in --text-dim: 7.55:1 dark / 6.70:1 light.
+ *   (b) CLOSED. --amber-line / --red-line are now declared in tokens.css in
+ *       both themes, so a promoted card's edge draws at the render's own
+ *       half-alpha strength rather than at full saturation.
+ *   (c) Type resolves through --type-* tokens, so a handful of the render's
+ *       bespoke sizes (12px / 11.5px / 10.5px) land on the nearest declared
+ *       token. A raw px font size is a token-hardcode violation and no such
+ *       declaration exists anywhere else in the package.
+ *
+ * MOTION: one transition, on the chevron, on `transform` only, at --motion-snap
+ * and the single damped curve. The band is a native <details>: no JS
+ * measurement, no height animation, nothing that costs a frame to open. */
+
+/* ---------- the thread ---------- */
+
+.tr-turns {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 76ch;
+  width: 100%;
+}
+
+.tr-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 0 0;
+}
+
+/* ---------- the question — the turn's opening edge ---------- */
+
+.tr-q {
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  max-width: 82%;
+}
+
+.tr-q__bubble {
+  background: var(--panel-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: 11px 15px;
+  font: var(--type-body);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.tr-q__meta {
+  font: var(--type-small);
+  color: var(--text-dim);
+  padding-right: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- the work band — routine steps, demoted and folded ---------- */
+
+.tr-work {
+  align-self: stretch;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+/* The summary line IS the audit précis: count · names · verdict tally · time.
+ * Everything a reader needs without opening anything. */
+.tr-work__sum {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 12px 6px 10px;
+  cursor: pointer;
+  list-style: none;
+  font: var(--type-small);
+  color: var(--text-dim);
+  user-select: none;
+  border-radius: 5px;
+}
+
+.tr-work__sum::-webkit-details-marker {
+  display: none;
+}
+
+.tr-work__sum:hover {
+  background: var(--hover-tint);
+}
+
+.tr-work__chev {
+  flex: none;
+  width: 10px;
+  color: var(--text-dim);
+  line-height: 1;
+  transform-origin: 45% 50%;
+  transition: transform var(--motion-snap) var(--ease-damped);
+}
+
+details[open] > .tr-work__sum .tr-work__chev {
+  transform: rotate(90deg);
+}
+
+.tr-work__count {
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.tr-work__names {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--type-cell-mono);
+  color: var(--text-dim);
+}
+
+.tr-work__verdict {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.tr-work__tally {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tr-work__tally--ok .tr-work__glyph {
+  color: var(--green);
+}
+
+.tr-work__tally--fault .tr-work__glyph {
+  color: var(--red);
+}
+
+.tr-work__time {
+  flex: none;
+  font: var(--type-cell-mono);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-work__steps {
+  list-style: none;
+  margin: 0;
+  padding: 5px 12px 9px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+}
+
+.tr-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 27px;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.tr-step__glyph {
+  flex: none;
+  width: 14px;
+  text-align: center;
+}
+
+.tr-step--allowed .tr-step__glyph {
+  color: var(--green);
+}
+
+.tr-step--running .tr-step__glyph {
+  color: var(--cherenkov);
+}
+
+.tr-step--failed .tr-step__glyph {
+  color: var(--red);
+}
+
+/* THE ROW'S ACT — the tool name, and the one element in this file that a long
+ * unbroken identifier used to destroy.
+ *
+ * IT USED TO SAY `overflow-wrap: anywhere`. That property does not merely allow
+ * a break inside a word, it changes the element's MIN-CONTENT CONTRIBUTION to
+ * roughly one character — and `.tr-step` is a flex row whose other two items
+ * (`__aux`, `__time`) are `white-space: nowrap` and therefore refuse to shrink
+ * at all. So the moment the band was drawn into a narrower column (the docked
+ * receipt pane), the flex algorithm took every pixel of the deficit out of the
+ * only item that would give: `read.knowledge.search` collapsed to a
+ * one-character track and wrapped down the page, twenty-one lines tall, with
+ * the rest of its own row laid out beside the column. Reproduced at 1280px and
+ * 1500px with the pane docked.
+ *
+ * THE FIX IS THE PAIR, not either half. `white-space: nowrap` makes a
+ * per-character wrap unrepresentable — there is no width at which this element
+ * can break a token again — and `min-width: 0` + `overflow: hidden` +
+ * `text-overflow: ellipsis` means the row degrades by ELLIPSIZING instead of by
+ * overflowing the band. The identifier itself is never shortened in the data:
+ * Transcript.tsx puts the full value on the element's `title`, so a visually
+ * clipped name is still readable and still copyable in full.
+ *
+ * `__aux` carries the same treatment for the same reason, and is the greedy
+ * item (`flex: 1 1 auto`) so the sentence yields before the tool name does. */
+.tr-step__name {
+  flex: 0 1 auto;
+  /* A REAL FLOOR, not zero. `min-width: 0` alone stops the per-character wrap
+     but leaves the name shrinking in proportion to its basis against a much
+     longer `__aux`, so a 21-character tool name ellipsized to nine at a width
+     that had room for all of it. The floor is the width a governed identifier
+     is worth reading at; `min()` keeps it from ever exceeding the row, so this
+     cannot reintroduce an overflow. */
+  min-width: min(100%, 22ch);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--type-cell-mono);
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+/* THE ACT OUTRANKS THE MACHINERY. A tool call is what the agent DID; a recorded
+ * model hop or a governed check is how it did it. Same row grammar, one step of
+ * contrast between them — the rank is presentational only and changes no
+ * verdict, no tally and no promotion (transcript/promotion.ts owns those).
+ * BOLD, IN PLACE — the owner's correction, verbatim: "just bold them in their
+ * regular chronological position don't randomly insert them at the top." The
+ * emphasis is weight and hue on the row where the call actually sits in the
+ * ledger; nothing is hoisted. */
+.tr-step--act .tr-step__name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.tr-step--running .tr-step__name {
+  color: var(--text);
+}
+
+.tr-step__sep {
+  color: var(--text-dim);
+}
+
+.tr-step__aux {
+  /* The greedy item AND the one that yields first: a shrink factor of 4 against
+     the name's 1 means the served sentence gives up its tail before the tool
+     name gives up a character. Both survive as full text — in the title, and in
+     this row's own DOM. */
+  flex: 1 4 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* THE ROLLED-UP ROW'S OWN DISCLOSURE. A row that compresses a run of recorded
+ * events (an evidence read's rows, a model call's two records) is itself a
+ * native <details>: the summary draws the ordinary row grammar plus a quiet
+ * chevron, and the verbatim per-event rows sit indented beneath it. The li
+ * gives up its flex layout to the details element; the summary takes it over,
+ * so a rolled row and a plain row read identically at rest. */
+.tr-step--has-detail {
+  display: block;
+}
+
+.tr-step__fold {
+  width: 100%;
+}
+
+.tr-step__foldsum {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 27px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tr-step__foldsum::-webkit-details-marker {
+  display: none;
+}
+
+.tr-step__foldsum:hover .tr-step__foldchev {
+  color: var(--text);
+}
+
+.tr-step__foldchev {
+  flex: none;
+  font-size: 0.5rem;
+  color: var(--text-dim);
+  transition: transform var(--motion-drum) var(--ease-damped);
+}
+
+details[open] > .tr-step__foldsum .tr-step__foldchev {
+  transform: rotate(90deg);
+}
+
+.tr-step__detail {
+  list-style: none;
+  margin: 0 0 4px 6px;
+  padding: 0 0 0 16px;
+  border-left: 1px solid var(--rule);
+}
+
+/* The band's own note — why the ledger is THINNER than the run, said in the
+ * ledger. Not a step row: no glyph, no verdict, and nothing counts it. */
+.tr-work__note {
+  padding: 4px 0 2px 22px;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.tr-step__time {
+  margin-left: auto;
+  padding-left: 12px;
+  font: var(--type-cell-mono);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- the measured in-flight line (never simulated) ---------- */
+
+.tr-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-progress__sep {
+  color: var(--text-dim);
+}
+
+/* ---------- the promoted gate ----------
+ * A pending or refused step surfaces itself. It is a different object, not a
+ * louder step row: it sits OUTSIDE the fold, carries the turn's only hue, and
+ * holds the action. It never collapses. */
+
+.tr-gate {
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+}
+
+.tr-gate::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+.tr-gate--pending {
+  border-color: var(--amber-line);
+  background: linear-gradient(var(--amber-tint), var(--amber-tint)) var(--panel);
+}
+
+.tr-gate--pending::before {
+  background: var(--amber);
+}
+
+.tr-gate--refused {
+  border-color: var(--red-line);
+  background: linear-gradient(var(--red-tint), var(--red-tint)) var(--panel);
+}
+
+.tr-gate--refused::before {
+  background: var(--red);
+}
+
+.tr-gate__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tr-gate__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.tr-gate--pending .tr-gate__state {
+  color: var(--amber);
+}
+
+.tr-gate--refused .tr-gate__state {
+  color: var(--red);
+}
+
+/* The promoted gate's name, same defect class as `.tr-step__name` above and
+ * the same fix: `overflow-wrap: anywhere` on a flex item whose siblings are
+ * nowrap is a per-character column waiting for a narrow enough column. The head
+ * wraps its items, so this one may take a whole line; what it may not do is
+ * break a governed identifier down the page. Full value on `title`. */
+.tr-gate__name {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--type-cell-mono);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.tr-gate__tier {
+  display: inline-flex;
+  align-items: center;
+  font: var(--type-cell-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+
+.tr-gate__body {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text);
+}
+
+.tr-gate__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tr-gate__ref {
+  font: var(--type-cell-mono);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- failure readout ----------
+ * The turn ended with no answer; the receipt says so and this says why. Same
+ * promoted slot, same never-folds rule, one per TURN rather than one per step.
+ *
+ * THREE TREATMENTS, and the shell below carries none of their hues. A FAULT —
+ * nothing answered, the model failed, the stream died — keeps the red card and
+ * its ✕. A REFUSAL — policy decided against the whole turn — takes the slate
+ * gated card and its ⊘: the same vocabulary `.ne-refusal--gated` and posture's
+ * whole-read refusal use, and the reason --state-gated exists at all (a
+ * role-scoped refusal drawn in the fault ramp read as an outage). A STOP — the
+ * reader pressed Stop — takes no hue whatsoever and its ■, because nothing
+ * happened to the reader that a colour could report. The state WORD differs
+ * with the colour in all three, so the distinction survives a reader who sees
+ * no colour at all. */
+
+.tr-fail {
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+}
+
+.tr-fail::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+/* the fault — something broke */
+
+.tr-fail--fault {
+  border-color: var(--red-line);
+  background: linear-gradient(var(--red-tint), var(--red-tint)) var(--panel);
+}
+
+.tr-fail--fault::before {
+  background: var(--red);
+}
+
+.tr-fail--fault .tr-fail__state {
+  color: var(--red);
+}
+
+/* the refusal — the governance system working */
+
+.tr-fail--refusal {
+  border-color: var(--rule-strong);
+  background: linear-gradient(var(--gated-tint), var(--gated-tint)) var(--panel);
+}
+
+.tr-fail--refusal::before {
+  background: var(--state-gated);
+}
+
+.tr-fail--refusal .tr-fail__state {
+  color: var(--state-gated);
+}
+
+/* the stop — the reader ended it, so NOTHING is reported
+ *
+ * The one card in this system that declares no fill and no border of its own:
+ * it takes the shell's --panel and --rule, and the only thing it adds is the
+ * edge every promoted card has, drawn in the hairline grey that separates
+ * surfaces rather than in a state colour. That is the whole treatment, and the
+ * absence is the message — a fault has a hue because something broke, a refusal
+ * has one because a boundary was enforced, and a stop has neither to report.
+ * The state WORD and the ■ carry it, so a reader who sees no colour loses
+ * nothing. Adding a tint or a state hue here IS the defect this unit fixed. */
+
+.tr-fail--stopped::before {
+  background: var(--rule-strong);
+}
+
+.tr-fail--stopped .tr-fail__state {
+  color: var(--text-dim);
+}
+
+.tr-fail__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.tr-fail__body {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text);
+}
+
+/* The server's own reason for the decision, under the stated line. Secondary
+ * text, because the stated line is the thing to act on — but never folded away:
+ * it is the only account of the refusal this console did not write. */
+.tr-fail__reason {
+  margin: 0;
+  width: 100%;
+  font: var(--type-cell);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+.tr-fail__foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------- the answer — the only unboxed prose in the turn ---------- */
+
+.tr-ans {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tr-ans__attr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+
+.tr-ans__mark {
+  display: inline-flex;
+  flex: none;
+}
+
+.tr-ans__body {
+  margin: 0;
+  font: var(--type-lead);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.tr-ans__body + .tr-ans__body {
+  margin-top: -2px;
+}
+
+/* The answer's own light-Markdown blocks (transcript/prose.tsx): lists keep
+ * the answer face and hang their markers inside the measure; inline code takes
+ * the data face one notch under the prose size. */
+.tr-ans__list {
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tr-ans__code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.tr-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  vertical-align: -0.18em;
+  background: var(--cherenkov);
+  margin-left: 1px;
+}
+
+/* ---------- sources — subordinate to the answer, still one hit away ------- */
+
+.tr-src {
+  border-left: 2px solid var(--rule);
+  padding: 2px 0 2px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tr-src__label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+
+.tr-src__lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tr-src__line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.tr-src__n {
+  color: var(--text-dim);
+  font: var(--type-cell-mono);
+  font-weight: 500;
+}
+
+/* ---------- the receipt — one governance footer, and the turn boundary ---- */
+
+.tr-receipt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.tr-receipt__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* The receipt's glyph takes the TURN'S tone, and on a turn that ended without
+ * an answer that is the failure card's own value — one vocabulary, so the
+ * footer cannot contradict the card a line above it. Each tone resolves to the
+ * colour its card resolves to: red for a fault, --state-gated for a refusal,
+ * and for a stop the line's own --text-dim, which is to say no colour at all.
+ * A refused turn drawn "✕ Failed" in red here is the bug that half-undid the
+ * card's fix, and it is now unrepresentable rather than merely corrected. */
+
+.tr-receipt--ok .tr-receipt__glyph {
+  color: var(--green);
+}
+
+.tr-receipt--paused .tr-receipt__glyph {
+  color: var(--amber);
+}
+
+/* THE TURN IS STILL IN FLIGHT. The same hue the running step's glyph takes —
+ * not a quieter red, not an amber pause. Nothing has happened TO this turn. */
+.tr-receipt--live .tr-receipt__glyph {
+  color: var(--cherenkov);
+}
+
+.tr-receipt--fault .tr-receipt__glyph {
+  color: var(--red);
+}
+
+.tr-receipt--refusal .tr-receipt__glyph {
+  color: var(--state-gated);
+}
+
+.tr-receipt--stopped .tr-receipt__glyph {
+  color: var(--text-dim);
+}
+
+/* ---------- the receipt's own controls ----------
+ *
+ * THESE TWO RULES DID NOT EXIST, and every element wearing them — the "How this
+ * turn ran" button on the workspace, "Open trace", Evidence and Governance on a
+ * Run — rendered as a raw browser default inside a designed footer.
+ *
+ * The intent was recorded and simply never reached the element: chat/chat.css
+ * carries the same rule as `.ne-ask__quiet`, with a comment reading "(render:
+ * .tr-receipt__quiet)". That comment is what made the gap survive review — it
+ * reads like the class is handled somewhere, when what it recorded was a rename
+ * nobody performed. (Second one tonight: `.ag-card--lead`'s `grid-column` sat
+ * on the <article> while the <li> was the grid item. Hence the guardian in
+ * transcript.test.tsx, which is worth more than either fix.)
+ *
+ * `.ne-ask__quiet` IS NOT DEAD and is not deleted: Ask still renders it on
+ * seven controls of its own — the feedback thumbs, flag-citation, the approvals
+ * link and the export copy — and only some of those sit in a receipt. Two
+ * module stylesheets, each naming the control its own surface draws.
+ *
+ * QUIET IS THE POINT. A receipt footer holds three or four of these at once, so
+ * underlining them would turn the turn's closing edge into a row of links and
+ * put more visual weight on the exits than on the outcome. No border, no
+ * underline, no fill until hover. --cherenkov appears on the focus ring ONLY:
+ * that is a selection state, which is exactly what the token is for, and none
+ * of these is a primary action. */
+.tr-receipt__quiet {
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-dim);
+  font: var(--type-small);
+  /* TWO OF THESE ARE <Link>s — "Open trace" here, the approvals link on Ask —
+     and an anchor underlines itself. That is the exact outcome the rule was
+     written to prevent ("underlining every one of them turned the turn's footer
+     into a row of links"), and the declaration that prevents it was never
+     written down. The hover tint below is the affordance instead. */
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tr-receipt__quiet:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+
+.tr-receipt__quiet:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+/* A control with nothing behind it is still a control the reader can see is
+ * off. It keeps the dim text and drops the pointer — it does not fade further,
+ * because a disabled action nobody can read is not a kinder disabled action. */
+.tr-receipt__quiet:disabled {
+  color: var(--text-dim);
+  cursor: default;
+}
+
+/* The group the receipt's paired controls sit in — Evidence beside Governance,
+ * the thumbs beside each other. It groups; it draws nothing of its own. */
+.tr-receipt__fb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tr-receipt__sep {
+  color: var(--text-dim);
+}
+
+.tr-receipt__spacer {
+  flex: 1 1 auto;
+}
+
+.tr-receipt__model {
+  font: var(--type-cell-mono);
+  color: var(--text-dim);
+}
+
+/* The em dash an absent value renders, and the short factual note beside it.
+ * Never "No", never 0, never a sample. */
+.tr-absent {
+  white-space: nowrap;
+}
+
+/* In the ANSWER slot the absent note is a full sentence on the prose measure
+ * (the source-protected and paused notes) — it wraps like the prose it stands
+ * in for instead of dragging a horizontal scrollbar across the thread. */
+.tr-ans__body .tr-absent {
+  white-space: normal;
+}
+
+.tr-absent__note {
+  color: var(--text-dim);
+}
+
+.tr-work__sep {
+  color: var(--text-dim);
+}
+
+/* CR-B11 — motion. The promoted governance cards (a refused/pending gate, a
+ * failed/refused/stopped turn) SEAT into place at --motion-settle when they
+ * appear: transform and opacity only (law 4 cl.3), one-shot, never on the
+ * collapsible band's height. §4.5. */
+@keyframes tr-settle {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tr-gate,
+.tr-fail {
+  animation: tr-settle var(--motion-settle) var(--ease-damped);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tr-gate,
+  .tr-fail {
+    animation: none !important;
+  }
+}
+
+/* THE FRONTIER ROW — the newest thing the Run has recorded, while it is still
+   working. It is a STATE, not a verdict: a word and a hairline, never a spinner,
+   because motion law 1 forbids depicting activity the server did not report. The
+   row is brightened rather than badged so a reader scanning a fifteen-row band
+   finds the live edge in one saccade.
+
+   --state-affirm, not --cherenkov: this is a STATE word set at --type-label,
+   and the state tokens are the ones tuned to clear 4.5:1 against --panel AND
+   --panel-raised (tokens.css; test/contrast-guardian.test.ts measures them). */
+.tr-step--latest {
+  color: var(--text);
+}
+
+.tr-step--latest .tr-step__name {
+  color: var(--text);
+}
+
+.tr-step__latest {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 7px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--state-affirm);
+  white-space: nowrap;
+}
+
+/* When the frontier row also carries a duration, the pill stops being the
+   auto-margin item and the time column keeps its own right edge. */
+.tr-step__latest + .tr-step__time {
+  margin-left: 8px;
+}
+
+/* The stated absence under the source list — a note, never a source line: no
+   ordinal, no rule above it, and the "Sources · N" count never sees it. */
+.tr-src__note {
+  margin: 6px 0 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* THE CITATION READ IS STILL IN FLIGHT — the source block's pending line. The
+ * live hue (--cherenkov, the same one a running step's glyph takes), NOT the
+ * settled note's dim grey: "no citations yet" and "the read landed and found
+ * none" are different facts and may not share a treatment. */
+.tr-src__pending {
+  margin: 6px 0 0;
+  font: var(--type-small);
+  color: var(--cherenkov);
+}
+
+/* The served row anchors — each verified row's canonical hash, drawn as the
+   row's identity. A line of HashChips under its own quiet label; the count
+   lives in the label, and the "Sources · N" count never sees these either. */
+.tr-src__anchors {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.tr-src__anchorlabel {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}

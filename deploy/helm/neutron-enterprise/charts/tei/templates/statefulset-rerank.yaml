@@ -1,0 +1,89 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# StatefulSet reproduction of deploy/compose/pilot/compose.yaml's tei-rerank
+# service (brain profile). Same SHARED tei image + hardening as tei-embed; the
+# only difference is --model-id (the reranker model) and the ClusterIP name.
+# See statefulset-embed.yaml for the PORT=8080 non-root adaptation rationale.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tei-rerank
+  labels:
+    app: tei-rerank
+    app.kubernetes.io/name: tei-rerank
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  serviceName: tei-rerank
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tei-rerank
+  template:
+    metadata:
+      labels:
+        app: tei-rerank
+        app.kubernetes.io/name: tei-rerank
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 1000 "gid" 1000 "fsGroup" 1000 "openshift" .Values.global.openshift) | nindent 8 }}
+      containers:
+        - name: tei-rerank
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" .Values.image.repository "tag" .Values.image.tag "digest" .Values.image.digest) }}
+          # BYTE-EQUAL to the compose tei-rerank `command`.
+          args:
+            - "--model-id"
+            - {{ .Values.rerank.modelId | quote }}
+          env:
+            - name: HF_HUB_DISABLE_TELEMETRY
+              value: "1"
+            - name: HF_HUB_OFFLINE
+              value: {{ .Values.hfOffline | quote }}
+            # THE non-root adaptation — bind 8080 (uid 1000 cannot bind :80).
+            - name: PORT
+              value: "8080"
+            # C11 parity with the compose tei-rerank: the TEI image bakes
+            # RAYON_NUM_THREADS=8, which a raised cpu limit alone cannot lift.
+            - name: RAYON_NUM_THREADS
+              value: {{ .Values.rerank.rayonNumThreads | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" false) | nindent 12 }}
+          volumeMounts:
+            - name: cache
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.rerank.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: cache
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.rerank.storage.storageClassName }}
+        storageClassName: {{ .Values.rerank.storage.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.rerank.storage.size }}

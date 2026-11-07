@@ -1,0 +1,26 @@
+{
+  "tickets": [
+    {
+      "id": 1003,
+      "subject": "Ticket 1003",
+      "description": "Body of ticket 1003.",
+      "status": "open",
+      "priority": "normal",
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-02T00:00:00Z"
+    },
+    {
+      "id": 1004,
+      "subject": "Ticket 1004",
+      "description": "Body of ticket 1004.",
+      "status": "deleted",
+      "priority": "normal",
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-02T00:00:00Z",
+      "requester_id": 5004,
+      "group_id": 7004
+    }
+  ],
+  "after_cursor": "curs3",
+  "end_of_stream": true
+}

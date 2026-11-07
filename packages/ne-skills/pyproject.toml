@@ -1,0 +1,48 @@
+[project]
+name = "ne-skills"
+version = "0.1.0"
+description = "Skill Forge read side: registry, governed discovery tools, ONE-ACL visibility, active set."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-flywheel",
+    "ne-events",
+    "ne-audit",
+    "ne-eval",
+    "pydantic>=2.11,<3",
+    "sqlalchemy>=2.0.51,<2.1",
+    "pyyaml>=6.0.3,<7",
+    "anyio>=4",
+]
+
+[dependency-groups]
+# Test-only: ne-permissions provides the REAL PrincipalStore/PrincipalExpander for
+# the ACL permission-trap suite (the ne-brain-graph D2 precedent); ne-runtime /
+# ne-govern / ne-mcp back the executor + MCP end-to-end tests. NONE is a runtime
+# dep — the D-10 boundary keeps ne-skills' RUNTIME closure ne-contracts + pydantic
+# + sqlalchemy + pyyaml + anyio only (no pydantic-ai/dbos import), enforced by
+# tests/test_import_boundary.py.
+dev = ["ne-permissions", "ne-runtime", "ne-govern", "ne-mcp"]
+
+[project.entry-points."ne.plugins.skill_substrate"]
+pydantic-ai = "ne.skills.substrate:PydanticAiSkillSubstrate"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-flywheel = { workspace = true }
+ne-events = { workspace = true }
+ne-audit = { workspace = true }
+ne-eval = { workspace = true }
+ne-permissions = { workspace = true }
+ne-runtime = { workspace = true }
+ne-govern = { workspace = true }
+ne-mcp = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.skills"
+namespace = true

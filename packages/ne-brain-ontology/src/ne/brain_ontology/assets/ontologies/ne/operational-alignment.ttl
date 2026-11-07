@@ -1,0 +1,121 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Self-authored operational-alignment ontology (NE-085b). Types the platform's
+# operational entities (ne-schema LinkML classes, whose generated
+# operational.shapes.ttl sh:targetClass IRIs these neop:* IRIs BYTE-MATCH)
+# against the vendored CCO-2.1 / BFO-2020 upper+mid ontology. It compensates for
+# the class_uri curation ne-schema never received (spec R5): the mappings are
+# SUBCLASS-ONLY and deliberately small/defensible (no subPropertyOf into CCO
+# relations). CCO parent IRIs were EXTRACTED from the vendored corpus by
+# rdfs:label — never invented from memory:
+#   Account  -> cco Organization (ont00001180, AgentOntology)
+#   Person   -> cco Person       (ont00001262, AgentOntology)
+#   Document -> cco Information Content Entity (ont00000958, InformationEntityOntology)
+#               [fallback: no exact 'Document' owl:Class label in CCO-2.1]
+#   Ticket   -> cco Information Content Entity (ont00000958)
+#               [fallback: no 'Directive Information Content Entity' label in CCO-2.1]
+#   Order    -> cco Information Content Entity (ont00000958) [same fallback]
+# nea:IdentityAssertion reifies a Tier-2 SAME_AS edge as a validated resource
+# (owl:sameAs is deliberately NOT asserted — the generated closed shapes would
+# quarantine it and no runtime reasoner consumes it).
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cco:  <https://www.commoncoreontologies.org/> .
+@prefix neop: <https://neutron.enterprise/schema/operational/> .
+@prefix nea:  <https://neutron.enterprise/schema/alignment/> .
+
+<https://neutron.enterprise/schema/alignment> a owl:Ontology ;
+    rdfs:label "Neutron Enterprise operational-alignment ontology" ;
+    dcterms:license "Apache-2.0" .
+
+# -- operational entity classes, subclassed under CCO ------------------------
+
+neop:Account a owl:Class ;
+    rdfs:label "Operational Account" ;
+    rdfs:subClassOf cco:ont00001180 .
+
+neop:Person a owl:Class ;
+    rdfs:label "Operational Person" ;
+    rdfs:subClassOf cco:ont00001262 .
+
+neop:Document a owl:Class ;
+    rdfs:label "Operational Document" ;
+    rdfs:subClassOf cco:ont00000958 .
+
+neop:Ticket a owl:Class ;
+    rdfs:label "Operational Ticket" ;
+    rdfs:subClassOf cco:ont00000958 .
+
+neop:Order a owl:Class ;
+    rdfs:label "Operational Order" ;
+    rdfs:subClassOf cco:ont00000958 .
+
+# -- EDGE_DEFS slot predicates (domain/range = neop classes) -----------------
+
+neop:works_at a owl:ObjectProperty ;
+    rdfs:label "works at" ;
+    rdfs:domain neop:Person ;
+    rdfs:range neop:Account .
+
+neop:author a owl:ObjectProperty ;
+    rdfs:label "author" ;
+    rdfs:domain neop:Document ;
+    rdfs:range neop:Person .
+
+neop:owned_by a owl:ObjectProperty ;
+    rdfs:label "owned by" ;
+    rdfs:domain neop:Document ;
+    rdfs:range neop:Person .
+
+neop:about a owl:ObjectProperty ;
+    rdfs:label "about" ;
+    rdfs:domain neop:Document ;
+    rdfs:range neop:Account .
+
+neop:belongs_to a owl:ObjectProperty ;
+    rdfs:label "belongs to" ;
+    rdfs:domain neop:Ticket ;
+    rdfs:range neop:Account .
+
+neop:requester a owl:ObjectProperty ;
+    rdfs:label "requester" ;
+    rdfs:domain neop:Ticket ;
+    rdfs:range neop:Person .
+
+neop:assignee a owl:ObjectProperty ;
+    rdfs:label "assignee" ;
+    rdfs:domain neop:Ticket ;
+    rdfs:range neop:Person .
+
+neop:account a owl:ObjectProperty ;
+    rdfs:label "account" ;
+    rdfs:domain neop:Order ;
+    rdfs:range neop:Account .
+
+neop:placed_by a owl:ObjectProperty ;
+    rdfs:label "placed by" ;
+    rdfs:domain neop:Order ;
+    rdfs:range neop:Person .
+
+# -- SAME_AS reification: the validated IdentityAssertion resource ------------
+
+nea:IdentityAssertion a owl:Class ;
+    rdfs:label "Identity Assertion" ;
+    rdfs:subClassOf cco:ont00000958 .
+
+nea:same_as_left a owl:ObjectProperty ;
+    rdfs:label "same as left" ;
+    rdfs:domain nea:IdentityAssertion .
+
+nea:same_as_right a owl:ObjectProperty ;
+    rdfs:label "same as right" ;
+    rdfs:domain nea:IdentityAssertion .
+
+nea:source_ref a owl:DatatypeProperty ;
+    rdfs:label "source ref" ;
+    rdfs:domain nea:IdentityAssertion ;
+    rdfs:range xsd:string .

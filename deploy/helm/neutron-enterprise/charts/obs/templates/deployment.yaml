@@ -1,0 +1,59 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Deployment reproduction of deploy/compose/pilot/compose.yaml's otel-collector
+# service (obs profile, default-OFF). uid/gid 10001 (no fsGroup — no PVC);
+# readOnlyRootFilesystem TRUE. args ["--config=/etc/otelcol/config.yaml"] are
+# byte-parity with compose. Byte-parity guardian: test_obs_render_behind_flag.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  labels:
+    app: otel-collector
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+        app.kubernetes.io/name: otel-collector
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 10001 "gid" 10001 "openshift" .Values.global.openshift) | nindent 8 }}
+      containers:
+        - name: otel-collector
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" .Values.image.repository "tag" .Values.image.tag "digest" .Values.image.digest) }}
+          args:
+            - "--config=/etc/otelcol/config.yaml"
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: otlp-http
+              containerPort: 4318
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 12 }}
+          volumeMounts:
+            # subPath (NOT a directory mount) — a plain ConfigMap directory mount
+            # creates kubelet's `..data`/`..<timestamp>` symlink farm; subPath
+            # bind-mounts just the one file (same rationale as charts/opa).
+            - name: config
+              mountPath: /etc/otelcol/config.yaml
+              subPath: config.yaml
+              readOnly: true
+          # NO probes: this image is distroless and has no shell/wget/curl to
+          # probe with (mirrors compose otel-collector, which documents the same
+          # exemption — deploy/compose/pilot/compose.yaml). Kubernetes treats the
+          # pod Ready once the container is running.
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config

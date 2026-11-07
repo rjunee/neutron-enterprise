@@ -1,0 +1,43 @@
+[project]
+name = "ne-obs"
+version = "0.1.0"
+description = "Observability, signals, and KPI instrumentation."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-audit",
+    "ne-eval",
+    "ne-flywheel",
+    # NE-FIX-SYNC-INVOKERS (P2-21): ne.obs.otlp maps OutboxRecord → OTel log records
+    # (promoted from the dev group — the exporter is a runtime seam) and calls
+    # ne.net.validate_in_vpc_endpoint at construction (C2: in-cluster sink only).
+    "ne-events",
+    "ne-net",
+    "sqlalchemy>=2.0.51,<2.1",
+    "pydantic>=2.11,<3",
+    "opentelemetry-api>=1.43,<2",
+    "opentelemetry-sdk>=1.43,<2",
+    "opentelemetry-semantic-conventions==0.64b0",
+    # The OTLP/HTTP log exporter (P2-21). Pinned to the 1.43 family (the semconv
+    # ==0.64b0 pin locks the otel family at 1.43.0); Apache-2.0 (C4 free-to-embed).
+    "opentelemetry-exporter-otlp-proto-http>=1.43,<2",
+]
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-audit = { workspace = true }
+ne-eval = { workspace = true }
+ne-flywheel = { workspace = true }
+ne-events = { workspace = true }
+ne-net = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.obs"
+namespace = true

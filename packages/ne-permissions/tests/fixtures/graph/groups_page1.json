@@ -1,0 +1,4 @@
+{
+  "value": [{"id": "g-eng", "displayName": "Engineering"}],
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/groups?$select=id,displayName&$skiptoken=GPAGE2"
+}

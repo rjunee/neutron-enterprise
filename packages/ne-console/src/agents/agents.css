@@ -1,0 +1,1744 @@
+/* Copyright (c) 2026 Ryan Junee. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+.ne-agent-facts,
+.ne-agent-run dl,
+.ne-agent-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.ne-model-continuity-receipt {
+  border-left: 3px solid var(--cherenkov);
+  margin-top: 16px;
+  padding: 12px;
+}
+.ne-model-continuity-receipt h3,
+.ne-model-continuity-receipt p {
+  margin-block: 0 8px;
+}
+.ne-model-continuity-receipt dl,
+.ne-model-step-receipt {
+  display: grid;
+  gap: 8px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.ne-model-continuity-receipt dl div,
+.ne-model-step-receipt div {
+  min-width: 0;
+}
+.ne-model-continuity-receipt dd,
+.ne-model-step-receipt dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ne-agent-facts div,
+.ne-agent-run dl div,
+.ne-agent-capabilities div {
+  display: grid;
+  gap: 2px;
+}
+.ne-agent-facts dt,
+.ne-agent-run dt,
+.ne-agent-capabilities dt {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+}
+.ne-agent-facts dd,
+.ne-agent-run dd,
+.ne-agent-capabilities dd {
+  margin: 0;
+}
+.ne-agent-launcher__availability {
+  color: var(--text-dim);
+}
+.ne-agent-launcher__write,
+.ne-agent-accepted {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ne-evidence-drawer {
+  background: var(--panel-raised);
+  border-left: 1px solid var(--rule);
+  box-shadow: -8px 0 24px var(--ground);
+  display: grid;
+  gap: 16px;
+  inset: 0 0 0 auto;
+  max-width: min(560px, 92vw);
+  overflow: auto;
+  padding: 24px;
+  position: fixed;
+  width: 100%;
+  z-index: 20;
+}
+.ne-evidence-drawer header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+.ne-evidence-drawer header h2 {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+.ne-evidence-drawer [data-focused="true"] {
+  outline: 3px solid var(--cherenkov);
+}
+/* THE CLAIM AND EVIDENCE ROWS ARE PRESSABLE SENTENCES, NOT BUTTONS.
+ *
+ * They wore no class at all, so they fell to the global bare-<button> rule in
+ * styles.css and every row in both lists painted --primary-fill: a drawer whose
+ * body was a column of solid accent blocks, each one claiming to be the most
+ * important control on the screen.
+ *
+ * .ne-btn is the wrong instrument for the repair. It is `white-space: nowrap`
+ * at a fixed 28px, which is right for a command word and wrong for a served
+ * claim sentence — the label would spill out of the box exactly as the note on
+ * .ne-btn warns. So these take the treatment this package already gives a
+ * list of pressable records (.ne-answer-ledger__timeline button,
+ * .ne-t3-browser__records button): full width, left aligned, hairline on the
+ * panel surface, and the pressed state carried by the border rather than a
+ * fill. Every colour is a token, so both themes resolve. */
+.ne-evidence-drawer li > button {
+  display: block;
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  /* The drawer's own surface is --panel-raised, so a row takes the next step up
+     the elevation ramp rather than the step down: a record sitting ON the pane,
+     the way .ne-t3-browser__records button sits on its panel. */
+  background: var(--panel-overlay);
+  color: var(--text);
+  font: var(--type-body);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.ne-evidence-drawer li > button:hover:not(:disabled),
+.ne-evidence-drawer li > button:focus-visible {
+  border-color: var(--cherenkov);
+}
+.ne-evidence-drawer li > button[aria-pressed="true"] {
+  border-color: var(--cherenkov);
+  background: var(--selected-tint);
+}
+/* A claim with no evidence_id behind it is disabled. The global rule fades it
+   to 0.5 opacity; this says which row is unavailable in the same grammar the
+   rest of the system uses for it. */
+.ne-evidence-drawer li > button:disabled {
+  border-color: var(--rule);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+.ne-evidence-drawer ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+/* The drawer is a single-column grid, so a button child would otherwise stretch
+   across the whole pane. A button is the width of its label. */
+.ne-evidence-drawer > .ne-btn {
+  justify-self: start;
+}
+.ne-assurance-label {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.75rem;
+  margin-inline-start: 8px;
+  padding: 2px 8px;
+}
+@media (max-width: 720px) {
+  .ne-conversation-model-control {
+    grid-template-columns: 1fr;
+    padding-inline: 16px;
+  }
+  .ne-agent-workspace {
+    grid-template-columns: 1fr;
+  }
+  .ne-agent-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+.rn-crumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-small);
+  color: var(--text-dim);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--rule);
+}
+.rn-crumb__spacer {
+  flex: 1 1 auto;
+}
+@media (max-width: 720px) {
+  .ne-runs {
+    grid-template-columns: 1fr;
+  }
+  .ne-runs__list {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+}
+
+/* ========================================================================== */
+/* THE AGENT WORKSPACE — switcher rail, strategy badge, run form, capabilities */
+/*                                                                            */
+/* Hand-written, tokens only, no new dependency. The strategy badge is the one */
+/* place here that spends colour, and it spends it asymmetrically on purpose:  */
+/* deterministic wears the affirm tint because "the plan is fixed before this  */
+/* starts" is the reassuring fact the owner asked to see prominently, while    */
+/* agentic stays a neutral outline because it is the resting state of a chat   */
+/* surface and a loud badge on every conversation is noise.                    */
+/* ========================================================================== */
+
+.ne-agentworkspace {
+  display: grid;
+  grid-template-columns: 216px minmax(0, 1fr);
+  min-height: 0;
+}
+/* THE CHAT TAB IS THE ONLY TAB THAT OWNS A HEIGHT.
+   Ask's thread scrolls inside itself, so it needs a bounded box; every other
+   tab (Runs, Conversations, Capabilities) is an ordinary document that scrolls
+   with the page and must NOT be clipped into one. So the fixed height is
+   scoped to the chat state rather than applied to the workspace shell, and the
+   viewport arithmetic subtracts this page's own chrome -- the topbar, the title
+   row the tab strip sits in, and the stage's bottom padding. */
+.ne-agentworkspace--chat {
+  height: calc(100vh - var(--topbar-height) - var(--space-24));
+}
+/* The chat tab hands its whole height to the mounted Ask surface, which is why
+   `.ne-ask--embedded` can drop the viewport-relative height it uses at /ask. */
+.ne-agentworkspace__chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ne-strategy {
+  align-items: baseline;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  display: inline-flex;
+  gap: var(--space-8);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  padding: 2px var(--space-8);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ne-strategy--deterministic {
+  background: var(--affirm-tint);
+  border-color: var(--state-affirm);
+  color: var(--state-affirm);
+}
+.ne-strategy--agentic {
+  color: var(--text-dim);
+}
+.ne-strategy__gloss {
+  color: var(--text-dim);
+  font: var(--type-small);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.ne-runform__lede,
+.ne-runform__absent,
+.ne-runform__noinput,
+.ne-runform__desc,
+.ne-runform__bounds {
+  color: var(--text-dim);
+  font: var(--type-small);
+  margin: 0;
+}
+.ne-runform__frozen {
+  border-collapse: collapse;
+  width: 100%;
+}
+.ne-runform__frozen th,
+.ne-runform__frozen td {
+  border-bottom: 1px solid var(--rule);
+  font-weight: 400;
+  padding: var(--space-8);
+  text-align: left;
+  vertical-align: top;
+}
+.ne-runform__frozen thead th {
+  color: var(--text-dim);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.ne-runform__fields {
+  display: grid;
+  gap: var(--space-12);
+}
+.ne-runform__field {
+  align-items: baseline;
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: minmax(120px, 200px) auto auto;
+}
+.ne-runform__field input[type="number"] {
+  width: 96px;
+}
+
+.ne-cap {
+  display: grid;
+  gap: var(--space-32);
+}
+.ne-cap__h2 {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  margin: 0 0 var(--space-12);
+  text-transform: uppercase;
+}
+.ne-cap__table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.ne-cap__table th,
+.ne-cap__table td {
+  border-bottom: 1px solid var(--rule);
+  font-weight: 400;
+  padding: var(--space-8);
+  text-align: left;
+  vertical-align: top;
+}
+.ne-cap__table thead th {
+  color: var(--text-dim);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.ne-cap__table tbody th small {
+  color: var(--text-dim);
+  display: block;
+  margin-top: 2px;
+}
+.ne-cap__note,
+.ne-cap__ineligible {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-cap__note {
+  margin: 0 0 var(--space-8);
+}
+/* The row's disclosure control: reads as the row text, behaves as a button. */
+.ne-cap__tool-open {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 2px;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+.ne-cap__tool-open:hover {
+  color: var(--cherenkov);
+}
+.ne-cap__tool-open:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+/* A connection identity code can be a 64-hex release pin: it wraps INSIDE its
+   cell rather than forcing the whole tab sideways (the pre-NE-CAPTAB defect). */
+.ne-cap__identity {
+  display: block;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.ne-cap__pair {
+  display: grid;
+  gap: var(--space-32);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.ne-cap__facts.ne-cap__facts {
+  display: grid;
+  gap: var(--space-12) var(--space-16);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+.ne-cap__facts dd {
+  overflow-wrap: anywhere;
+}
+.ne-cap-drawer {
+  align-content: start;
+}
+.ne-cap-drawer header h2 {
+  margin: 0;
+}
+.ne-cap-drawer__name {
+  color: var(--text-dim);
+  margin: calc(-1 * var(--space-8)) 0 0;
+}
+.ne-cap-drawer__desc {
+  margin: 0;
+}
+.ne-cap-drawer__h3 {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  margin: 0 0 var(--space-8);
+  text-transform: uppercase;
+}
+.ne-cap-drawer__identity {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ne-cap-drawer section p {
+  margin: 0 0 4px;
+}
+.ne-cap-drawer__args {
+  display: grid;
+  gap: var(--space-12);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ne-cap-drawer__arg {
+  border-left: 2px solid var(--rule);
+  display: grid;
+  gap: 2px;
+  padding-left: var(--space-12);
+}
+.ne-cap-drawer__arg p {
+  margin: 0;
+}
+.ne-cap-drawer__arg-head {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.ne-cap-drawer__arg-facts,
+.ne-cap-drawer__arg-constraint {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-cap-drawer__arg-desc {
+  margin: 0;
+}
+.ne-cap-drawer__columns {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.ne-cap-skill__tools,
+.ne-cap-skill__triggers {
+  gap: var(--space-8);
+}
+.ne-cap-skill__triggers {
+  color: var(--text-dim);
+  font: var(--type-small);
+  list-style: disc;
+  padding-left: var(--space-16);
+}
+.ne-cap-skill__body {
+  display: grid;
+  gap: var(--space-8);
+}
+.ne-cap-skill__body-h {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  margin: var(--space-8) 0 0;
+  text-transform: uppercase;
+}
+.ne-cap-skill__body-h:first-child {
+  margin-top: 0;
+}
+.ne-cap-skill__body-p {
+  margin: 0;
+}
+.ne-cap-skill__body-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: var(--space-16);
+}
+.ne-cap__tier {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font: var(--type-small);
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+.ne-cap__health--healthy {
+  color: var(--state-affirm);
+}
+.ne-cap__health--unhealthy {
+  color: var(--red);
+}
+.ne-cap__health {
+  font: var(--type-small);
+  margin-inline-start: var(--space-8);
+}
+
+/* NARROW VIEWPORT. The workspace is pane-heavy — the shell rail, the agent
+   switcher, and (on the Chat tab) Ask's own history pane and source pane. Below
+   this width the switcher is the first thing to go: it is a convenience for
+   moving between Agents, while the panes beside it are the work. The catalog at
+   /agents remains the full list, one tap away. */
+@media (max-width: 1100px) {
+  .ne-agentworkspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ne-agentrail {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+ * AGENTS · ROUND 4 RECOMPOSITION
+ * (design/round4/screens/agents.html + AGENTS-NOTES.md)
+ *
+ * ONE USER ACT, ONE NOUN. The thread IS the screen. Chat stopped being a tab,
+ * the conversation-turns page is gone, and a Run's governance detail opens in
+ * the docked pane in place rather than on another route.
+ *
+ * FOUR CHROME COLUMNS BECOME THREE. `.ag-side` carries the agent roster AND
+ * the selected agent's one history list, so the old switcher rail and the old
+ * question-history pane are both deleted rather than stacked.
+ *
+ * THE CHERENKOV BUDGET, per screen: selection (rail node, sidebar rows, the
+ * active tab, the segmented on-state), ONE primary action (Ask / Run), and
+ * live state (streaming cursor). Strategy words, tabs at rest and "New" are
+ * quiet by construction, which is what removes the five-competing-blues
+ * problem the owner was looking at.
+ * ========================================================================== */
+
+.ag-work {
+  display: grid;
+  grid-template-columns: var(--workside-width) minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ---------- the sidebar: who + history, stacked, ONE list per agent ------- */
+.ag-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--rule);
+  background: var(--panel);
+}
+.ag-side__label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  padding: 0 8px;
+}
+.ag-side__roster {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 12px 12px;
+  border-bottom: 1px solid var(--rule);
+  flex: none;
+}
+.ag-roster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ag-roster__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text);
+  background: transparent;
+  border: none;
+}
+.ag-roster__item:hover {
+  background: var(--hover-tint);
+  text-decoration: none;
+}
+.ag-roster__item--on {
+  background: var(--selected-tint);
+  box-shadow: inset 2px 0 0 var(--cherenkov);
+}
+.ag-roster__name {
+  font: 400 13.5px/18px var(--font-ui);
+  color: var(--text);
+}
+.ag-roster__item--on .ag-roster__name {
+  font-weight: 500;
+}
+.ag-roster__meta {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-side__all {
+  padding: 0 8px;
+}
+.ag-side__all a {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-side__all a:hover {
+  color: var(--text);
+}
+.ag-side__hist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 12px 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.ag-side__histhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+}
+.ag-side__histhead .ag-side__label {
+  padding: 0;
+}
+.ag-side__hist .ne-input {
+  width: 100%;
+  flex: none;
+}
+.ag-hist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  min-height: 0;
+}
+/* `color` is declared for the same reason `.ne-ann` declares its border: this
+ * rule sets background and border, so without it the row's COLOUR alone fell
+ * through to the global bare-`button` element rule. Nothing visible depends on
+ * it today — `.ag-hist__prompt` and `.ag-hist__meta` hold every word on the row
+ * and set their own — which is exactly why it had gone unnoticed. */
+.ag-hist__item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text);
+}
+.ag-hist__item:hover {
+  background: var(--hover-tint);
+}
+.ag-hist__item--on {
+  background: var(--selected-tint);
+  box-shadow: inset 2px 0 0 var(--cherenkov);
+}
+.ag-hist__prompt {
+  font: 400 13px/18px var(--font-ui);
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ag-hist__meta {
+  font: var(--type-small);
+  color: var(--text-dim);
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+.ag-hist__meta .g {
+  color: var(--green);
+}
+.ag-hist__meta .a {
+  color: var(--amber);
+}
+.ag-hist__meta .r {
+  color: var(--red);
+}
+.ag-side__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 10px;
+}
+
+/* ---------- the agent mast: crumbs, one title row, two tabs -------------- */
+.ag-stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  /* The workspace is the whole stage: it escapes the shell stage's padding so
+   * the sidebar rule and the docked pane's edge reach the chrome, exactly as
+   * the Audit and Graph work screens do. */
+  height: calc(100vh - var(--topbar-height) - var(--space-16) - var(--space-24));
+  margin: calc(-1 * var(--space-16)) calc(-1 * var(--space-24)) calc(-1 * var(--space-24));
+}
+.ag-mast {
+  flex: none;
+  padding: 16px 28px 0;
+  background: var(--ground);
+}
+.ag-titlerow {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 8px 0 0;
+  flex-wrap: wrap;
+}
+.ag-titlerow__h1 {
+  margin: 0;
+  font: var(--type-title);
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.ag-titlerow__meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  font: var(--type-small);
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+.ag-titlerow__spacer {
+  flex: 1 1 auto;
+}
+
+/* The strategy is a quiet meta word, not a full-width pill. */
+.ag-strategy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.ag-strategy__word {
+  font: 600 10.5px/15px var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 2px 7px;
+  color: var(--text);
+}
+.ag-strategy__gloss {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* Tabs that read as tabs: an underline strip on the mast's own rule. */
+.ag-tabs {
+  display: flex;
+  gap: 24px;
+  margin-top: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.ag-tab {
+  position: relative;
+  padding: 7px 2px 9px;
+  font: 500 13.5px/20px var(--font-ui);
+  color: var(--text-dim);
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.ag-tab:hover {
+  color: var(--text);
+}
+.ag-tab[aria-selected="true"] {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--cherenkov);
+}
+.ag-tab__n {
+  font: var(--type-small);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  margin-left: 5px;
+}
+
+/* ---------- main area: thread + the docked pane, which never navigates --- */
+.ag-main {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.ag-main--pane {
+  grid-template-columns: minmax(0, 1fr) var(--detail-width);
+}
+/* The thread scrolls INSIDE, so the composer stays pinned to the bottom edge
+ * and never scrolls away from the reader mid-answer. */
+.ag-thread {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.ag-thread__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 34px 22px;
+}
+.ag-thread .tr-thread {
+  flex: 1 1 auto;
+}
+.ag-panel {
+  padding: 16px 28px 28px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.ag-thread > .ag-panel {
+  flex: 1 1 auto;
+}
+
+/* ---------- the agentic composer: one card, question above, controls below
+ * The two "how will this be answered" controls — model and grounding — live in
+ * the composer's own bordered footer. Nothing about answering floats outside
+ * this card, which is what stopped grounding being homeless. */
+.ag-composer {
+  flex: none;
+  padding: 12px 34px 18px;
+  background: var(--ground);
+}
+.ag-composer__card {
+  max-width: 76ch;
+  width: 100%;
+  margin-inline: auto;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+}
+.ag-composer__card:focus-within {
+  border-color: var(--rule-strong);
+}
+.ag-composer__text {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  resize: none;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: var(--type-body);
+  outline: none;
+  padding: 12px 14px 6px;
+}
+.ag-composer__text::placeholder {
+  color: var(--text-dim);
+}
+.ag-composer__ctl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  row-gap: 8px;
+  padding: 8px 10px 8px 14px;
+  border-top: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+/* WHY THE COMPOSER WILL NOT SEND — the sentence that used to be missing.
+ * Sits in the composer's own footer row, beside the send control it explains,
+ * in the caution tone so it is not read as another quiet caps note. It wraps
+ * (unlike `.ag-caps`) because it is a sentence, not a readout. */
+.ag-composer__blocked {
+  font: var(--type-small);
+  color: var(--amber);
+  flex: 1 1 16ch;
+  min-width: 0;
+}
+
+.ag-caps {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: var(--type-small);
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ag-composer__send {
+  height: 30px;
+  padding: 0 18px;
+  margin-left: auto;
+}
+
+/* Grounding: ONE compact switch (owner: "just put a regular toggle switch
+ * instead of two buttons that take up so much space"). The word beside the
+ * track states the CURRENT position — "Grounded" / "Ungrounded" — so the off
+ * state stays named without a second button. Checked spends the screen's
+ * selection budget (--selected-tint + cherenkov-deep), same as the segment
+ * it replaces; unchecked spends nothing. */
+.ag-gswitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  font: 400 12.5px/18px var(--font-ui);
+  color: var(--text-dim);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ag-gswitch__track {
+  flex: none;
+  width: 26px;
+  height: 14px;
+  border-radius: 7px;
+  border: 1px solid var(--rule);
+  background: var(--hover-tint);
+  position: relative;
+}
+.ag-gswitch__word {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ag-gswitch__thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: transform var(--motion-drum) var(--ease-damped);
+}
+.ag-gswitch:hover {
+  color: var(--text);
+}
+.ag-gswitch[aria-checked="true"] {
+  color: var(--text);
+}
+.ag-gswitch[aria-checked="true"] .ag-gswitch__track {
+  background: var(--selected-tint);
+  border-color: var(--cherenkov-deep);
+}
+.ag-gswitch[aria-checked="true"] .ag-gswitch__word {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ag-gswitch__thumb {
+  transform: translateX(12px);
+  background: var(--cherenkov-deep);
+}
+.ag-gswitch:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+/* THE TAP TARGET SURVIVES THE RESTYLE. The previous control carried a 44px
+ * minimum at phone width; a switch that is 22px tall on a touch screen is a
+ * control most people miss. */
+@media (max-width: 48rem) {
+  .ag-gswitch {
+    min-height: 44px;
+  }
+}
+
+/* ---------- the deterministic composer: a run form, not a prompt box ------
+ * There is deliberately no textarea anywhere inside this region — and that is
+ * an assertion carried by RunForm's own paired test, not a coincidence. */
+.ag-runform {
+  flex: none;
+  padding: 12px 34px 18px;
+  background: var(--ground);
+}
+.ag-runform__card {
+  max-width: 100ch;
+  width: 100%;
+  margin-inline: auto;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+}
+.ag-runform__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-raised);
+}
+.ag-runform__head h3 {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+.ag-runform__lede {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-plate {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ag-plate__field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  white-space: nowrap;
+}
+.ag-plate__field > dt {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ag-plate__field > dd {
+  margin: 0;
+  color: var(--text);
+}
+.ag-plate__field .ne-mono {
+  color: var(--text);
+}
+.ag-runform__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+.ag-runform__col {
+  padding: 12px 16px 14px;
+  min-width: 0;
+}
+.ag-runform__col + .ag-runform__col {
+  border-left: 1px solid var(--rule);
+}
+.ag-runform__h {
+  margin: 0 0 8px;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ag-runform__h + .ag-runform__h {
+  margin-top: 14px;
+}
+.ag-plan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ag-plan__step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 27px;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-plan__ord {
+  flex: none;
+  width: 16px;
+  text-align: right;
+  font: 500 11.5px/16px var(--font-mono);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.ag-plan__action {
+  font: 500 12px/18px var(--font-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.ag-plan__kind {
+  white-space: nowrap;
+}
+.ag-frozen {
+  margin: 2px 0 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  row-gap: 5px;
+  column-gap: 12px;
+  font: var(--type-small);
+}
+.ag-frozen dt {
+  color: var(--text-dim);
+}
+.ag-frozen dd {
+  margin: 0;
+  color: var(--text);
+  font: 400 12px/18px var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.ag-runform__absent {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text-dim);
+}
+.ag-runform__foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+.ag-budgets {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  font: var(--type-small);
+  color: var(--text-dim);
+  flex-wrap: wrap;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.ag-budgets b {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.ag-runform__foot .ne-btn--primary {
+  margin-left: auto;
+  height: 30px;
+  padding: 0 20px;
+}
+.ag-runform__write {
+  max-width: 100ch;
+  width: 100%;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* The deterministic turn opens with the submitted input, not a prose bubble. */
+.tr-q__bubble--typed {
+  font: 400 13px/20px var(--font-mono);
+}
+
+/* ---------- unavailable band (availability_reasons, served verbatim) ------ */
+.ag-unavail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 9px 14px;
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius);
+  background: var(--amber-tint);
+  font: var(--type-small);
+  color: var(--amber);
+}
+
+/* ==========================================================================
+ * THE CATALOG — a roster, not a table. Four agents cannot earn five sortable
+ * columns. Each card's anatomy is its strategy: the agentic card opens with
+ * what you can ask it, a deterministic card with the Workflow it is bound to.
+ * ========================================================================== */
+.ag-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1160px;
+}
+.ag-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 2px 10px;
+}
+.ag-group__head h2 {
+  margin: 0;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ag-group__head span {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+/* THE CATALOG GRID.
+ *
+ * `auto-fit`, NOT `auto-fill`, and the difference is the whole defect. Both
+ * lay 340px-minimum tracks across the row; `auto-fill` KEEPS the tracks it
+ * could not fill, so the CONVERSATIONAL group — which holds exactly one card —
+ * drew that card into one third of an 1180px row and left two empty tracks
+ * beside it. Squeezed into ~370px the card then clipped its own AVAILABLE pill
+ * and fragmented its workflow hash. `auto-fit` collapses the empty tracks, so a
+ * lone card takes the row and two cards take half of it each.
+ *
+ * Verified at 1280px (2 tracks) and 1500px (3 tracks), with 1, 2 and 3 cards. */
+.ag-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* THE GRID ITEM IS THE <li>, NOT THE CARD — which is why `.ag-card--lead`'s own
+ * `grid-column` never applied and the lead card never spanned. The span lives
+ * on the item that is actually in the grid; `min-width: 0` gives that item the
+ * floor a long unbroken identifier inside it would otherwise remove. */
+.ag-cards > li {
+  display: flex;
+  min-width: 0;
+}
+.ag-cards > li.ag-cards__lead {
+  grid-column: 1 / -1;
+}
+.ag-cards > li > .ag-card {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ag-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  overflow: hidden;
+}
+/* NOTHING IS CLIPPED AT THE CARD EDGE. The card is `overflow: hidden`, so a
+ * head whose min-content is wider than the card does not overflow visibly — it
+ * is CUT, which is how "AVAILABLE" reached the screen as "AVAILABL". The head
+ * therefore wraps rather than overflowing, the title gets a floor of zero so it
+ * yields first, and the pill (styles/table.css) shrinks for nobody. */
+.ag-card__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 13px 16px 0;
+  min-width: 0;
+}
+.ag-card__name {
+  margin: 0;
+  min-width: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+.ag-card__name a {
+  color: var(--text);
+}
+.ag-card__spacer {
+  flex: 1 1 auto;
+}
+.ag-card__desc {
+  margin: 6px 0 0;
+  padding: 0 16px;
+  font: var(--type-small);
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.ag-card__facts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px 0;
+}
+.ag-factchip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  font: var(--type-small);
+  color: var(--text);
+  white-space: nowrap;
+}
+.ag-factchip > span:first-child {
+  color: var(--text-dim);
+}
+.ag-card__plate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 9px 16px;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-raised);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+/* The workflow profile id: one unbroken token in a wrapping flex row. It gets
+ * its own line before it gets split down the page, and it ellipsizes — with the
+ * whole value still in the DOM and in the title — before it overflows a card
+ * that clips. It is never shortened in the DATA. */
+.ag-card__plate .ne-mono {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.ag-card__foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px 14px;
+  margin-top: auto;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-card__foot .ne-btn {
+  margin-left: auto;
+}
+.ag-card--lead .ag-card__desc {
+  max-width: 74ch;
+  font: var(--type-body);
+  color: var(--text-dim);
+}
+
+/* ---------- capabilities tab content ---------- */
+.ag-capstack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1060px;
+}
+
+/* ---------- narrow behaviour ----------
+ * ≤1280px the docked pane overlays the thread (the Audit pattern), so the
+ * conversation never drops below its prose measure to make room for it.
+ * ≤1100px the sidebar folds into the mast's own "Agent" control. */
+@media (max-width: 1280px) {
+  .ag-main--pane {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ag-main--pane .ne-detail {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    box-shadow: var(--shadow-pane);
+  }
+}
+/* Under 1100px the sidebar STACKS rather than hiding. A folded "Agent ▾" mast
+ * control was drawn in the render, and a control is only worth building when it
+ * is the only way back: hiding the roster behind a toggle that does not exist
+ * yet would strand the reader on one agent with no way to reach another. The
+ * roster and its one history list keep their rows and give up their column. */
+@media (max-width: 1100px) {
+  .ag-work {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .ag-side {
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+    max-height: 15rem;
+    overflow-y: auto;
+  }
+  .ag-side__roster,
+  .ag-side__hist {
+    padding-block: var(--space-8);
+  }
+}
+
+/* ---------- crumbs: the only "where am I" on the workspace mast ---------- */
+.ag-crumbs {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-crumbs a {
+  color: var(--text-dim);
+}
+.ag-crumbs a:hover {
+  color: var(--text);
+}
+.ag-crumbs b {
+  font-weight: 500;
+  color: var(--text);
+}
+.ag-btn--sm {
+  height: 24px;
+  padding: 0 var(--space-8);
+  font: var(--type-small);
+}
+
+/* SchemaInputFields inside the run form takes the form's own field anatomy —
+ * label, the typed control, then the served bounds. The component is unchanged;
+ * only the room it sits in is. */
+.ag-runform .ne-runform__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ag-runform .ne-runform__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ag-runform .ne-runform__field label {
+  font: var(--type-cell);
+  color: var(--text);
+}
+.ag-runform .ne-runform__field input[type="number"] {
+  width: 76px;
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  box-shadow: var(--well-inset);
+  color: var(--text);
+  font: var(--type-cell);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ag-runform .ne-runform__bounds,
+.ag-runform .ne-runform__desc,
+.ag-runform .ne-runform__noinput {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* ========================================================================== */
+/* ROW IDENTITY + THE RUN COMPARE VIEW (S9)                                    */
+/*                                                                            */
+/* The row anchor is the served canonical hash of a verified row — the row's  */
+/* identity. It draws as the console draws every hash: short form, mono, full  */
+/* value in the title and behind the copy control. The compare view is two     */
+/* independent Run records side by side; nothing in this CSS (or anywhere      */
+/* else) marks a match or a mismatch — the reader does the comparing.          */
+/* ========================================================================== */
+
+.ag-rowanchor {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ag-rowanchor__label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ag-rowanchor__count {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ag-compare-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.ag-compare-page__h1 {
+  margin: 0;
+  font: var(--type-title);
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.ag-compare-page__lead {
+  margin: 0;
+  max-width: 72ch;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+  margin-top: 6px;
+}
+@media (max-width: 900px) {
+  .ag-compare {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.ag-compare__col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 14px 18px 18px;
+}
+.ag-compare__colhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ag-compare__colhead .ag-side__label {
+  padding: 0;
+}
+.ag-compare__picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ag-compare__pickfield {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ag-compare__pickfield select {
+  height: 28px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  color: var(--text);
+  font: var(--type-cell);
+  padding: 0 var(--space-8);
+}
+.ag-compare__runs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.ag-compare__runpick {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font: var(--type-cell);
+}
+.ag-compare__runpick:hover {
+  background: var(--hover-tint);
+}
+.ag-compare__runlabel {
+  font: var(--type-cell);
+  color: var(--text);
+}
+.ag-compare__runmeta,
+.ag-compare__runmore {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-compare__run {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.ag-compare__runhead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ag-compare__h2 {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+.ag-compare__h3 {
+  margin: 0 0 6px;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ag-compare__runstamp,
+.ag-compare__settle,
+.ag-compare__model {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-compare__settle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ag-compare__output {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ag-compare__absent {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ag-compare__anchors {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ag-compare__claims {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ag-compare__claim {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font: var(--type-cell);
+  color: var(--text);
+}
+.ag-compare__exits {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--rule);
+}
+
+/* The run receipt's plan lists print the SERVER's own step ordinal in the row text.
+   A default <ol> adds its own marker on top, so every row read "1. 1. …". The server's
+   number is authoritative -- the agentic list is filtered to the visible steps, so a
+   positional marker would not match the executed plan. Suppress the browser's. */
+.ne-run-plan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ========================================================================== */
+/* THE RUN TIMELINE — the ordered record of a governed Run's events.          */
+/*                                                                            */
+/* It wore a class and the class had NO RULE, so the one list on this page     */
+/* whose rows are disclosures drew with the browser's decimal markers at a     */
+/* 40px indent, and the child list drew deeper again — inside a console that   */
+/* has no other numbered list on any screen. Same defect as .ne-run-plan       */
+/* above and the same reason for suppressing the marker: every row's own <dl>  */
+/* already prints the SERVER's sequence number, so a positional marker is a    */
+/* second, weaker answer to a question the row has already answered.          */
+.ne-run-timeline,
+.ne-run-timeline ol {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.ne-run-timeline {
+  margin: 0;
+  padding: 0;
+}
+/* A CHILD EVENT IS SUBORDINATE, NOT SMALLER. The rail is the one this package
+   already uses wherever a block is subordinate to the one above it
+   (.ne-cap-drawer__arg, .tr-src) — so depth reads the same here as everywhere
+   else, and the nested list loses the browser's second, deeper indent. */
+.ne-run-timeline ol {
+  margin: var(--space-8) 0 0;
+  padding: 0 0 0 var(--space-12);
+  border-left: 2px solid var(--rule);
+}
+.ne-run-timeline li {
+  min-width: 0;
+}
+/* The disclosure marker STAYS. Unlike a decimal list marker it is the row's
+   affordance — the one thing telling the reader the event opens. */
+.ne-run-timeline summary {
+  cursor: pointer;
+  padding: var(--space-4) 0;
+  font: var(--type-cell);
+  color: var(--text);
+}
+.ne-run-timeline summary:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-run-timeline summary time {
+  color: var(--text-dim);
+  font: var(--type-cell-mono);
+}
+
+/* The heading row above it: the section title and the live-follow toggle sit on
+   ONE line. With no rule the <div> was a plain block, so the <h2> and the
+   button stacked and the toggle landed under the word it qualifies. */
+.ne-run-timeline-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+}
+.ne-run-timeline-title h2 {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+/* "Follow live" is a TOGGLE, and .ne-btn has no pressed state of its own — a
+   toggle whose on-state is invisible is the same defect in a quieter register.
+   The border and the selection wash carry it, in the grammar
+   .ne-answer-ledger__timeline and .ne-t3-browser already use, and aria-pressed
+   carries it for anyone not reading the border. */
+.ne-run-timeline-title .ne-btn[aria-pressed="true"] {
+  border-color: var(--cherenkov);
+  background: var(--selected-tint);
+  color: var(--text);
+}

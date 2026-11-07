@@ -1,0 +1,62 @@
+[project]
+name = "ne-brain-graph"
+version = "0.2.0"
+description = "Brain T2: property-graph knowledge tier (v1.1)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    # ne-brain is a RUNTIME dep: ne.brain_graph.read imports ne.brain.trimming (C7
+    # trimming: GroupExpander, acl_match_labels) at module top-level. The interim
+    # sovereignty/air-gap edge was removed by NE-FIX-SSRF-CONSOLIDATION (its guard
+    # now comes from ne-net), but this runtime trimming edge is unrelated and stays.
+    "ne-brain",
+    "ne-connect",
+    "ne-events",
+    "ne-audit",
+    "ne-flywheel",
+    "ne-envbuild",
+    "ne-net",
+    "pydantic>=2.11,<3",
+    "sqlalchemy>=2.0.51,<2.1",
+    "psycopg[binary]>=3.3.4,<4",
+    # deterministic constraint-conforming sample values in extraction/prompt.py
+    # (shortest-match search via partial matching); already pinned+hash-verified
+    # in the workspace uv.lock via tiktoken, so this adds an edge, not a lock
+    # entry; license Apache-2.0 AND CNRI-Python, CNRI-Python operand already
+    # allowlisted with rationale in tools/supply-chain/license-policy.toml (~line 36).
+    "regex>=2026.6.28,<2027",
+]
+
+[dependency-groups]
+# Test-only: ne-permissions provides the REAL PrincipalStore/PrincipalExpander
+# for the D2 provable-trimming suite (mirrors ne-brain's C7 suite). Not a runtime
+# dep — the group expander is injected at the composition root as a Protocol.
+dev = ["ne-permissions"]
+
+[project.scripts]
+ne-brain-graph = "ne.brain_graph.cli:main"
+
+[project.entry-points."ne.plugins.graph_store"]
+age = "ne.brain_graph.age.store:AgeGraphStore"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-brain = { workspace = true }
+ne-connect = { workspace = true }
+ne-events = { workspace = true }
+ne-audit = { workspace = true }
+ne-flywheel = { workspace = true }
+ne-envbuild = { workspace = true }
+ne-net = { workspace = true }
+ne-permissions = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.brain_graph"
+namespace = true

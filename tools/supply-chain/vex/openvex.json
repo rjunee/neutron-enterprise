@@ -1,0 +1,475 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/rjunee/neutron-enterprise/vex/2026-07-18-model-export-transformers",
+  "author": "Ryan Junee <owner@example.com>",
+  "timestamp": "2026-07-18T02:00:00Z",
+  "last_updated": "2026-09-23T16:00:00Z",
+  "version": 6,
+  "statements": [
+    {
+      "vulnerability": {
+        "name": "CVE-2026-4372",
+        "aliases": [
+          "GHSA-29pf-2h5f-8g72",
+          "PYSEC-2026-2289"
+        ],
+        "description": "HuggingFace transformers vulnerable to remote code execution"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "transformers 4.57.6 is a BUILD-TIME-ONLY dependency of the isolated tools/model-export toolchain (hash-pinned export_env sidecar venv; SPEC \u00a711 heavy-ML-closure isolation principle) and is NEVER installed in any shipped platform runtime image, container, or SBOM. CVE-2026-4372 is a remote-code-execution issue triggered by loading a model whose repository ships custom/remote code (trust_remote_code). tools/model-export/export_env/export_and_gate.py calls optimum.exporters.onnx.main_export() and sentence_transformers.SentenceTransformer() against a LOCAL, pre-downloaded, PINNED, trusted checkpoint (Qwen/Qwen3-Embedding-0.6B @ 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3, a standard architecture registered natively by optimum-onnx) and NEVER passes trust_remote_code=True (it is left at its default of False). No untrusted or user-supplied model is ever loaded, so the vulnerable remote-code path is not reachable in our usage."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-29pf-2h5f-8g72",
+        "aliases": [
+          "CVE-2026-4372",
+          "PYSEC-2026-2289"
+        ],
+        "description": "HuggingFace transformers vulnerable to remote code execution"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-4372 (grype keys this finding by its GHSA id). transformers 4.57.6 is a build-time-only, isolated model-export sidecar dependency, never present in the platform runtime or SBOM; the export tool loads only a local, pinned, trusted Qwen3-Embedding-0.6B checkpoint and never enables trust_remote_code, so the remote-code path is not reachable in our usage."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-5241",
+        "aliases": [
+          "GHSA-fgcw-684q-jj6r",
+          "PYSEC-2026-2290"
+        ],
+        "description": "python-transformers: Arbitrary code execution due to overridden trust_remote_code setting"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Same context as CVE-2026-4372: transformers 4.57.6 is a build-time-only, isolated model-export sidecar dependency, never present in the platform runtime or SBOM. CVE-2026-5241 requires an overridden trust_remote_code setting so a model with custom remote code executes arbitrary code at load time. The export tool loads only the pinned, trusted, local Qwen3-Embedding-0.6B checkpoint with trust_remote_code at its default (False) and never overrides it; no untrusted model is loaded. The fixed transformers versions (5.3.0 / 5.5.0) cannot be adopted here because the optimum-onnx 0.1.0 exporter caps transformers at <4.58 \u2014 revisit this VEX statement when a newer optimum-onnx relaxes that ceiling."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-fgcw-684q-jj6r",
+        "aliases": [
+          "CVE-2026-5241",
+          "PYSEC-2026-2290"
+        ],
+        "description": "python-transformers: Arbitrary code execution due to overridden trust_remote_code setting"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-5241 (grype keys this finding by its GHSA id). Build-time-only, isolated model-export sidecar transformers; the export tool loads only a local, pinned, trusted Qwen3-Embedding-0.6B checkpoint with trust_remote_code at its default (False), so the arbitrary-code path is not reachable in our usage."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-1839",
+        "aliases": [
+          "GHSA-69w3-r845-3855",
+          "PYSEC-2026-2288"
+        ],
+        "description": "HuggingFace Transformers allows arbitrary code execution in the Trainer class via Trainer._load_rng_state() calling torch.load() without weights_only on a checkpoint rng_state file"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "transformers 4.57.6 is a BUILD-TIME-ONLY dependency of the isolated, hash-pinned export_env model-export sidecar venv (SPEC \u00a711 heavy-ML-closure isolation) and is NEVER installed in any shipped platform runtime image, container, or SBOM. CVE-2026-1839 is an RCE in transformers.Trainer._load_rng_state(), which calls torch.load() on a checkpoint rng_state without weights_only=True; per the advisory it is exploitable only with torch<2.6. tools/model-export/export_env/export_and_gate.py never uses the Trainer class (the string 'Trainer' appears nowhere in the file) \u2014 it invokes only optimum.exporters.onnx.main_export() (export_and_gate.py L126, L129), sentence_transformers.SentenceTransformer() (L146, L148), and transformers.AutoTokenizer.from_pretrained() (L161) against the LOCAL pinned, trusted Qwen/Qwen3-Embedding-0.6B checkpoint at immutable commit SHA 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3 (tools/model-export/src/ne/model_export/specs.py:35-36). export_env additionally pins torch==2.13.0 (>=2.6, requirements.txt:886), so even the torch.load surface the advisory targets is patched. The vulnerable Trainer path is therefore not reachable in our usage. The fixed release 5.0.0rc3 sits behind the optimum-onnx 0.1.0 transformers<4.58 ceiling (SPEC \u00a711 keep-VEX FINAL) \u2014 revisit when optimum-onnx relaxes that cap."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-69w3-r845-3855",
+        "aliases": [
+          "CVE-2026-1839",
+          "PYSEC-2026-2288"
+        ],
+        "description": "HuggingFace Transformers allows arbitrary code execution in the Trainer class via Trainer._load_rng_state() calling torch.load() without weights_only on a checkpoint rng_state file"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-1839 (grype keys this finding by its GHSA id). transformers 4.57.6 is a build-time-only, isolated model-export sidecar dependency, never present in the platform runtime or SBOM; export_and_gate.py never uses the Trainer class (only main_export/SentenceTransformer/AutoTokenizer on the local, pinned, trusted Qwen3-Embedding-0.6B checkpoint), and export_env pins torch==2.13.0 (>=2.6), so the Trainer._load_rng_state torch.load path is not reachable in our usage."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-14929",
+        "aliases": [
+          "PYSEC-2025-217"
+        ],
+        "description": "Hugging Face Transformers X-CLIP checkpoint conversion deserialization of untrusted data allows remote code execution (ZDI-CAN-28308)"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "transformers 4.57.6 is a BUILD-TIME-ONLY dependency of the isolated, hash-pinned export_env model-export sidecar venv and is NEVER installed in any shipped platform runtime image, container, or SBOM. CVE-2025-14929 (ZDI-CAN-28308, CVSS 3.1 7.8 AV:L/AC:L/PR:N/UI:R) is deserialization of untrusted data in the X-CLIP checkpoint-conversion script, requiring a user to run a transformers X-CLIP conversion CLI on an attacker-supplied checkpoint. tools/model-export/export_env/export_and_gate.py never invokes any conversion script \u2014 it invokes only optimum.exporters.onnx.main_export() (L126, L129), sentence_transformers.SentenceTransformer() (L146, L148), and transformers.AutoTokenizer.from_pretrained() (L161) on the pinned LOCAL immutable-SHA Qwen/Qwen3-Embedding-0.6B checkpoint (specs.py:35-36); no X-CLIP model or conversion code path exists anywhere under tools/model-export/. The vulnerable conversion path is not reachable in our usage. Affected range is <5.0.0rc0 (osv last_affected 5.0.0-rc0); any fix is behind the optimum-onnx 0.1.0 transformers<4.58 ceiling (SPEC \u00a711 keep-VEX FINAL)."
+    },
+    {
+      "vulnerability": {
+        "name": "PYSEC-2025-217",
+        "aliases": [
+          "CVE-2025-14929"
+        ],
+        "description": "Hugging Face Transformers X-CLIP checkpoint conversion deserialization of untrusted data allows remote code execution (ZDI-CAN-28308)"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2025-14929 (osv/PYSEC-keyed scanners report this id; no GHSA exists). transformers 4.57.6 is a build-time-only, isolated model-export sidecar dependency, never present in the platform runtime or SBOM; export_and_gate.py never invokes any transformers conversion script and no X-CLIP conversion path exists under tools/model-export/ \u2014 the tool only runs main_export/SentenceTransformer/AutoTokenizer on the local, pinned, trusted Qwen3-Embedding-0.6B checkpoint, so the X-CLIP deserialization path is not reachable in our usage."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-9856",
+        "aliases": [
+          "GHSA-xrqw-3rrv-vx5w"
+        ],
+        "description": "Transformers save_pretrained path traversal allows arbitrary file writes through chat template names"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "transformers 4.57.6 is a build-time-only dependency of the isolated tools/model-export toolchain (hash-pinned export_env sidecar venv; SPEC \u00a711 heavy-ML-closure isolation principle). The vulnerable save_pretrained() chat-template write path IS executed during an export, but every value that reaches it comes from a single SHA-pinned trusted checkpoint, so no adversary can control the chat-template names the CVE requires. EVIDENCE (re-verifiable without redoing the analysis; all versions are the hash-pinned tools/model-export/export_env/requirements.txt closure \u2014 optimum-onnx 0.1.0, optimum 2.1.0, transformers 4.57.6): (1) REACHABILITY IS CONCEDED \u2014 this statement deliberately does NOT claim vulnerable_code_not_in_execute_path. The sidecar's optimum.exporters.onnx.main_export() call (tools/model-export/export_env/export_and_gate.py) reaches transformers save_pretrained() transitively: optimum-onnx 0.1.0 src/optimum/exporters/onnx/convert.py line 1029 model.config.save_pretrained(output), line 1035 generation_config.save_pretrained(output), and line 1040 maybe_save_preprocessors(model_name_or_path, output) -> optimum 2.1.0 src/optimum/utils/save_utils.py line 92, which calls preprocessor.save_pretrained(dest_dir) for every loadable preprocessor INCLUDING the tokenizer \u2014 the exact function CVE-2026-9856 lives in (tokenizer save writes chat-template files whose names come from the tokenizer's chat-template config). (2) NO ADVERSARY CONTROL \u2014 the only model this tool can ever export is the single entry in the MODEL_SPECS registry (tools/model-export/src/ne/model_export/specs.py): Qwen/Qwen3-Embedding-0.6B pinned at immutable commit 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3. export_and_gate.py resolves that revision to an immutable SHA via HfApi.repo_info (failing closed if it cannot) and snapshot_download()s exactly that revision; the CLI takes a registry key, never a user-supplied path or repo id. The chat-template names that flow into save_pretrained() therefore derive solely from that pinned, trusted snapshot \u2014 there is no input an adversary can control. (3) BUILD-TIME-ONLY \u2014 the deploy/docker/ne-app/Dockerfile runtime stage copies only /app/.venv, /bin/uv, the packages/ne-brain/parser_env payload, and the console dist: no tools/model-export content and no .export-venv ships in any runtime image, and transformers 4.57.6 appears in no platform uv.lock/SBOM. UPGRADE CONSTRAINT: the fixed release (5.10.0) is unreachable today \u2014 optimum-onnx 0.1.0 (the latest published release) requires transformers>=4.36,<4.58.0, so the bump is unsatisfiable until upstream ships optimum-onnx with transformers 5.x support; re-triage then."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-xrqw-3rrv-vx5w",
+        "aliases": [
+          "CVE-2026-9856"
+        ],
+        "description": "Transformers save_pretrained path traversal allows arbitrary file writes through chat template names"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/transformers@4.57.6"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_cannot_be_controlled_by_adversary",
+      "impact_statement": "Alias of CVE-2026-9856 (grype keys this finding by its GHSA id; the dual-key gate matches vulnerability.name exactly, never aliases). Same finding and evidence as the CVE-keyed statement: the vulnerable save_pretrained() chat-template write path IS executed by the build-time-only model-export sidecar, but its sole input is a SHA-pinned trusted checkpoint, so no adversary controls the chat-template names. EVIDENCE (re-verifiable without redoing the analysis; all versions are the hash-pinned tools/model-export/export_env/requirements.txt closure \u2014 optimum-onnx 0.1.0, optimum 2.1.0, transformers 4.57.6): (1) REACHABILITY IS CONCEDED \u2014 this statement deliberately does NOT claim vulnerable_code_not_in_execute_path. The sidecar's optimum.exporters.onnx.main_export() call (tools/model-export/export_env/export_and_gate.py) reaches transformers save_pretrained() transitively: optimum-onnx 0.1.0 src/optimum/exporters/onnx/convert.py line 1029 model.config.save_pretrained(output), line 1035 generation_config.save_pretrained(output), and line 1040 maybe_save_preprocessors(model_name_or_path, output) -> optimum 2.1.0 src/optimum/utils/save_utils.py line 92, which calls preprocessor.save_pretrained(dest_dir) for every loadable preprocessor INCLUDING the tokenizer \u2014 the exact function CVE-2026-9856 lives in (tokenizer save writes chat-template files whose names come from the tokenizer's chat-template config). (2) NO ADVERSARY CONTROL \u2014 the only model this tool can ever export is the single entry in the MODEL_SPECS registry (tools/model-export/src/ne/model_export/specs.py): Qwen/Qwen3-Embedding-0.6B pinned at immutable commit 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3. export_and_gate.py resolves that revision to an immutable SHA via HfApi.repo_info (failing closed if it cannot) and snapshot_download()s exactly that revision; the CLI takes a registry key, never a user-supplied path or repo id. The chat-template names that flow into save_pretrained() therefore derive solely from that pinned, trusted snapshot \u2014 there is no input an adversary can control. (3) BUILD-TIME-ONLY \u2014 the deploy/docker/ne-app/Dockerfile runtime stage copies only /app/.venv, /bin/uv, the packages/ne-brain/parser_env payload, and the console dist: no tools/model-export content and no .export-venv ships in any runtime image, and transformers 4.57.6 appears in no platform uv.lock/SBOM. UPGRADE CONSTRAINT: the fixed release (5.10.0) is unreachable today \u2014 optimum-onnx 0.1.0 (the latest published release) requires transformers>=4.36,<4.58.0, so the bump is unsatisfiable until upstream ships optimum-onnx with transformers 5.x support; re-triage then."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-6587",
+        "aliases": [
+          "GHSA-95ww-475f-pr4f",
+          "PYSEC-2026-3046"
+        ],
+        "description": "RAGAS has SSRF via the Multi-Modal Faithfulness collections module through manipulation of file-processing arguments"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/ragas@0.4.3"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "ragas 0.4.3 lives ONLY inside the isolated, hash-pinned, dev/test-only packages/ne-eval/ragas_env sidecar venv used to cross-validate native eval-metric arithmetic \u2014 it is NEVER a runtime dependency, never in the platform uv.lock closure, images, or SBOM. CVE-2026-6587 is an SSRF in ragas's multi-modal faithfulness collections module (file/URL processing over retrieved_contexts). The sole sidecar entrypoint packages/ne-eval/ragas_env/cross_check.py imports only the classic metrics Faithfulness, LLMContextPrecisionWithReference, and LLMContextRecall plus their parsed-output models NLIStatementOutput/StatementFaithfulnessAnswer/Verification/ContextRecallClassification from ragas.metrics._faithfulness/_context_precision/_context_recall (cross_check.py:41-51) and scores FIXED verdicts \u2014 the multi-modal collections module is never imported and no URL or local-file processing of contexts ever executes (grep confirms zero multi_modal/url/http/requests usage in the file). The vulnerable SSRF path is not reachable in our usage. No fixed ragas release exists (osv last_affected 0.4.3 = current PyPI latest, re-verified 2026-07-21); re-checked each surveillance run."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-95ww-475f-pr4f",
+        "aliases": [
+          "CVE-2026-6587",
+          "PYSEC-2026-3046"
+        ],
+        "description": "RAGAS has SSRF via the Multi-Modal Faithfulness collections module through manipulation of file-processing arguments"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/ragas@0.4.3"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-6587 (grype keys this finding by its GHSA id). ragas 0.4.3 is a dev/test-only, isolated ragas_env sidecar dependency, never a runtime dep and never in the platform uv.lock/images/SBOM; cross_check.py imports only the classic Faithfulness/LLMContextPrecisionWithReference/LLMContextRecall metrics and their parsed-output models (cross_check.py:41-51) and never imports the multi-modal collections module, so the SSRF file/URL-processing path is not reachable in our usage. No fixed release exists (last_affected 0.4.3)."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2025-69872",
+        "aliases": [
+          "GHSA-w8v5-vhqr-4h9v",
+          "PYSEC-2026-2447"
+        ],
+        "description": "DiskCache (python-diskcache) through 5.6.3 uses Python pickle for serialization by default; an attacker with write access to the cache directory can achieve arbitrary code execution when a victim application reads from the cache"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/diskcache@5.6.3"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "diskcache 5.6.3 is present ONLY as a transitive dependency of ragas inside the isolated, hash-pinned, dev/test-only packages/ne-eval/ragas_env sidecar venv (requirements.txt:321) \u2014 it is NEVER a runtime dependency, never in the platform uv.lock closure, images, or SBOM. CVE-2025-69872 is unsafe pickle deserialization requiring an attacker with write access to a cache directory that a victim application later reads via diskcache. The sole sidecar entrypoint packages/ne-eval/ragas_env/cross_check.py makes no LLM calls and never exercises ragas's diskcache cache backend \u2014 it imports only the metric classes and their parsed-output models (cross_check.py:41-51) and scores fixed verdicts, so no diskcache code path executes and no cache directory is ever created or read (grep confirms zero cache/diskcache usage in the file). The vulnerable pickle-read path is not reachable in our usage. No fixed diskcache release exists (osv affects through 5.6.3 = current PyPI latest, re-verified 2026-07-21); re-checked each surveillance run."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-w8v5-vhqr-4h9v",
+        "aliases": [
+          "CVE-2025-69872",
+          "PYSEC-2026-2447"
+        ],
+        "description": "DiskCache (python-diskcache) through 5.6.3 uses Python pickle for serialization by default; an attacker with write access to the cache directory can achieve arbitrary code execution when a victim application reads from the cache"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/diskcache@5.6.3"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2025-69872 (grype keys this finding by its GHSA id). diskcache 5.6.3 is a dev/test-only, isolated transitive ragas_env dependency, never a runtime dep and never in the platform uv.lock/images/SBOM; cross_check.py never exercises ragas's diskcache backend \u2014 it imports only the metric classes and parsed-output models (cross_check.py:41-51) and scores fixed verdicts, so no cache directory is created or read and the unsafe-pickle path is not reachable in our usage. No fixed release exists (affects through 5.6.3)."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-45829",
+        "aliases": [],
+        "description": "chromadb: ChromaDB Python Project: Arbitrary code execution via pre-authentication code injection"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "chromadb 1.1.1 is a BASE (unconditional, non-optional) dependency of the top-level `crewai` package (verified via crewai 1.15.5's PyPI requires_dist: `chromadb~=1.1.0` carries no `extra ==` marker), so it is pulled into packages/ne-mcp/crewai_env/ (the NE-CREWAI-DROPIN isolated sidecar venv, the out-of-process governed drop-in) regardless of whether CrewAI's optional memory feature is ever used. This CVE requires ChromaDB's Python/FastAPI HTTP server to be running and network-reachable pre-auth (confirmed via the public advisory: 'local installs... are not impacted'; 'affects internet-facing deployments'; the Rust frontend and local installs are explicitly out of scope). The sidecar's own code (packages/ne-mcp/crewai_env/agent.py) never references CrewAI's memory, embedder, or chromadb APIs at all (zero occurrences), never enables Agent(memory=True), and never starts any chromadb server process \u2014 chromadb is present in the venv purely as an unused transitive install, never imported or instantiated by anything this drop-in runs. No fixed version exists upstream as of 2026-07-22; re-verify this statement when chromadb ships a patch or when crewai's own pin range changes."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-xf7x-x43h-rpqh",
+        "aliases": [],
+        "description": "json_repair: Circular JSON Schema $ref causes unbounded CPU DoS"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/json-repair@0.25.3"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "json-repair 0.25.3 is a BASE dependency of the top-level `crewai` package (crewai 1.15.5 pins `json-repair~=0.25.2` directly, tightly, with no `extra ==` marker \u2014 verified via PyPI requires_dist; the pin cannot be bumped past 0.25.x without diverging from crewai's own declared compatibility range). The vulnerable code is specifically `SchemaRepairer.resolve_schema()`, an unbounded loop resolving JSON Schema `$ref` references. CrewAI's own actual integration point (src/crewai/tools/tool_usage.py, verified via crewai's public source/PR history) calls only the unrelated `repair_json()` text-repair function to fix malformed LLM tool-call JSON output \u2014 never the schema-resolution code path. NE-CREWAI-DROPIN's own code (packages/ne-mcp/crewai_env/agent.py) never imports or calls json-repair directly either. The vulnerable function is present in the installed package but not reachable from any code path this drop-in or CrewAI's own tool-calling integration exercises. A fixed version (0.60.1+) exists upstream but cannot be adopted here because crewai's own pin caps it at <0.26.0; re-verify when crewai relaxes that pin."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-f4j7-r4q5-qw2c",
+        "aliases": [
+          "CVE-2026-45829"
+        ],
+        "description": "ChromaDB: pre-authentication code injection via malicious model repository reference (\"ChromaToast\")"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-45829 (grype keys this finding by its GHSA id rather than the CVE id used in the earlier statement above). Same context: chromadb 1.1.1 is an unconditional base dependency of the top-level `crewai` package, pulled into the isolated NE-CREWAI-DROPIN sidecar venv (packages/ne-mcp/crewai_env/) regardless of whether CrewAI's optional memory feature is used. The vulnerability requires ChromaDB's Python/FastAPI HTTP server to be running and network-reachable pre-auth (public advisory: local installs and the Rust frontend are not impacted). The sidecar's own code (packages/ne-mcp/crewai_env/agent.py) never references memory, embedder, or chromadb APIs, never enables Agent(memory=True), and never starts any chromadb server process. No fixed version exists upstream as of 2026-07-22."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-45830",
+        "aliases": [
+          "GHSA-2wm9-hf6c-p5cr"
+        ],
+        "description": "ChromaDB authorization validation permits authenticated cross-tenant collection access"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "chromadb 1.1.1 is installed only as an unused transitive dependency in the isolated, hash-pinned NE-CREWAI-DROPIN demo sidecar venv. CVE-2026-45830 requires an authenticated user sending collection operations to a running ChromaDB server and exploits missing tenant authorization validation. The sidecar entrypoint packages/ne-mcp/crewai_env/agent.py neither imports nor instantiates chromadb, never configures a Chroma tenant/database/collection or authentication provider, and never starts the Chroma Python/FastAPI server; it creates only CrewAI Agent/Task/Crew objects whose tools are direct MCP stdio proxies to the separately governed Neutron server. There is therefore no Chroma HTTP endpoint, authenticated Chroma principal, tenant, collection, or authorization decision in this execution path. Re-verify if the sidecar begins using CrewAI memory/embedder support or starts/exposes ChromaDB."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-2wm9-hf6c-p5cr",
+        "aliases": [
+          "CVE-2026-45830"
+        ],
+        "description": "ChromaDB authorization validation permits authenticated cross-tenant collection access"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-45830 for GHSA-keyed scanners. The isolated NE-CREWAI-DROPIN entrypoint never imports, instantiates, configures, or serves chromadb and uses only MCP stdio proxy tools; no Chroma HTTP service, authenticated Chroma user, tenant, database, collection, or authorization decision exists in the executed sidecar path."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-45831",
+        "aliases": [
+          "GHSA-xph7-9rjv-w5fr"
+        ],
+        "description": "ChromaDB SimpleRBACAuthorizationProvider fails to scope permissions to tenant, database, or collection"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "chromadb 1.1.1 is installed only as an unused transitive dependency in the isolated, hash-pinned NE-CREWAI-DROPIN demo sidecar venv. CVE-2026-45831 is in ChromaDB's SimpleRBACAuthorizationProvider and requires a running Chroma server evaluating a user's permission without binding it to the target tenant, database, or collection. packages/ne-mcp/crewai_env/agent.py never imports or instantiates chromadb, never selects SimpleRBACAuthorizationProvider, never creates a Chroma user/tenant/database/collection, and never starts or exposes a Chroma server; its only remote tool path is MCP over stdio to Neutron's governed server. The vulnerable authorization provider cannot execute in this usage. Re-verify if the sidecar begins using CrewAI memory/embedder support or starts/exposes ChromaDB."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-xph7-9rjv-w5fr",
+        "aliases": [
+          "CVE-2026-45831"
+        ],
+        "description": "ChromaDB SimpleRBACAuthorizationProvider fails to scope permissions to tenant, database, or collection"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-45831 for GHSA-keyed scanners. The isolated NE-CREWAI-DROPIN entrypoint never imports or instantiates chromadb, configures SimpleRBACAuthorizationProvider, creates Chroma authority objects, or starts/exposes a Chroma server, so the provider's cross-tenant authorization path cannot execute."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-45833",
+        "aliases": [
+          "GHSA-36p7-vc44-83pf"
+        ],
+        "description": "ChromaDB authenticated collection update can execute code through a malicious model repository"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "chromadb 1.1.1 is installed only as an unused transitive dependency in the isolated, hash-pinned NE-CREWAI-DROPIN demo sidecar venv. CVE-2026-45833 requires an authenticated attacker with UPDATE_COLLECTION permission to send a malicious model repository and trust_remote_code=true to a running ChromaDB /api/v2 collection-update endpoint. packages/ne-mcp/crewai_env/agent.py never imports or instantiates chromadb, never creates or updates a Chroma collection, never accepts model-repository or trust_remote_code inputs, and never starts or exposes Chroma's Python/FastAPI server; its tools are fixed MCP stdio proxies to Neutron's governed server. The affected HTTP collection-update path is absent from this execution. Re-verify if the sidecar begins using CrewAI memory/embedder support or starts/exposes ChromaDB."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-36p7-vc44-83pf",
+        "aliases": [
+          "CVE-2026-45833"
+        ],
+        "description": "ChromaDB authenticated collection update can execute code through a malicious model repository"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/chromadb@1.1.1"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-45833 for GHSA-keyed scanners. The isolated NE-CREWAI-DROPIN entrypoint neither imports nor starts chromadb, creates or updates Chroma collections, nor accepts model-repository/trust_remote_code inputs; no Chroma HTTP collection-update endpoint exists in the executed sidecar path."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-85734",
+        "aliases": [
+          "GHSA-frch-4w6v-q5xx"
+        ],
+        "description": "lightrag-hku: No Rate Limiting on /login Endpoint Allows Brute-Force Attacks"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/lightrag-hku@1.5.4"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "lightrag-hku 1.5.4 (wheel sha256 3bb28b2a763a91fb11b9ac87798140be852891edf71266cff59018d23afeea9d, the first hash at packages/ne-brain-graph/lightrag_env/requirements.txt:587) is installed ONLY in the isolated, hash-pinned LightRAG graph-retrieval sidecar venv compiled from packages/ne-brain-graph/lightrag_env/requirements.in; the string lightrag_env occurs 0 times in uv.lock, deploy/ and .github/, so no platform runtime, container image or SBOM carries it (packages/ne-brain-graph/tests/test_no_gpl_sidecar_leak.py; .importlinter contract t2-sidecars-out-of-process). CVE-2026-85734 is the absence of rate limiting on the bundled API server's POST /login handler, defined at lightrag/api/lightrag_server.py:2184 in the 1.5.4 wheel. That server is BANNED here and cannot even import: lightrag_server.py imports fastapi at lines 5-8, 22, 23, 26 and 72 and uvicorn at line 19, the wheel METADATA lists fastapi and uvicorn only under extra == \"api\" (METADATA lines 67 and 77), requirements.in pins lightrag-hku==1.5.4 with no extra, and the compiled closure (59 pins) contains no fastapi, uvicorn or starlette pin -- asserted from the parsed lockfile by packages/ne-brain-graph/tests/test_lightrag_sidecar_surface.py. At load, lightrag/__init__.py imports only typing and ._version (lines 1 and 3) and resolves LightRAG/QueryParam lazily from .lightrag (lines 27-40); lightrag/lightrag.py imports nothing under lightrag/api, and lightrag/api/__init__.py itself imports only .._version (line 1), so even a stray import of the lightrag.api package would not load lightrag_server.py. The only first-party code that imports lightrag is packages/ne-brain-graph/lightrag_env/project.py (imports LightRAG, lightrag.utils.EmbeddingFunc, lightrag.kg.shared_storage.initialize_pipeline_status; calls initialize_storages, ainsert_custom_kg, finalize_storages) and query.py (imports LightRAG, QueryParam; calls initialize_storages, aquery with only_need_context=True, finalize_storages); neither imports lightrag.api, AST-asserted by the same test. The sidecar is driven as a subprocess over JSON files by packages/ne-brain-graph/src/ne/brain_graph/lightrag/_lightrag.py (subprocess.run at lines 141-151 and 164-178) and opens no network listener, so no /login endpoint exists to brute-force. Fixed upstream in 1.5.5; 1.5.4 -> 1.5.x is an UPGRADE proposal for the weekly lane (SPEC 6.1.1 arbiter ruling 2026-09-23, Q1), not a security bump. REMOVE THIS STATEMENT if any first-party code imports lightrag.api, if fastapi/uvicorn/starlette enter the sidecar closure, or if the sidecar gains a network listener."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-frch-4w6v-q5xx",
+        "aliases": [
+          "CVE-2026-85734"
+        ],
+        "description": "lightrag-hku: No Rate Limiting on /login Endpoint Allows Brute-Force Attacks"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/lightrag-hku@1.5.4"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-85734 (grype keys this finding by its GHSA id; vex_dualkey_gate.py matches vulnerability.name exactly, never aliases). Same evidence: the vulnerable POST /login handler lives in the bundled API server (lightrag/api/lightrag_server.py:2184 in the 1.5.4 wheel), which imports fastapi (lines 5-8, 22, 23, 26, 72) and uvicorn (line 19) -- packages that exist only under the wheel's extra == \"api\" (METADATA lines 67, 77) and are absent from the hash-pinned sidecar closure packages/ne-brain-graph/lightrag_env/requirements.txt (requirements.in pins lightrag-hku==1.5.4 with no extra). project.py and query.py import nothing from lightrag.api (AST-asserted by packages/ne-brain-graph/tests/test_lightrag_sidecar_surface.py), the sidecar runs as a subprocess over JSON files with no listener (packages/ne-brain-graph/src/ne/brain_graph/lightrag/_lightrag.py lines 141-151, 164-178), and lightrag_env is absent from uv.lock, deploy/ and .github/. Fixed upstream in 1.5.5; the bump is an UPGRADE proposal (arbiter 2026-09-23 Q1). Removal conditions as for CVE-2026-85734."
+    },
+    {
+      "vulnerability": {
+        "name": "CVE-2026-85740",
+        "aliases": [
+          "GHSA-vv3m-f8x4-7377"
+        ],
+        "description": "lightrag-hku: SSRF via IPv6-transition address bypass (NAT64, IPv4-compatible, 6to4) of the native-markdown image-download guard"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/lightrag-hku@1.5.4"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "lightrag-hku 1.5.4 (wheel sha256 3bb28b2a763a91fb11b9ac87798140be852891edf71266cff59018d23afeea9d = packages/ne-brain-graph/lightrag_env/requirements.txt:587) is installed ONLY in the isolated, hash-pinned LightRAG sidecar venv; lightrag_env occurs 0 times in uv.lock, deploy/ and .github/. CVE-2026-85740 is an IPv6-transition-address (NAT64 64:ff9b::/96, IPv4-compatible ::/96, 6to4 2002::/16) bypass of _validated_addresses() at lightrag/parser/markdown/parser.py:241 (the ip.is_global check at line 268), which runs only inside that module: from _host_is_public (def line 274, calling it at 276), which NativeMarkdownParser._download (def line 503) calls at line 507 and the redirect handler calls at line 334, and from the pinned-connection resolver (line 286), all while ingesting an uploaded markdown/textpack DOCUMENT. In the 1.5.4 wheel that module is imported only lazily, inside NativeParser._markdown_parser at lightrag/parser/native_dispatch.py:47, which runs only from NativeParser.parse (native_dispatch.py:53-56); native_dispatch itself is loaded only by get_parser's importlib.import_module (lightrag/parser/registry.py:262; impl string lightrag.parser.native_dispatch:NativeParser at line 182). The document pipeline reaches it only through LightRAG.ainsert (lightrag/lightrag.py:1428; parser.routing import at 1479, apipeline_enqueue_documents at 1486, apipeline_process_enqueue_documents at 1493) -> lightrag/pipeline.py apipeline_process_enqueue_documents (line 927) -> _run_pipeline_batch (1075, def 1143) -> _parse_worker (1236, def 1546) -> get_parser (1647) -> parser.parse (1693). The sidecar never calls ainsert, insert, apipeline_enqueue_documents or apipeline_process_enqueue_documents and never parses a document: project.py calls only ainsert_custom_kg (lightrag/lightrag.py:1786-2052, whose body contains no import statement and no reference to lightrag.parser) on a JSON custom-KG payload, and query.py calls only aquery(..., only_need_context=True); both are AST-asserted by packages/ne-brain-graph/tests/test_lightrag_sidecar_surface.py. Stated honestly: lightrag.parser.base, lightrag.parser.registry and lightrag.parser.routing ARE imported at library load (lightrag.py:139 -> pipeline.py:44-54; lightrag.py:116 -> utils_pipeline.py:30), but lightrag/parser/registry.py loads no parser implementation until a document is parsed (registry.py:5-9), so lightrag/parser/markdown/parser.py is never imported, let alone executed, in the sidecar. No network-reachable input exists: the sidecar is a subprocess over JSON files (packages/ne-brain-graph/src/ne/brain_graph/lightrag/_lightrag.py lines 141-151, 164-178). Fixed upstream in 1.5.5; the bump is an UPGRADE proposal (SPEC 6.1.1 arbiter 2026-09-23 Q1). REMOVE THIS STATEMENT if first-party code calls ainsert/insert/apipeline_enqueue_documents or imports lightrag.parser, or if the sidecar gains a network listener."
+    },
+    {
+      "vulnerability": {
+        "name": "GHSA-vv3m-f8x4-7377",
+        "aliases": [
+          "CVE-2026-85740"
+        ],
+        "description": "lightrag-hku: SSRF via IPv6-transition address bypass (NAT64, IPv4-compatible, 6to4) of the native-markdown image-download guard"
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/lightrag-hku@1.5.4"
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_in_execute_path",
+      "impact_statement": "Alias of CVE-2026-85740 (grype keys this finding by its GHSA id; vex_dualkey_gate.py matches vulnerability.name exactly, never aliases). Same evidence: the bypassed guard _validated_addresses() (lightrag/parser/markdown/parser.py:241, is_global check at 268) runs only inside that module (NativeMarkdownParser._download def 503 -> _host_is_public check at 507), a module imported lazily by lightrag/parser/native_dispatch.py:47 from the document-ingestion pipeline (LightRAG.ainsert lightrag.py:1428 -> pipeline.py apipeline_process_enqueue_documents 927 -> _parse_worker 1546 -> parser.parse 1693). The sidecar's project.py calls only ainsert_custom_kg (lightrag.py:1786-2052; no parser import in its body) and query.py only aquery(only_need_context=True); neither calls ainsert/insert/apipeline_enqueue_documents nor imports lightrag.parser (AST-asserted by packages/ne-brain-graph/tests/test_lightrag_sidecar_surface.py); the sidecar is a subprocess over JSON files with no listener (_lightrag.py lines 141-151, 164-178); lightrag_env is absent from uv.lock, deploy/ and .github/. Fixed upstream in 1.5.5; bump is an UPGRADE proposal (arbiter 2026-09-23 Q1). Removal conditions as for CVE-2026-85740."
+    }
+  ]
+}

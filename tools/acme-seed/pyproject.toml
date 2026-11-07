@@ -1,0 +1,33 @@
+[project]
+name = "ne-acme-seed"
+version = "0.1.0"
+description = "Live-tenant Acme corpus seeder (NE-102) — pushes a fixture slice INTO the M365/Salesforce/Slack dev tenants; egress-by-design dev tool, NOT shipped product"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-acme",
+    "ne-connect",
+    "pydantic>=2.13.4,<3",
+]
+
+[project.scripts]
+ne-acme-seed = "ne.acme_seed.cli:main"
+
+[dependency-groups]
+# httpx is TEST-ONLY: the seeder src NEVER imports httpx (it rides the
+# connector clients' re-exported Transport/Client aliases, mirroring the
+# product's single-egress-site discipline). The tests build httpx.MockTransport
+# recording transports so CI never touches a live tenant.
+dev = ["httpx>=0.28.1,<1"]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.acme_seed"
+namespace = true
+
+[tool.uv.sources]
+ne-acme = { workspace = true }
+ne-connect = { workspace = true }

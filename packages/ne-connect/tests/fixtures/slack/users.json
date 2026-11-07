@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "members": [
+    {"id": "U00000ADA", "name": "ada", "real_name": "Ada Lovelace"},
+    {"id": "U00000BOB", "name": "bob", "real_name": "Bob Boyle"},
+    {"id": "U00000EVE", "name": "eve", "real_name": "Eve Torres"}
+  ],
+  "response_metadata": {"next_cursor": ""}
+}

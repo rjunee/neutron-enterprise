@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-PILOT-OPA-BUNDLE: the REAL ne-govern rego bundle, stamped by
+# `ne k8s render`/`ne k8s up` into .Values.governBundle.files (see
+# tools/ne-cli/src/ne/cli/opa_bundle.py::govern_bundle_files). Default-empty
+# (values.yaml) so a bare `helm template`/`helm install` renders NOTHING
+# here — the committed opa-policies ConfigMap (policies-configmap.yaml,
+# byte-copy of the shipped ne.dev placeholder) is untouched either way.
+{{- if .Values.governBundle.files }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-govern-policies
+  labels:
+    app: opa
+    app.kubernetes.io/part-of: neutron-enterprise
+data:
+  {{- range $key, $spec := .Values.governBundle.files }}
+  {{ $key }}: {{ $spec.content | toJson }}
+  {{- end }}
+{{- end }}

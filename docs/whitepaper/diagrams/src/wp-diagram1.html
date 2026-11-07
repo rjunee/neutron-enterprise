@@ -1,0 +1,102 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  @import url('');
+  html,body{margin:0;padding:0;background:#fff;}
+  body{width:1376px;height:768px;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{position:relative;width:1376px;height:768px;}
+
+  .title{position:absolute;top:44px;left:0;width:1376px;text-align:center;
+    font-size:19px;font-weight:600;letter-spacing:.09em;color:#0f766e;}
+
+  /* sovereignty boundary */
+  .boundary{position:absolute;left:68px;top:104px;width:852px;height:540px;
+    border:3.5px solid #0d7168;border-radius:26px;
+    background:linear-gradient(160deg,#f3f8f8 0%,#eef5f5 55%,#e9f2f2 100%);}
+  .blabel{position:absolute;left:104px;top:138px;font-size:15px;font-weight:600;
+    letter-spacing:.055em;color:#0f766e;}
+
+  .box{position:absolute;border:1.6px solid #24404a;border-radius:9px;background:#fff;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:17px;color:#1c333c;line-height:1.34;}
+
+  .platform{left:130px;top:186px;width:730px;height:74px;}
+  .gw{left:678px;top:270px;width:182px;height:48px;font-size:15.5px;z-index:3;}
+  .conn{left:678px;top:330px;width:182px;height:60px;font-size:14px;z-index:3;}
+  .data{left:130px;top:402px;width:262px;height:104px;}
+  .models{left:414px;top:402px;width:246px;height:104px;}
+  .ident{left:262px;top:534px;width:404px;height:56px;font-size:16px;}
+
+  /* egress gate */
+  .gate{position:absolute;left:938px;top:262px;width:150px;height:126px;
+    border:1.6px dashed #0d7168;border-radius:10px;background:#f7fbfb;}
+  .gatecap{position:absolute;left:938px;top:274px;width:150px;text-align:center;
+    font-size:12.5px;font-weight:600;color:#0f766e;letter-spacing:.02em;line-height:1.5;}
+  .gatelist{position:absolute;left:938px;top:312px;width:150px;text-align:center;
+    font-size:12px;color:#3d5b63;line-height:1.65;}
+
+  .dest{position:absolute;border:1.6px solid #24404a;border-radius:9px;background:#fff;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:14.5px;color:#1c333c;line-height:1.35;}
+  .d1{left:1136px;top:222px;width:212px;height:62px;}
+  .d2{left:1136px;top:300px;width:212px;height:62px;}
+  .d3{left:1136px;top:378px;width:212px;height:62px;}
+
+  .airgap{position:absolute;left:930px;top:404px;width:172px;
+    font-size:13px;color:#b7791f;line-height:1.45;text-align:center;}
+  .airgap b{font-weight:600;}
+
+  .caption{position:absolute;top:700px;left:0;width:1376px;text-align:center;
+    font-size:16px;color:#6b7c82;}
+
+  svg{position:absolute;left:0;top:0;width:1376px;height:768px;overflow:visible;}
+</style>
+<div class="wrap">
+  <div class="title">THE SOVEREIGNTY BOUNDARY</div>
+
+  <div class="boundary"></div>
+  <div class="blabel">CUSTOMER VPC / ON-PREMISES</div>
+
+  <div class="box platform">Neutron Enterprise platform — all modules</div>
+  <div class="box gw">Model gateway</div>
+  <div class="box conn">Connectors &amp;<br>external tool calls</div>
+  <div class="box data">Your data<br>(Postgres · Qdrant)</div>
+  <div class="box models">In-VPC open-weight models<br>(vLLM)</div>
+  <div class="box ident">Identity (Keycloak) · Secrets · Audit</div>
+
+  <div class="gate"></div>
+  <div class="gatecap">GOVERNED<br>EGRESS</div>
+  <div class="gatelist">deny by default<br>allowlist · policy<br>· audit</div>
+
+  <div class="dest d1">Frontier model API<br>(optional)</div>
+  <div class="dest d2">SaaS sources<br>(Jira · Salesforce · M365)</div>
+  <div class="dest d3">External tools<br>(web search · MCP)</div>
+
+  <div class="airgap"><b>⚠ AIR_GAP</b><br>severs every external lane</div>
+
+  <svg viewBox="0 0 1376 768">
+    <defs>
+      <marker id="ar" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="#0d7168"/>
+      </marker>
+    </defs>
+    <g stroke="#0d7168" stroke-width="1.9" fill="none">
+      <!-- gateway + connectors into the gate -->
+      <path d="M860,294 L892,294 L892,325 L904,325"/>
+      <path d="M860,360 L892,360 L892,325"/>
+      <path d="M926,325 L938,325" marker-end="url(#ar)"/>
+      <!-- gate out to three destinations -->
+      <path d="M1088,325 L1112,325 L1112,253 L1136,253" marker-end="url(#ar)"/>
+      <path d="M1088,325 L1112,325 L1112,331 L1136,331" marker-end="url(#ar)"/>
+      <path d="M1088,325 L1112,325 L1112,409 L1136,409" marker-end="url(#ar)"/>
+    </g>
+    <!-- air-gap break switch on the trunk -->
+    <g stroke="#b7791f" stroke-width="2.1" fill="none">
+      <path d="M906,326 L924,312"/>
+    </g>
+    <circle cx="904" cy="325" r="3.4" fill="#fff" stroke="#b7791f" stroke-width="1.9"/>
+    <circle cx="926" cy="325" r="3.4" fill="#fff" stroke="#b7791f" stroke-width="1.9"/>
+  </svg>
+
+  <div class="caption">One boundary. Every exit governed the same way — no lane is trusted as “safe”.</div>
+</div>

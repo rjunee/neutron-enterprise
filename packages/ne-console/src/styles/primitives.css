@@ -1,0 +1,679 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * NE-130 — shared CSS primitives (design §0, §1.4, §1.6). EVERY value resolves
+ * through a tokens.css custom property; NO raw hex/rgb/px-font-size/non-token
+ * font-family (the token-hardcode guardian enforces this). Component-specific
+ * styles (HashPlate, rail, AwaitingUnit, ProveOverlay) are appended below.
+ */
+
+/* Engraved placard label (§1.2 --type-label): the every-field / nav / annunciator
+ * caption — uppercase, tracked, dimmed. */
+.ne-label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+
+/* Ledger ruling (§1.4): single hairline between rows. */
+.ne-ledger > * + * {
+  border-top: 1px solid var(--rule);
+}
+
+/* Double-rule section closer (§1.4): 1px rule, 3px gap, 1px rule-strong. */
+.ne-section-close {
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-top: 3px;
+}
+
+/* Engraved placard surface (§1.4): panel fill, hairline border, and the card
+ * elevation — the catchlight along its top edge plus --shadow-card, which is
+ * what makes it read as lifted OFF the ground rather than cut INTO it. */
+.ne-placard {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: var(--space-12);
+}
+
+/* Annunciator lamp (§1.6): small square lamp. Achromatic chrome by default
+ * (chroma is evidence, §0 law 1); hue only when proving something. */
+/* A DOT, not a square. The filled/hollow SQUARE pair reads as a checkbox — the
+ * same complaint the brief lodges against `☐ AIR_GAP` — and the state
+ * vocabulary moved to circles (primitives/StatePill.tsx), so the rail's lamps
+ * follow. A hollow ring cannot be mistaken for a control nobody ticked. */
+.ne-lamp {
+  display: inline-block;
+  width: var(--space-12);
+  height: var(--space-12);
+  border-radius: 50%;
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  vertical-align: middle;
+}
+.ne-lamp--proven {
+  background: var(--cherenkov-deep);
+  border-color: var(--cherenkov-deep);
+}
+.ne-lamp--hollow {
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+}
+.ne-lamp--valid {
+  background: var(--green);
+  border-color: var(--green);
+}
+.ne-lamp--break {
+  background: var(--red);
+  border-color: var(--red);
+}
+
+/* ==========================================================================
+ * LAW 4 — MOTION IS EVIDENCE.
+ * Design §0 law 4, amended in full by docs/design/ne-console-motion-design.md §2.
+ *
+ * "Nothing decorative moves" SURVIVES. It was right and it was unenforceable:
+ * a comment that review checked the code against instead of a contract a test
+ * could hold — and the one utility that sat under it (`.ne-motion-settle`,
+ * `transition: all`, zero call sites) violated it. The clauses below are the
+ * contract. They are NUMBERED so a reviewer rejects a bad animation by citing a
+ * clause rather than by arguing taste.
+ *
+ * 1. CAUSED, OR ABSENT. Every animation starts because a served event arrived
+ *    or the operator acted. A screen at rest runs ZERO animations — an idle
+ *    console must not burn a core. `animation-iteration-count: infinite` may
+ *    appear only on the loading skeleton (`.ne-skeleton`); nowhere else.
+ *
+ * 2. DEPICTS ONLY WHAT HAPPENED. No synthetic replay of a computation the
+ *    client only saw the result of; no intermediate value that was never true
+ *    (no count-up numerals); no motion on an empty, fallback, loading-error or
+ *    refused state; no activity animation when nothing is active. Motion that
+ *    depicts activity which did not happen is fabricated data in a product
+ *    whose central claim is that it fabricates nothing.
+ *
+ * 3. COMPOSITOR GRAMMAR. Entering, exiting and travelling motion animates
+ *    `transform` and `opacity` ONLY. Paint properties (color, background-color,
+ *    border-color, box-shadow, fill) may animate only as a one-shot pulse of at
+ *    most --motion-pulse on at most ONE element per triggering event.
+ *    Animating or transitioning a layout property (width, height, top/right/
+ *    bottom/left, inset, margin*, padding*, font-size, flex-*, grid-*, gap) is a
+ *    defect by name. `transition: all` is a defect by name.
+ *
+ * 4. A DENIAL NEVER EASES. Refusal, break and fault states appear instantly at
+ *    full strength; affirmative completions settle with --ease-damped. An allow
+ *    and a deny must FEEL different before the word is read. --ease-damped is
+ *    the only curve in the product; a second curve is a defect.
+ *
+ * 5. CEILINGS. At most 8 elements animate concurrently; a batch larger than the
+ *    per-effect cap collapses to one aggregate affordance; any load
+ *    choreography completes within 800 ms. Durations come from the --motion-*
+ *    scale in tokens.css — a duration outside that scale is proposing the wrong
+ *    effect, and a component-local constant is a parallel vocabulary.
+ *
+ * 6. REDUCED MOTION LOSES NOTHING. The global prefers-reduced-motion collapse
+ *    below stays. Every animated signal has a static co-signal (word, glyph,
+ *    colour, count) carrying the same fact: motion is always a REDUNDANT
+ *    channel, never the only one. A state distinguishable only by movement
+ *    fails accessibility and fails a screenshot.
+ *
+ * 7. NO STATE GATES ON ANIMATION. Data renders in the frame the client learns
+ *    it; animation dresses already-final state. No handler waits on
+ *    `animationend`/`transitionend` to set application state, with NO exempt
+ *    files. Removing the animated node itself is the one permitted wait, and
+ *    it is event-free: hold the node until its own `getAnimations()`
+ *    `finished` promises settle (primitives/surface.ts, useSurfacePresence).
+ *
+ * HOW EACH CLAUSE IS HELD. MACHINE-CHECKED by src/test/motion-guardian.test.ts
+ * (which fs-walks every production .css/.ts/.tsx/.js in this package and pairs
+ * each rule with a bidirectional self-test): clauses 1 and 3; clause 4's
+ * vocabulary half — one curve, including the implicit browser-default `ease`
+ * of a curve-less shorthand; clause 5's duration vocabulary FOR CSS-AUTHORED
+ * TIMING — stylesheet declarations, quoted style strings, runtime style
+ * writes and direct WAAPI calls in scripts; clause 6's collapse, structurally
+ * (universal selector, all three declarations); and clause 7's event half (no
+ * animationend/transitionend handler anywhere, no exemptions). REVIEW-CHECKED
+ * ONLY: clause 2; clause 5's concurrency caps (quoted-clause review +
+ * per-effect unit tests); clause 4's grammar half (which states arrest, which
+ * settle — unit-tested per effect); and ALL JS-NUMERIC choreography — a
+ * duration constant in a component, a setTimeout pacing or exiting a scene —
+ * which no scanner here parses. Two live instances of that last class are
+ * DECLARED RESIDUALS in the guardian's residual block (knowledge/compare's
+ * STAGGER_MS/IMPLODE_MS/B_ONLY_FADE_MS vocabulary, clause 5; ComparePane's
+ * KEY_WITHDRAWN exit timer, clause 7's intent), owned by follow-up NE-141b.
+ *
+ * jsdom does not run animations: the guardian proves the STRUCTURAL budgets
+ * (which properties animate, no infinities, no raw durations, no gating) and
+ * proves NOTHING about frame rate. The 60fps claim is a manual demo-rig check.
+ * ========================================================================== */
+
+/* Transit pulse (§1.6, motion design §4.3): a nav node's dot pulses cherenkov
+ * for one --motion-pulse when a live audit event transits its stage.
+ * Event-driven only (law 4 cl. 1). Lives with the rail: styles/shell.css
+ * (.ne-rail__transit), consumed by rail/NavRail.tsx from the shared poll. */
+
+/* Law 4 cl. 6 — the global collapse: reduced motion renders ALL animation and
+ * transition instant. Every signal keeps its static co-signal. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== HashPlate (§1.2 hash typography) ===== */
+.ne-hashplate {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font: var(--type-mono);
+  color: var(--text);
+}
+.ne-hashplate--plate {
+  font: var(--type-mono-plate);
+}
+.ne-hashplate__mid {
+  color: var(--text-dim);
+}
+.ne-hashplate--unattested {
+  color: var(--text-dim);
+}
+.ne-hashplate__trigger {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.ne-hashplate__trigger:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-hashplate__popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  margin-top: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: 90vw;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: var(--panel-overlay);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  padding: var(--space-8);
+  color: var(--text);
+  font: var(--type-mono);
+}
+.ne-hashplate__copy {
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+  padding: 0 var(--space-4);
+}
+.ne-hashplate__copy:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* ===== AwaitingUnit (honest empty state, §0 law 5) ===== */
+.ne-awaiting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-width: 640px;
+  padding: var(--space-32) 0;
+}
+.ne-awaiting__title {
+  font: var(--type-title);
+  letter-spacing: var(--tracking-display);
+  color: var(--text);
+  margin: 0;
+}
+.ne-awaiting__body {
+  font: var(--type-body);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-awaiting__links {
+  display: flex;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+.ne-awaiting__links a {
+  font: var(--type-body);
+  color: var(--cherenkov);
+  text-decoration: none;
+}
+.ne-awaiting__links a:hover,
+.ne-awaiting__links a:focus-visible {
+  text-decoration: underline;
+}
+
+/* The `.ne-landing*` and `.ne-placards*` rules that lived here dressed the old
+ * pitch landing — a display one-liner and three claim cards. "/" is a work
+ * surface now (landing/landing.css) and nothing renders those classes, so the
+ * rules are gone rather than left to rot in the cascade. */
+
+/* ===== Shell + rail =====
+ * MOVED to styles/shell.css (§1). The rail is 240px of navigation now: the
+ * twelve-constraint annunciator, the chain lamp, the config-hash plate, the
+ * air-gap row and the guided-tour button are gone from it, and so are the
+ * ~330 lines of rules that fitted, quantised, scrolled and re-shaped that
+ * annunciator against four viewports. They are deleted rather than left to rot
+ * in the cascade — nothing renders those classes.
+ *
+ * This ONE rule survives the move: the guided-tour panel is `position: fixed` at
+ * the foot of the content column, and while it is open the stage reserves height
+ * beneath it so anything the panel overlaps can still be SCROLLED CLEAR. The
+ * verified defect: on the ask screen the composer sat inside the occluded band
+ * and the page scrolled 30px, so the input could never be brought out from
+ * under it. It must track .ne-demo's max-height exactly. */
+:root[data-ne-tour="open"] .ne-shell__stage {
+  padding-bottom: calc(min(30vh, 320px) + var(--space-24));
+}
+
+/* ===== Sovereignty posture board (§4.2 — NE-131) ===== */
+.ne-posture {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 960px;
+}
+
+/* C1–C12 annunciator grid. */
+.ne-annunciator {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-12);
+}
+.ne-annunciator__panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.ne-annunciator__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.ne-annunciator__id {
+  font: var(--type-section);
+  color: var(--text);
+}
+.ne-annunciator__enforcement {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-annunciator__evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font: var(--type-small);
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+.ne-annunciator__evidence > li {
+  overflow-wrap: anywhere;
+}
+
+/* The `.ne-annunciator__panel--lit` wake animation that lived here is GONE. It
+ * staggered on a raw `calc(var(--i, 0) * 80ms)` — a duration outside the
+ * --motion-* scale, which is law 4 cl. 5's parallel-vocabulary defect — and it
+ * had zero call sites: the twelve-constraint board moved to /posture and renders
+ * `.ne-annrow*` (primitives/AnnunciatorRow.tsx). Dead AND out of vocabulary, so
+ * deleted rather than re-tokenised into code nothing runs. */
+
+/* Posture sub-panels (egress / model lanes / config_hash timeline). */
+.ne-posture__panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.ne-posture__panel .ne-section-close {
+  margin-top: var(--space-8);
+}
+.ne-posture__hashrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-8);
+  margin: 0 calc(-1 * var(--space-8));
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+}
+.ne-posture__hashrow:hover,
+.ne-posture__hashrow:focus-visible {
+  color: var(--cherenkov);
+  background: var(--hover-tint);
+}
+.ne-posture__hashrow:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+
+/* ===== Sovereignty hero (§4.1) ===== */
+.ne-instrument-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-24);
+}
+.ne-instrument-row__lamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.ne-instrument-row__lampbtn {
+  display: inline-flex;
+  text-decoration: none;
+}
+.ne-instrument-row__lampbtn:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-hero__footer {
+  font: var(--type-mono);
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* ===== PULL-TO-PROVE overlay (§5.2) ===== */
+.ne-prove-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--scrim);
+}
+.ne-prove-pane {
+  width: min(520px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--panel);
+  box-shadow: var(--shadow-pane);
+  border-left: 1px solid var(--rule-strong);
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.ne-prove-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-16);
+}
+.ne-prove-close {
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+  padding: var(--space-4) var(--space-8);
+}
+.ne-prove-close:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+.ne-prove-close:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-prove-stage {
+  padding: var(--space-12) 0;
+}
+.ne-prove-stage__name {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text);
+}
+.ne-prove-stage__flag {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin-top: var(--space-4);
+}
+
+/* ===== /connect — Connectors view (§4.3, NE-132) ===== */
+.ne-connect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 960px;
+}
+.ne-connect--placard {
+  gap: var(--space-16);
+}
+
+/* Two columns: connector lanes | quarantine vessel. Collapses to one on narrow. */
+.ne-connect__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--space-24);
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .ne-connect__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ne-connect__lanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+/* One schematic connector lane. */
+.ne-connect__lane {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.ne-connect__lane--idle {
+  border-style: dashed;
+}
+.ne-connect__lane-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.ne-connect__valve {
+  color: var(--text-dim);
+  flex: none;
+}
+.ne-connect__lane--idle .ne-connect__valve {
+  color: var(--text-dim);
+}
+.ne-connect__lane-name {
+  font: var(--type-section);
+  color: var(--text);
+}
+.ne-connect__lane--idle .ne-connect__lane-name {
+  color: var(--text-dim);
+}
+
+/* Freshness gauge: hand-rolled SVG bar + a mono age readout. */
+.ne-connect__gauge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.ne-connect__gauge-bar {
+  width: 120px;
+  height: var(--space-8);
+  flex: none;
+}
+.ne-connect__gauge-track {
+  fill: var(--rule);
+}
+.ne-connect__gauge-fill {
+  fill: var(--cherenkov);
+}
+.ne-connect__age {
+  color: var(--text);
+}
+
+/* ACL-mirror placard + lane foot. */
+.ne-connect__placard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.ne-connect__lane-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+.ne-connect__quar-count {
+  color: var(--red);
+}
+.ne-connect__env {
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* ===== The quarantine vessel ===== */
+.ne-vessel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: var(--space-16);
+}
+.ne-vessel__body {
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  box-shadow: var(--well-inset);
+  padding: var(--space-12);
+}
+.ne-vessel__count {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--text);
+}
+.ne-vessel__ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ne-vessel__reason {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-8) 0;
+}
+.ne-vessel__reason-label {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.ne-vessel__reason-count {
+  color: var(--red);
+  flex: none;
+}
+.ne-vessel__framing {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* The `.ne-vessel--pulse` quarantine flash that lived here is GONE. Three law-4
+ * defects in one dead rule (zero call sites — nothing renders `.ne-vessel*`):
+ * a raw `490ms` (cl. 5, outside the --motion-* scale AND longer than the
+ * --motion-pulse ceiling a paint one-shot is allowed), and a 12px `box-shadow`
+ * bloom on --red (cl. 3 — glow is the demolished Cherenkov shimmer under a new
+ * name, and it spends the alarm channel on decoration). */
+
+/* ============ round-2 additions ============ */
+
+/* GATED refusal proof — slate, not the fault ramp. */
+.ne-refusal--gated {
+  border-color: var(--rule-strong);
+  background: var(--gated-tint);
+}
+.ne-refusal--gated .ne-refusal__head {
+  color: var(--state-gated);
+}
+
+/* An authored constant, tagged where it is displayed rather than two clicks
+   down. It occupies the slot a SOURCE line occupies for a measured readout. */
+.ne-authored {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--state-gated);
+  border: 1px solid var(--rule-strong);
+  padding: 0 var(--space-4);
+  margin-right: var(--space-4);
+  white-space: nowrap;
+}
+
+/* A shortened principal id, with the note that it is shortened. */
+.ne-principal {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+.ne-principal__note {
+  font: var(--type-small);
+  color: var(--text-dim);
+}

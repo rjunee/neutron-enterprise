@@ -1,0 +1,253 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * NE-141 Dual-Key Compare styles (design §4.6, §5.3, §5.4). Component-scoped
+ * (imported by KnowledgePage) so it never conflicts with the concurrent NE-132/
+ * 137 edits. ONLY var(--…) tokens — no raw colour, no px font-size, no non-token
+ * font-family (token-hardcode guardian enforced). Square corners, hairline
+ * var(--rule) separation, engraved placards. The prefers-reduced-motion block
+ * collapses ALL compare motion (ticker drum, stamp snap) to instant final state.
+ */
+
+/* --- the COMPARE control (top-right of the chamber wrap) --- */
+.ne-compare-control {
+  position: absolute;
+  top: var(--space-16);
+  right: var(--space-16);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-8);
+}
+
+.ne-compare-control__button {
+  padding: var(--space-8) var(--space-16);
+  background: var(--panel-raised);
+  color: var(--text);
+  border: 1px solid var(--cherenkov-deep);
+  border-radius: var(--radius);
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+}
+
+.ne-compare-control__button:disabled {
+  color: var(--text-dim);
+  border-color: var(--rule);
+  cursor: not-allowed;
+}
+
+.ne-compare-control__error {
+  max-width: 32ch;
+  padding: var(--space-8);
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--red);
+  text-align: right;
+}
+
+/* --- the compare overlay (covers the chamber, above the canvas) --- */
+.ne-compare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ground);
+  color: var(--text);
+}
+
+.ne-compare__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-compare__plates {
+  display: flex;
+  gap: var(--space-24);
+}
+
+.ne-compare__plate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-compare__plate--b {
+  border-color: var(--cherenkov-deep);
+}
+
+.ne-compare__persona {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ne-compare__withdraw {
+  padding: var(--space-8) var(--space-16);
+  background: var(--panel-raised);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+}
+
+.ne-compare__withdraw:disabled {
+  color: var(--text-dim);
+  border-color: var(--rule);
+  cursor: not-allowed;
+}
+
+.ne-compare__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  overflow-y: auto;
+}
+
+.ne-compare__body--fault .ne-compare__title {
+  color: var(--red);
+}
+
+.ne-compare__title {
+  font: var(--type-section);
+  margin: 0;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-compare__note {
+  margin: 0;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* --- the contraction chamber (the additive overlay canvas) --- */
+.ne-compare__chamber {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  overflow: hidden;
+}
+
+.ne-compare__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ne-compare__ticker {
+  position: absolute;
+  left: var(--space-16);
+  bottom: var(--space-16);
+  color: var(--text-dim);
+  pointer-events: none;
+  /* drum feel: a damped nudge as the count rolls down. */
+  transition: transform var(--motion-drum) var(--ease-damped);
+}
+
+.ne-compare__nodes {
+  margin: 0;
+  padding: 0;
+}
+
+/* --- side-by-side stats --- */
+.ne-compare__stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-compare__stat-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--space-16);
+  align-items: baseline;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-compare__stat-label {
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-compare__stat-a,
+.ne-compare__stat-b {
+  min-width: 4ch;
+  text-align: right;
+}
+
+.ne-compare__stat-b {
+  color: var(--cherenkov);
+}
+
+.ne-compare__unavailable {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-compare__bonly {
+  margin: 0;
+  color: var(--amber);
+}
+
+.ne-compare__placard {
+  margin: 0;
+  padding: var(--space-16);
+  border-top: 1px double var(--rule-strong);
+  color: var(--text);
+}
+
+/* --- KEY WITHDRAWN stamp (snap) --- */
+.ne-compare__stamp {
+  align-self: center;
+  margin: auto;
+  padding: var(--space-16) var(--space-32);
+  background: var(--panel);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  font: var(--type-mono-plate);
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+  animation: ne-compare-snap var(--motion-snap) var(--ease-damped);
+}
+
+@keyframes ne-compare-snap {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-compare__ticker {
+    transition: none;
+  }
+  .ne-compare__stamp {
+    animation: none;
+  }
+}

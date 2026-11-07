@@ -1,0 +1,42 @@
+[project]
+name = "ne-gateway"
+version = "0.1.0"
+description = "Model gateway: all frontier calls route here."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-events",
+    "ne-obs",
+    "ne-net",
+    "litellm==1.100.4",
+    "sqlalchemy>=2.0.51,<2.1",
+    "opentelemetry-api>=1.43,<2",
+]
+
+[project.entry-points."ne.plugins.model_gateway"]
+litellm = "ne.gateway.gateway:LiteLLMGateway"
+
+[dependency-groups]
+# Test-only: the OTel SDK exercises the in-memory span exporter (span-construction
+# proof), and ne-audit (in-workspace) provides the real PostgresAuditSink round
+# trip. NEITHER is a production dependency — the gateway is a library that emits
+# into whatever TracerProvider / AuditSink the hosting process configures.
+dev = ["ne-audit", "opentelemetry-sdk>=1.43,<2"]
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-events = { workspace = true }
+ne-obs = { workspace = true }
+ne-net = { workspace = true }
+ne-audit = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.gateway"
+namespace = true

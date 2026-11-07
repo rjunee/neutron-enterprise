@@ -1,0 +1,66 @@
+[project]
+name = "ne-api"
+version = "0.1.0"
+description = "Governed console-backend HTTP service (composition root for C6/C7/HITL over OIDC)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-identity",
+    "ne-runtime",
+    "ne-govern",
+    "ne-brain",
+    "ne-brain-graph",
+    "ne-brain-ontology",
+    "ne-connect",
+    "ne-audit",
+    "ne-eval",
+    "ne-flywheel",
+    "ne-gateway",
+    "ne-permissions",
+    "ne-permissions-rebac",
+    "ne-events",
+    "ne-schema",
+    "ne-secrets",
+    "ne-obs",
+    "ne-skills",
+    "fastapi>=0.139.0,<1",
+    "httpx>=0.27,<1",
+    "uvicorn>=0.51,<1",
+    "sqlalchemy>=2.0.51,<2.1",
+    "anyio>=4,<5",
+    "pydantic>=2.13.4,<3",
+    "pydantic-settings>=2.14.2,<3",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.api"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-identity = { workspace = true }
+ne-runtime = { workspace = true }
+ne-govern = { workspace = true }
+ne-brain = { workspace = true }
+ne-brain-graph = { workspace = true }
+ne-brain-ontology = { workspace = true }
+ne-connect = { workspace = true }
+ne-audit = { workspace = true }
+ne-eval = { workspace = true }
+ne-flywheel = { workspace = true }
+ne-gateway = { workspace = true }
+ne-permissions = { workspace = true }
+ne-permissions-rebac = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+ne-secrets = { workspace = true }
+ne-obs = { workspace = true }
+ne-skills = { workspace = true }
+
+[dependency-groups]
+dev = ["httpx>=0.28.1,<1"]

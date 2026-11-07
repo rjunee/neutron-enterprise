@@ -1,0 +1,40 @@
+[project]
+name = "ne-skills-cc"
+version = "0.1.0"
+description = "Claude-Code SkillSubstrate binding: filesystem .claude/skills projection + transcript-journal observation (NE-SKILL-5, C5 second binding)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-skills",
+    "pydantic>=2.11,<3",
+    "pyyaml>=6.0.3,<7",
+    "anyio>=4",
+]
+
+[dependency-groups]
+# Test-only: the C5 swap test (test_swap_c5.py) seeds the pydantic-ai binding's
+# sqlite audit closure alongside this binding's filesystem seed, so BOTH sides of
+# the dual-binding scenario run in one process. NONE of these is a runtime dep of
+# ne.skills_cc itself (the D-9 boundary: this package's runtime closure is
+# ne-contracts + ne-skills + pydantic + pyyaml + anyio ONLY), enforced by
+# tests/test_import_boundary.py.
+dev = ["ne-audit", "ne-events", "ne-schema", "sqlalchemy>=2.0.51,<2.1"]
+
+[project.entry-points."ne.plugins.skill_substrate"]
+claude-code = "ne.skills_cc.substrate:ClaudeCodeSkillSubstrate"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-skills = { workspace = true }
+ne-audit = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.skills_cc"
+namespace = true

@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+[Unit]
+Description=Neutron inference provider deny-by-default network namespace
+Before=ne-inference-provider-broker.service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecCondition=/usr/local/bin/ne-inference-provider-air-gap-condition
+ExecStart=/opt/neutron/inference-operator/bin/provider-network-policy.sh
+ExecStop=/opt/neutron/inference-operator/bin/provider-network-policy.sh teardown
+UMask=0077
+ProtectHome=true
+PrivateTmp=true
+ProtectSystem=strict
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN
+NoNewPrivileges=false

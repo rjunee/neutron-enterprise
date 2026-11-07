@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Copy to terraform.tfvars and fill in. No secrets here — this smoke stack
+# takes no credentials as tfvars (AWS auth is via the runner's role, see
+# .github/workflows/eks-hardened-apply.yml).
+
+prefix          = "ne-eks-smoke"
+region          = "us-east-1"
+cluster_version = "1.33"
+
+install_velero = false # stage-2 — requires an ops-runner able to reach the private EKS API (Risk R7)
+
+tags = {
+  purpose = "c9-portability-smoke"
+}

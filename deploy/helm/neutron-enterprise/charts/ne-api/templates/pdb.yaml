@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-089 HA production-profile surface — a vanilla policy/v1 PodDisruptionBudget
+# for the stateless ne-api Deployment (safe per ADR-001: sticky state lives in
+# Postgres, not the pod). Gated OFF by default (podDisruptionBudget.enabled:
+# false in values.yaml) so this file renders NOTHING unless an operator opts in
+# via examples/values-production-ha.yaml or an equivalent overlay — the
+# NE-071a byte-parity guardians assert the default render is unaffected.
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ne-api
+  labels:
+    app: ne-api
+    app.kubernetes.io/name: ne-api
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app: ne-api
+{{- end }}

@@ -1,0 +1,19 @@
+template_id = "accounts-directory-total"
+version = 1
+description = "Every account visible to the caller (rows kind) with an opt-in total_rows count."
+sparql = """
+SELECT ?account ?name WHERE {
+  #BINDINGS#
+  ?account a <https://neutron.enterprise/schema/operational/Account> .
+  ?account <https://neutron.enterprise/schema/operational/name> ?name .
+}
+"""
+
+[scope]
+graph_classes = ["alpha", "beta"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["account", "name"]
+citation_var = "account"
+count_total_rows = true

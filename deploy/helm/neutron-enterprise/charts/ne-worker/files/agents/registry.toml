@@ -1,0 +1,1798 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+# PRE-008 operator-mounted Agent registry. Declarative catalog only; no launch seam.
+
+schema_version = 1
+generation = 27
+
+[[agents]]
+# Version 16 / generation 27 (NE-WRAPPED-CALL-FUNDED): the output-retry pool
+# gained the ladder-sized `wrapped-call` class, so `model_request_limit(34)`
+# moved 41 -> 75 and this budget — which is DERIVED from that ceiling — is
+# re-derived below (1327813 -> 3662637). Nothing else about the definition
+# moved: no grant, no instruction, no `max_steps`, no `max_tool_calls`.
+agent_id = "agt_01k3meridiananalyst000000000"
+version = 16
+label = "Meridian Analyst"
+description = "Answers Meridian servicing questions with governed knowledge and graph evidence. Read-only: drafting and outreach live on Meridian Customer Support."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["agentic"]
+default_strategy = "agentic"
+# NE-ANALYST-INSTRUCTIONS (generation 17 / version 13). The Agent's own system
+# prompt, which it should always have had: until NE-CS-SPLIT its runtime
+# instructions were INCIDENTALLY non-empty only because the pinned Skill's
+# rendered index was standing in for them, and removing the last pin composed an
+# empty prompt that the runtime's non-empty-instructions guard refused —
+# killing every run at run time. The manifest now REQUIRES instructions for an
+# agentic agent with no Skill pins, so this misconfiguration fails at registry
+# load, legibly, not after admission.
+# The text is deliberately SHORT: it is re-sent on every one of the run's 40
+# permitted model requests (see the budget derivation below — 508 chars = 174
+# tokens x 40 requests), and it carries ONLY what the model cannot infer from
+# its tool schemas: governed-evidence-only answering, no assertions beyond the
+# served records, and the honest read-only refusal (demo beat S7). The
+# answer-transport rules already ride in on the completion tail; repeating them
+# here would be paid 40 times for nothing.
+instructions = "You are the Meridian servicing analyst, a read-only agent. Answer servicing questions strictly from the governed evidence your tools return during this run. Never state or imply anything the served records do not themselves state; when the records do not support an answer, say so plainly instead of guessing. You cannot draft, send, or modify anything: if asked to email a customer or take any other action, explain that you are read-only and that outreach is handled by the Meridian Customer Support agent."
+model_policy_id = "agent.meridian-analyst.v2"
+# NE-ANALYST-VERIFIED-LANE. The six `read.kg.*` grants are the verified-answer
+# templates the four demo questions ACTUALLY read, one per question-step, and
+# nothing else. Meridian Hardship Review already grants four of them for the
+# same corpus; this is the agentic agent reaching the same governed lane.
+#   B1 "for DR-4830, which affected loans ... eligible for a hardship offer?"
+#      -> customers_in_counties, autoloans_for_customer, payments_due_window,
+#         servicing_notes_for_loan (+ disaster_declarations, optional below)
+#   B2 "which open debit-card disputes are overdue for provisional credit?"
+#      -> disputes_directory, open_disputes_by_status
+#   B3 "total value of Reg E provisional credits issued late?" (a REFUSAL) and
+#      its control question -> disputes_directory
+# Deliberately NOT granted, though they exist in other fixtures' registries:
+# `read.kg.entity_by_iri`, `read.kg.accounts_directory`,
+# `read.kg.tickets_by_status`, `read.kg.orders_*`, `read.kg.unpaid_invoices`,
+# `read.kg.boot_directory`. No demo question reads them, and an over-granted
+# agent in a governance demo is a worse exhibit than a refusal.
+#
+# Generation 18 / version 14 is NE-ANSWER-THE-QUESTION + NE-GRAPH-ANCHOR: no
+# grant moves; the answer-transport tail gained the enumeration-question rule,
+# the two dispute catalog entries name what their rows serve, and the shared
+# read.knowledge.graph_path catalog entry grew (id/class endpoint semantics), so
+# S and the token budget are re-derived below — prompt text is a budget input.
+# NE-CS-SPLIT (generation 16 / version 12, owner decision 2026-08-27): the
+# Analyst is ANALYTICAL AND READ-ONLY. `draft.email.create`, the
+# `meridian-hardship-draft` Skill pin, and `read.skills.view` (which, with no
+# Skill pinned, could only ever fail closed) all moved to the new Meridian
+# Customer Support agent below. Asked to email a customer, this agent has no
+# tool that could and must SAY so — an honest capability refusal is the intended
+# exhibit, and the DR-4830 eligibility rules it needs remain fully served
+# through `read.knowledge.search` (the Disaster Hardship Response SOP,
+# art-hardship-2026, states them verbatim in the t1/t2 corpus).
+tool_grants = [
+  "read.knowledge.search",
+  "read.knowledge.graph_path",
+  "read.kg.customers_in_counties",
+  "read.kg.autoloans_for_customer",
+  "read.kg.payments_due_window",
+  "read.kg.servicing_notes_for_loan",
+  "read.kg.disputes_directory",
+  "read.kg.open_disputes_by_status",
+  "read.kg.disaster_declarations",
+]
+# The WHOLE verified-answer lane is OPTIONAL, tools and Tier-3 release alike,
+# and that is deliberate on two counts.
+#   1. It keeps the boot story this catalog already tells: knowledge arrives
+#      progressively, and the Analyst is admitted as soon as `meridian-servicing`
+#      t1 lands rather than waiting on a Tier-3 publish. A REQUIRED grant would
+#      make the agent UNAVAILABLE wherever the release is absent — strictly worse
+#      than an agent that answers what it can and refuses the rest.
+#   2. `read.kg.disaster_declarations` ships on a separate branch
+#      (NE-MERIDIAN-DISASTER, d691f600). Optional is the whole of this file's
+#      dependency on it: where that template is registered the Analyst reads
+#      DR-4830's own designated counties instead of being told them; where it is
+#      not, nothing here breaks.
+# `effective_agent_tool_grants` admits the optional tools only once the optional
+# knowledge is ready, so the lane is admitted as ONE unit — never a read.kg tool
+# without the release it reads.
+optional_tool_grants = [
+  "read.knowledge.graph_path",
+  "read.kg.customers_in_counties",
+  "read.kg.autoloans_for_customer",
+  "read.kg.payments_due_window",
+  "read.kg.servicing_notes_for_loan",
+  "read.kg.disputes_directory",
+  "read.kg.open_disputes_by_status",
+  "read.kg.disaster_declarations",
+]
+# Tier 3 is the Oxigraph RDF release the `read.kg.*` tools read; it serves NO
+# chunk-store corpus, so it contributes nothing to a `read.knowledge.search`
+# filter and cannot widen one (`ne.api.knowledge_scope`:
+# KNOWLEDGE_SOURCE_CONNECTORS maps it to an EMPTY tuple, and a scope naming only
+# it is refused rather than silently widened).
+knowledge_sources = [
+  { source_id = "meridian-servicing", tiers = ["t1", "t2"] },
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+optional_knowledge_sources = [
+  { source_id = "meridian-servicing", tiers = ["t2"] },
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+# NE-CS-SPLIT: no Skill pin — the hardship-draft procedure belongs to Meridian
+# Customer Support now, and an Agent with no pinned Skill grants no skills view.
+skills = []
+availability_dependencies = [
+  { kind = "tool", dependency_id = "read.knowledge.search" },
+  { kind = "knowledge", dependency_id = "meridian-servicing" },
+  { kind = "model-policy", dependency_id = "agent.meridian-analyst.v2" },
+]
+
+[agents.visibility]
+all_authenticated = true
+principals = []
+groups = []
+roles = []
+departments = []
+
+[agents.budgets]
+# NE-MULTIHOP-FANOUT. RE-SIZED for the fan-out the flagship DR-4830 question
+# ACTUALLY has. At `max_tool_calls = 10` that question terminated
+# `budget_exhausted`/`tool-calls` after 104.6s live (2026-08-27), and the ceiling
+# was the honest stop: 10 calls cannot traverse this population, because every
+# `read.kg.*` template binds exactly ONE key.
+#
+# THE HOP COUNT IS COUNTED, NOT ESTIMATED. From the fixture's own shape
+# (`tools/meridian/fixtures/meridian-v1/ground_truth.json` b1 and the generator
+# that emits it) and each template's declared args:
+#    1  read.knowledge.search        the DR-4830 hardship SOP that DEFINES
+#                                    "eligible for a new hardship offer" (active,
+#                                    no prior hardship offer, no repossession)
+#                                    and the 14-day window. The eligibility rule
+#                                    is prose in t1/t2, not a graph edge, so this
+#                                    is a required hop, and the live run's own
+#                                    opening move.
+#    1  read.kg.disaster_declarations  takes NO args and returns every designated
+#                                    county in one call -> Columbia, Jefferson,
+#                                    Richmond.
+#    3  read.kg.customers_in_counties  `q_county` is ONE enum value (max_length
+#                                    16); the template's own description reads
+#                                    "call once per county for a complete bounded
+#                                    sweep". 3 counties -> 11 affected customers.
+#   11  read.kg.autoloans_for_customer `q_customer_id` matches
+#                                    `^mer-cus-[0-9]{3}$` — one customer per call.
+#                                    8 of the 11 hold an auto loan; the 3 that do
+#                                    not (mer-cus-011/013/015) can only be
+#                                    established BY the empty read.
+#    8  read.kg.payments_due_window   `q_loan_id`, one loan per call, 8 loans.
+#    8  read.kg.servicing_notes_for_loan  `q_loan_id`, one loan per call.
+#   --
+#   32  the complete traversal that yields the ground truth
+#       {mer-loan-001, mer-loan-002, mer-loan-003}.
+#    2  headroom for one or two refinements — a read re-issued after a rejected
+#       county spelling, or a re-read of a result the model mis-summarised.
+#   --
+#   34  `max_tool_calls`.
+#
+# 34 is not a round number and not a guess: 32 is what this fixture's 3-county /
+# 11-customer / 8-loan fan-out costs in SINGLE-KEY reads, and 2 is the refinement
+# headroom that was asked for. A model that prunes — dropping `payments`/`notes`
+# for loans whose OWN row already says `paid_off`/`repossession` or a
+# `next_due_date` outside the window — reaches the same answer in 26. 34 is the
+# budget that does not require the model to be clever.
+#
+# THE REAL FIX IS TEMPLATE ARITY, NOT THIS NUMBER. `customers_in_counties` is
+# plural in its own name and still takes one county. Widening it,
+# `autoloans_for_customer`, `payments_due_window` and `servicing_notes_for_loan`
+# to a multi-row `VALUES` binding collapses 3+11+8+8 = 30 calls into 4 and the
+# whole chain into 6 — inside the OLD 10-call budget, in about a minute. Until
+# that lands, this budget is what buys a complete answer.
+max_steps = 40
+max_tool_calls = 34
+# `max_steps` is NOT the tool ceiling and never was: `enforced_agentic_caps`
+# makes the tool ceiling `min(max_steps, max_tool_calls)` and the wall clock
+# `max_steps * 10`. Nothing enforces a relation between `max_steps` and the
+# request ceiling; 40 is held at 40 so that
+#   (a) `max_tool_calls = 34` is the BINDING tool ceiling, named by the field
+#       whose name says so, and
+#   (b) the run gets about ten seconds of wall clock per model request it is
+#       PERMITTED to make, which is the measured rate: 49.9s for 6 requests
+#       (8.3s each) and 104.6s for 11 requests (9.5s each).
+# `wall_clock_seconds` therefore becomes 400.
+#
+# ⚠ `max_steps` IS NO LONGER ANYWHERE NEAR `model_request_limit(34)`, AND THAT
+# IS NOW A STANDING PROPERTY RATHER THAN A ONE-OFF RESIDUAL. NE-SHAPE-ALLOWANCE-4
+# first broke the old equality (40 vs 41); NE-WRAPPED-CALL-FUNDED makes the
+# request ceiling `2*max_tool_calls + 7` = 75, because the `wrapped-call`
+# allowance is one corrective round per rung of the ladder. So the wall clock
+# funds 40 of the 75 requests this run may make, and at the measured 8.3-9.5
+# s/request 75 requests cost 622-712 s against a 400 s clock.
+#
+# STATED PLAINLY RATHER THAN PAPERED OVER: a run that actually wrapped every
+# rung would be stopped by the CLOCK at roughly its 42nd-48th request, not by
+# the request ceiling and not by the token budget. That is still a NAMED
+# terminal (`budget-exhausted`/`wall-clock`) and it is not the failure this
+# change exists to prevent, which is `budget_exhausted`/`tokens` — a terminal
+# that names the wrong cause and is reached BEFORE the correction is delivered.
+# The token budget below funds the whole permitted stack so that the cause a
+# run reports is the cause it actually hit.
+#
+# `max_steps` is held at 40 for the reason it has always been held: the same
+# equality CANNOT be restored on Meridian Customer Support — its `max_steps` is
+# the subtrahend of this deployment's published 180 s approval window and 23 is
+# a hard ceiling there (see that agent's block). Moving this one alone would buy
+# clock at the price of two agents obeying different rules.
+#
+# THE TRADEOFF IS STATED, NOT HIDDEN. A complete unpruned run is 34 tool calls
+# and 35+ model requests, and the later requests are the expensive ones
+# (request 35 carries 49463 input tokens against the old final request's 16343).
+# Expect four to six and a half minutes for the full traversal. That is a SLOW
+# demo, and it is worse than the 90s one the room wants. It is still strictly
+# better than the 104.6s `budget_exhausted` it replaces, which produced no answer
+# at all. The template-arity fix above is what gets the minute back; inflating
+# this clock further would not.
+#
+# `max_input_tokens + max_output_tokens` IS the run's cumulative
+# `total_tokens_limit` (ne.api.platform._compose_workflow_execution_bindings), and
+# pydantic-ai counts that ACROSS every request in the loop, not per request. So
+# the token budget has to be RE-DERIVED whenever the request ceiling moves, or it
+# binds first and makes the call ceilings fictional — which is exactly how this
+# Agent failed at 24000+4000.
+#
+# RE-DERIVED for 34 tool calls / 41 model requests by the SAME method as the two
+# derivations before it (NE-TOKEN-BUDGET-14, NE-CLAIM-RETRY-RESERVE), with the
+# SAME constants.
+#
+# NE-CS-SPLIT re-measures S DOWN (3132 -> 2916): revoking `draft.email.create`
+# and `read.skills.view` removes their two catalog entry lines (231 + 202 chars,
+# measured over the composed ToolSpecs by the same renderer), and un-pinning the
+# Skill removes the one-line Skill index (201 chars — `render_index` returns the
+# EMPTY STRING for zero packs, never a bare header). 634 chars / 2.93 = 216
+# tokens, re-paid on all 40 requests below = 8640 off the previous ceiling.
+# Prompt text is a budget input exactly as a grant is — in BOTH directions.
+#
+# NE-ANALYST-INSTRUCTIONS (generation 17) then re-measures S UP (2916 -> 3090):
+# the manifest `instructions` above are the agent's own system prompt, sent
+# ahead of the (empty) Skill index on every request. 508 chars (len() of the
+# exact TOML string; the worker composes it verbatim — with zero pins there is
+# no index and no joiner) / 2.93 = 174 tokens, re-paid on all 40 requests below
+# = 6960 onto the previous ceiling.
+#   S  = 3358  fixed prompt re-sent every request: the manifest instructions
+#              (508 chars = 174 tokens, NE-ANALYST-INSTRUCTIONS), plus the
+#              3184 itemised by the derivations above: the in-band tool catalog
+#              (rendered by ne.runtime.model._catalog_text, which carries each
+#              tool's description AND its args JSON Schema), the PromptedOutput
+#              schema block for _StructuredAgenticCompletion, the answer-transport
+#              tail, NO Skill index (empty at zero pins) and the question
+#              (~150 chars), at ~2.93 chars/token. Measured for the
+#              verified-answer lane's 11 grants in NE-ANALYST-VERIFIED-LANE
+#              (S = 2543), re-measured to 3132 by NE-LANE-CHOICE (its
+#              itemisation kept below), reduced 216 by NE-CS-SPLIT as itemised
+#              above, then raised 209 by NE-ANSWER-THE-QUESTION (generation 18
+#              / version 14), measured over the exact inserted strings: the
+#              enumeration-question rule in the answer-transport tail (+336
+#              chars), the open-disputes catalog entry now naming the
+#              deadline/notice/as-of columns each row serves (+263), and
+#              "debit-card (Reg E)" in the directory entry (+13) —
+#              612 / 2.93 = 209 tokens — and raised a further 59 by
+#              NE-GRAPH-ANCHOR (same generation): the shared
+#              read.knowledge.graph_path catalog entry grew 174 chars (id/class
+#              endpoint semantics in its description and both arg schemas,
+#              measured over the rendered _catalog_text line) = 59 tokens at
+#              2.93. So the catalog-and-tail component is 2916 + 209 + 59 =
+#              3184, and with the manifest instructions S = 3358, re-paid on
+#              all 40 requests below. The NE-LANE-CHOICE count, kept for the
+#              record:
+#                each of the 7 read.kg entries carries CATALOG_SHAPE_CLAUSE,
+#                +87 bytes                                           +609
+#                read.knowledge.search now says what it RETURNS instead
+#                of naming the store it reads                        +116
+#                the ONE template declaring [date_window] publishes its
+#                endpoint semantics in its two date args' schema       +350
+#                the answer-transport tail gained the rows-are-not-
+#                quotable rule, which carries the row form and the
+#                no-derived-totals rule with it: 1519 -> 2167 chars   +648
+#                                                          = 1723 chars
+#              1723 / 2.93 = 589 tokens, so S 2543 -> 3132. RE-MEASURED against
+#              train-32: NE-SPAN-BIND replaced the claims contract with a
+#              server-selected span and rewrote the tail, so the tail figure is
+#              taken from THAT tail, not the one this guidance was first written
+#              against.
+#   C  = 1300  one search result: `retrieval_top_k = 5` (ApiSettings) x a live
+#              corpus chunk MEASURED at 700.8 chars = 239 tokens via TEI
+#              /tokenize (20 real `ne_chunks` rows, 2026-08-27), plus the
+#              `<chunk_id>: ` prefix each chunk carries into the rendering.
+#   t  =   80  the assistant's one-line tool_call JSON incl. `step_intent`.
+#   F  = 4000  the final answer, at this Agent's own `max_output_tokens`.
+#   W  =  439  NE-WRAPPED-CALL-FUNDED. A PROSE-WRAPPED TOOL CALL — prose around
+#              exactly one well-formed call — re-paid in history and written as
+#              output. MEASURED, on the only two live instances there are: the
+#              S5 governed-send rejections stamped `chars=1134` and `chars=1284`
+#              by `rejected_reply_shape`, i.e. the whole stripped reply. The
+#              LARGER of the two, 1284 / 2.93 = 439. ⚠ THIS IS AN OBSERVED
+#              FLOOR, NOT A PROVEN CEILING, exactly as the `answer-shape`
+#              allowance of 4 is: nothing stops a model wrapping a call in more
+#              prose, and the hard bound is `max_output_tokens` = F = 4000. It
+#              is recorded as the measured figure rather than padded to F
+#              because padding it costs this Agent ~2.85M tokens of budget for
+#              a shape no run has ever produced. At F the derivation below
+#              totals 6511876 and the worst single request 219699 — still
+#              inside a 262144-window lane, but with 4761 tokens to spare.
+#   R_res   = 172  `_RESIDUE_RETRY`, measured (503 chars / 2.93). A server-
+#              authored `ModelRetry` string, so `_render_retry_prompt` delivers
+#              it verbatim: the whole message.
+#   R_wrap  = 347  the WHOLE rendered wrapped-call retry, measured through
+#              `GatewayModel._render_retry_prompt` on this tree: pydantic-ai's
+#              `model_response()` for the single `json_invalid` root entry
+#              (240 chars — no `input` echo, see that method's field table)
+#              + the two joining newlines + `_WRAPPED_CALL_RETRY` (774 chars)
+#              = 1016 chars / 2.93.
+#   R_shape = 242  ⭐ CORRECTED from 200 by NE-WRAPPED-CALL-FUNDED, and the
+#              correction is a MEASUREMENT, not a re-estimate. 200 described
+#              "pydantic-ai's own JSON error list" ALONE, which stopped being
+#              the whole retry message when NE-RETRY-LEGIBLE began appending
+#              `final_answer_retry_instruction` to it. Measured the same way as
+#              R_wrap beside it: 240 + 2 + `_STRUCTURED_ANSWER_RETRY_CORRECTION`
+#              (467 chars) = 709 chars / 2.93 = 242. R_res and R_claim were
+#              already whole-message figures, so this makes all four constants
+#              share ONE basis — which is the only way R_wrap is comparable to
+#              the constant beside it. Costs +588 on every derivation below.
+#   R_claim = 403  the LARGEST message the reserved claim slot can carry —
+#              `max(len(_claim_correction(r)) for r in _CLAIM_REJECTION_REASONS)`
+#              = 1179 chars / 2.93. It is no longer `_CLAIMS_REQUIRED_RETRY`,
+#              which NE-SPAN-BIND deleted along with the claims contract. MOST OF
+#              THIS DRIFT PREDATES this change: at train-32 the worst correction
+#              was already 1048 chars (358 tokens) against a figure here still
+#              reading 327, so 31 of the 76-token move is this change's (the
+#              rows hint added to the unbound-span correction) and 45 was already
+#              owed. Corrected rather than left understating the slot, because a
+#              budget derived from a retry message smaller than the one actually
+#              sent is not a budget.
+# History increments: a tool turn adds t + C = 1380; the retry stage adds
+# (t + R_res) = 252, then 34 x (W + R_wrap) = 786 each, then 4 x (F + R_shape)
+# = 4242, then (F + R_claim) = 4403 — the classes in the order
+# `_OUTPUT_RETRY_ALLOWANCES` enumerates them, which is the sequence every
+# derivation in this file uses (residue, wrapped calls, the WHOLE
+# `answer-shape` allowance, then rejected claims, then the served answer).
+# A FIFTH shape rejection ends the run rather than borrowing the reserved
+# claim-contract slot, which is what keeps the composition the worst one.
+#
+# ⚠ RECORDED, NOT FIXED: the enumerated order is not the most EXPENSIVE
+# INTERLEAVING. Because each increment is re-paid by every LATER retry request,
+# the costliest permutation is the one that carries the largest increments
+# longest — descending, i.e. claim first. Nothing in the ledger forbids it: the
+# classes are charged per attempt and the model chooses the order. At the
+# 1/4/1 composition this convention understated by 20755 (1.6%) and every pin
+# in this file was written against it; the `wrapped-call` class widens the gap
+# to 631905 (17%) for this Agent. That is a defect of the shared convention,
+# not of this change, and re-cutting it belongs in one pass over all four
+# derivations rather than smuggled in here. The number is written down so the
+# choice is visible.
+#
+# ⭐ NE-WRAPPED-CALL-FUNDED (2026-09-11) ADDED THE LADDER-SIZED `wrapped-call`
+# CLASS, so every figure below is re-derived rather than adjusted. The pool is
+# now 1 + `max_tool_calls` + 4 + 1 = 40 for this Agent, and the request ceiling
+# `2*max_tool_calls + 7` = 75. Leaving the budget at the 6-retry figure would
+# have replaced a legible `AgentOutputContractError` (which still carries
+# `sole=tool-call`) with a `budget_exhausted`/`tokens` terminal that names the
+# wrong cause — strictly worse than the failure being fixed. The carried
+# increments are therefore 252, then 786 per wrapped round to 26976, then 4242
+# per shape round to 43944, then 4403 to 48347.
+#
+#   requests 1..34  (tool-reading)  sum(S + k*1380 for k in 0..33)
+#                                   = 34*3358 + 1380*561
+#                                   = 114172 + 774180       =   888352
+#   request 35      (first answer)  S + 34*1380 = 3358 + 46920 =  50278
+#   requests 36..75 (the 40 retries) each re-pay 50278 plus every increment
+#                                   carried so far. Written as the four stages
+#                                   rather than 40 lines:
+#                                     residue     1 req  carried 252
+#                                                        = 50530
+#                                     wrapped    34 reqs carried 252 + 786n,
+#                                                        n = 1..34, last 26976
+#                                                        = 77254
+#                                     shape       4 reqs carried +4242 each,
+#                                                        last 43944 = 94222
+#                                     claim       1 req  carried 48347
+#                                                        = 98625
+#                                   40*50278 = 2011120, plus the carried sums
+#                                   675161                 =  2686281
+#   INPUT                                                       3624911
+#   OUTPUT  34*t + t + 34*W + 6F
+#           = 2720 + 80 + 14926 + 24000                  =        41726
+#   TOTAL                                                       3666637
+# minus the 4000 output budget leaves the figure below.
+#
+# CROSS-CHECK, because a number this large has to be attributable rather than
+# plausible. It is two separate moves, each attributable on its own.
+#   NE-MULTIHOP-FANOUT (10 -> 34 tool calls, at S = 2543) added 973752 over the
+#   previous 249855, and every token of it is one of the 24 added tool calls:
+#     the 24 new tool-reading requests   sum(S + k*1380 for k in 10..33)
+#                                        = 24*2543 + 1380*516 = 773112
+#     24 more tool turns of history, re-paid by each of the 6 final-answer-stage
+#     requests                           6 * 24 * 1380        = 198720
+#     24 more tool_call outputs          24 * 80              =   1920
+#                               773112 + 198720 + 1920        = 973752  exactly.
+#   NE-LANE-CHOICE + NE-ROWS-ARE-NOT-QUOTABLE + NE-WINDOW-ENDPOINTS add 23636 on
+#   top, and every token of it is one of two things:
+#     the fixed prompt re-sent, 40 requests x (3132 - 2543)  = 23560
+#     the re-derived claim-retry slot, once           (403 - 327) =    76
+#                             1223607 + 23636              = 1247243.
+#   NE-CS-SPLIT then subtracts exactly the revoked prompt text and nothing else:
+#     the fixed prompt re-sent, 40 requests x (3132 - 2916)  = -8640
+#                             1247243 - 8640               = 1238603.
+#   NE-ANALYST-INSTRUCTIONS then adds exactly the new manifest instructions and
+#   nothing else:
+#     the fixed prompt re-sent, 40 requests x (3090 - 2916)  = +6960
+#                             1238603 + 6960               = 1245563.
+#   NE-ANSWER-THE-QUESTION then adds exactly the new prompt text and nothing
+#   else:
+#     the fixed prompt re-sent, 40 requests x (3299 - 3090)  = +8360
+#                             1245563 + 8360               = 1253923.
+#   NE-GRAPH-ANCHOR then adds exactly the grown graph_path entry and nothing
+#   else:
+#     the fixed prompt re-sent, 40 requests x (3358 - 3299)  = +2360
+#                             1253923 + 2360               = 1256283.
+#   NE-SHAPE-ALLOWANCE-4 then adds exactly ONE MORE `answer-shape` retry and
+#   nothing else — no tool call, no grant, no prompt text, S unchanged:
+#     the added retry request itself    S + 34*1380 + 17052   = +67330
+#     the claim-contract retry re-pays one more shape increment = +4200
+#     one more final answer written     F                     =  +4000
+#                             1256283 + 75530              = 1331813.
+#   NE-WRAPPED-CALL-FUNDED is TWO moves, each attributable on its own.
+#   (a) R_shape 200 -> 242, the measured correction. It touches only the four
+#       shape increments and what re-pays them: +42, +84, +126, +168 on the
+#       four shape retries and +168 on the claim retry
+#                             1331813 + 588                = 1332401.
+#       (Independent of the tool count: it is +588 on all four derivations.)
+#   (b) the `wrapped-call` class itself, 34 rounds at W + R_wrap = 786:
+#       the 34 new retry requests   sum(50278 + 252 + 786n for n in 1..34)
+#                                   = 34*50530 + 786*595   = 2185690
+#       the 4 shape + 1 claim retries each re-pay the whole wrapped block
+#                                   5 * 786 * 34           =  133620
+#       34 wrapped replies written as output  34 * W = 34*439 =  14926
+#                             1332401 + 2334236            = 3666637.
+# No tool call was added, no grant changed, S is unchanged and no allowance
+# other than `wrapped-call` moved, which is the check that the ceiling was
+# COSTED rather than the budget rounded up around it.
+max_input_tokens = 3662637
+# Held at 4000 deliberately: this is what the run may spend on model OUTPUT, and
+# the serving lane's own `max_output_tokens` is being raised separately. Do not
+# raise it past what the lane can actually serve.
+max_output_tokens = 4000
+# LANE HEADROOM, stated plainly.
+#
+# The largest SINGLE request is S + 34*(t+C) + all forty retry increments =
+# 3358 + 46920 + 48347 = 98625 tokens.
+#   PRIMARY LANES: VIABLE, with room. `frontier-default` and `private-default`
+#   both declare 262144 with a 24576 output reserve and a 13108 margin, i.e.
+#   224460 input tokens. 98625 leaves 125835 unspent. The frontier lane this
+#   Agent is primaried on for the live demo serves the worst case whole.
+#
+#   32768-WINDOW FALLBACK LANES (`cpu-model`, and `private-default` on the sealed
+#   CPU box): NOT VIABLE, and this is a change in KIND, not a shrinking margin.
+#   Those lanes allow 27033 input tokens. Two ceilings ago only the RETRY
+#   worst case (33522) passed that; an ordinary tool-reading request never did.
+#   At 34 tool calls an ORDINARY request passes it too — request k costs
+#   S + (k-1)*1380, which reaches 28198 at k = 19 — so such a run stops being
+#   servable around its 19th tool call, mid-traversal.
+#   What absorbs that is unchanged and is not new machinery: the gateway's budget
+#   pre-flight (design §3.3) SKIPS a candidate that cannot serve the request, and
+#   the runtime's own context trim (design §3.5) drops middle history rather than
+#   serving a lie. Neither yields a COMPLETE population answer.
+#   The honest statement is therefore: the DR-4830 multi-hop question is a
+#   262144-window question. On a 32768-window lane it is not completely
+#   answerable at ANY budget, because 32 single-key reads of accumulated history
+#   do not fit that window. Shorter questions (B2, B3 — 1-2 reads) are unaffected
+#   and still run on every lane.
+#
+# This does NOT make the Agent unbounded. `max_tool_calls = 34`, the request
+# ceiling derived from it, and the 400s wall clock are all still hard ceilings; a
+# runaway run stops, named, exactly as before. Growing the tool menu, the retry
+# count, or this ceiling again needs this whole block re-derived, not extended.
+
+[[agents]]
+# NE-CS-SPLIT + NE-CS-SEND (owner decisions 2026-08-27): the drafting-and-
+# outreach half of the old Analyst, running the REAL governed action ladder.
+# This agent exists to run ONE workflow end to end: identify a single
+# customer/loan from served evidence, draft hardship outreach under the pinned
+# Skill procedure (a real unsent M365 draft, Tier-0), and on the follow-up turn
+# REALLY send it (Tier-2 — the run parks at waiting_approval until a distinct
+# human approver releases it).
+# ⛔ THE APPROVED SEND IS THE LAST THING THE RUN DOES, and generation 24 stops
+# claiming otherwise. A resume executes exactly the ONE pinned effect a human
+# approved and terminalizes (`approved_effect_complete`); it does not re-enter
+# the agent loop, which the architecture scopes as "DETERMINISTIC AND BOUNDED AGENTIC
+# PRIMITIVES ONLY — NOT BUILT AS A GENERAL DURABLE LOOP". So nothing ordered
+# AFTER the gated send can run. Skill v2's step 6 ordered a Salesforce contact
+# note there and was therefore structurally unreachable: the platform told the
+# model to do something it then made impossible. Skill v3 ends at the send, and
+# every count and claim below is re-derived against that.
+# NE-CS-WHOLE-LADDER (generation 19 / version 3, owner decision 2026-08-28)
+# extends the FRONT of that ladder: the agent now holds the Analyst's five
+# hardship verified-answer templates, so the same run first ESTABLISHES the
+# loan's hardship eligibility — county of residence against the declared
+# disaster counties, the payments-due window, and the repossession /
+# prior-hardship-offer check — instead of refusing the whole ask for want of
+# them (which is exactly what it did, correctly, when asked about mer-loan-001
+# without this lane).
+# Version 6 / generation 27 (NE-WRAPPED-CALL-FUNDED): the output-retry pool
+# gained the ladder-sized `wrapped-call` class, so `model_request_limit(17)`
+# moved 24 -> 41 and this budget — DERIVED from that ceiling — is re-derived
+# below (530959 -> 1194989). ⛔ `max_steps` is NOT touched: 23 is the subtrahend
+# of the published 180 s approval window (420 - 230 - 10) and moving it in
+# either direction moves a governed, published claim.
+agent_id = "agt_01k3customersupport000000000"
+version = 6
+label = "Meridian Customer Support"
+description = "Establishes disaster-hardship eligibility for one Meridian loan from governed verified-answer templates, drafts the outreach (a real unsent M365 draft), then with per-item human approval really sends it. The approved send is the last step: the resumed run performs it and ends. Sends reach only the deployment's allow-listed recipient."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["agentic"]
+default_strategy = "agentic"
+# The SAME model policy as the Analyst, deliberately: this agent runs on the same
+# serving lane, and a second policy id would be routing ceremony with no second
+# routing decision behind it (the gateway's task map carries exactly this id).
+model_policy_id = "agent.meridian-analyst.v2"
+# EVERY grant is one the workflow reads or writes; nothing speculative.
+#   read.skills.view           the pinned Skill's procedure body is served ONLY
+#                              through this governed, audited firing (PRE-011B).
+#   read.knowledge.search      the hardship SOP + approved program language the
+#                              Skill requires every factual statement to stay
+#                              inside (art-hardship-2026 in t1/t2).
+#   read.knowledge.graph_path  the customer<->loan evidence for the ONE subject
+#                              being drafted for; also what satisfies the
+#                              agentic-write evidence floor ("writes require
+#                              evidence observed by an earlier successful read").
+#   draft.email.create         the Skill's own governed draft action — Tier-0
+#                              (its own tiers.rego class): a REAL M365 draft,
+#                              isDraft, never sent by it, in the deployment's
+#                              allow-listed mailbox.
+#   write.external.email.send  NE-CS-SEND: the REAL Tier-2 send of that draft.
+#                              write.external. classifies Tier-2 in tiers.rego
+#                              and the class floor means no caller can declare
+#                              it lower; every call parks on the durable
+#                              approval gate, and the action re-reads the
+#                              draft's ACTUAL recipients from Graph and refuses
+#                              any address outside the deployment's exact send
+#                              allowlist.
+#   write.internal.crm.note    OPTIONAL — the Tier-1 Salesforce contact note
+#                              (autonomous + digest). ⚠️ GRANTED, BUT NO LONGER
+#                              PART OF THE PINNED PROCEDURE. Skill v2 ordered it
+#                              after the approval-gated send, where it can never
+#                              run; v3 removed that step rather than pretend.
+#                              The grant is kept, and the reason is stated so it
+#                              is not read as an oversight: (a) it remains an
+#                              offered tool the model may call BEFORE the send
+#                              inside the same turn — nothing forbids that, the
+#                              procedure simply no longer orders it; and (b)
+#                              dropping it would move a RUNTIME cap
+#                              (`enforced_agentic_caps` takes max_parked_writes
+#                              = min(max_tool_calls, non-`read.` grants) = 3),
+#                              which this documentation change deliberately does
+#                              not do. Optional because its binding exists only
+#                              where the Salesforce connector legs are staged;
+#                              absent, the agent still drafts and sends.
+#   read.external.crm.account  OPTIONAL — the Tier-0 lookup that resolves a CRM
+#                              record id from the system of record (rides the
+#                              same Salesforce staging). Same status as the note
+#                              since v3: granted, and not read by the procedure,
+#                              which ends at the send.
+#   read.external.crm.contact  OPTIONAL — NE-CS-LOOKUP: the Tier-0 read that
+#                              turns the customer NAME served by the governed
+#                              graph path into the outreach recipient (the
+#                              contact's recorded email). This is the hop
+#                              that keeps the recipient OUT of the prompt: the
+#                              address is read from the system of record or
+#                              the outreach is withheld. Rides the same
+#                              Salesforce staging as the note.
+#   read.kg.*                  NE-CS-WHOLE-LADDER (generation 19 / version 3,
+#                              owner decision 2026-08-28: "Add the verified
+#                              templates to the customer support agent so one
+#                              agent can do the whole ladder"): the Analyst's
+#                              five HARDSHIP verified-answer templates, granted
+#                              so this agent can ESTABLISH eligibility for the
+#                              one loan it drafts for instead of refusing for
+#                              want of the customer's county of residence, the
+#                              payments-due-window check, and the
+#                              repossession / prior-offer check
+#                              (servicing_notes_for_loan serves that last one).
+#                              Deliberately NOT granted: the two dispute
+#                              templates (disputes_directory,
+#                              open_disputes_by_status) — unrelated to this
+#                              ladder, and an over-granted agent in a
+#                              governance demo is a worse exhibit than a
+#                              refusal.
+# The first four are exactly the Skill's requires_tools (activation is refused
+# unless requires_tools is a subset of the grants).
+#
+# WHAT THE read.kg.* GRANTS ACTUALLY REACH — stated as the grants permit it, not
+# as the workflow intends it. An earlier version of this comment claimed the
+# 3-county / 11-customer population sweep "remains the Analyst's job" and that
+# this agent "reads the fan-out for exactly ONE subject". BOTH WERE FALSE the day
+# they were written. NE-KG-MULTIKEY landed 2026-08-27, one day before this lane,
+# and made every keyed template argument MULTI-VALUED; there is no per-agent
+# narrowing, because `ne.api.verified_tools` copies `arg.list_max` straight from
+# the template and never sees an agent_id. The reachable scope is therefore the
+# TEMPLATE's cap, and the model reads that cap in the catalog description:
+#   read.kg.disaster_declarations     no args — returns EVERY designated county
+#   read.kg.customers_in_counties     q_county       list_max = 4 (== the whole
+#                                     county enum: one call sweeps the pilot set)
+#   read.kg.autoloans_for_customer    q_customer_id  list_max = 24
+#   read.kg.payments_due_window       q_loan_id      list_max = 16
+#   read.kg.servicing_notes_for_loan  q_loan_id      list_max = 16 — and this is
+#                                     the only one of the five returning FREE TEXT
+# So 5 of this agent's 17 calls can reproduce the Analyst's entire population
+# exhibit, leaving 12 calls in a context that also holds `draft.email.create`
+# (Tier-0, autonomous, no approval).
+#
+# WHY THAT IS STILL THE RIGHT GRANT SET, as the marginal change it actually is:
+# NO NEW DATA REACHES A NEW PRINCIPAL. The `ops` group could already run the
+# Meridian Analyst, which holds these same five templates plus the two dispute
+# ones and is `all_authenticated = true`; this agent is `groups = ["ops"]`, i.e.
+# strictly narrower. The marginal change is CO-RESIDENCY — the population fan-out
+# now shares a turn with a write surface — not reachability. A per-agent
+# `list_max` would be real new machinery for a single-user demo box and is
+# recorded as a design item rather than built here.
+tool_grants = [
+  "read.skills.view",
+  "read.knowledge.search",
+  "read.knowledge.graph_path",
+  "draft.email.create",
+  "write.external.email.send",
+  "write.internal.crm.note",
+  "read.external.crm.account",
+  "read.external.crm.contact",
+  "read.kg.disaster_declarations",
+  "read.kg.customers_in_counties",
+  "read.kg.autoloans_for_customer",
+  "read.kg.payments_due_window",
+  "read.kg.servicing_notes_for_loan",
+]
+# Two optional families ride one coarse admission gate
+# (`effective_agent_tool_grants` admits ALL optional tools only once EVERY
+# optional knowledge tier is ready — the same single-unit wiring as the
+# Analyst's lane):
+#   - the three Salesforce grants: on a deployment without the Salesforce legs
+#     the agent stays AVAILABLE (drafting and the approval-gated send are its
+#     core exhibit) and simply is not offered the note/lookups; a missing M365
+#     binding, by contrast, makes it honestly UNAVAILABLE ("tool-unavailable")
+#     rather than present with a procedure it cannot follow.
+#   - the five read.kg templates (NE-CS-WHOLE-LADDER): optional for exactly the
+#     Analyst's two reasons — the agent is admitted as soon as
+#     `meridian-servicing` t1 lands rather than waiting on a Tier-3 publish,
+#     and nothing here breaks where `read.kg.disaster_declarations` is not
+#     registered.
+# STATED, NOT HIDDEN: the gate is a conjunction, so on a deployment with
+# Salesforce staged but no Tier-3 release (or vice versa) NEITHER family is
+# admitted until both tiers are. On this single-deployment demo box both are
+# staged; a finer per-family gate would be machinery with no deployment that
+# needs it.
+#
+# THE CONSEQUENCE AN OPERATOR HAS TO KNOW, because nothing on screen says it.
+# `optional_tool_grants` are dropped SILENTLY (`agent_catalog.
+# effective_agent_tool_grants`: an unready optional family is subtracted from
+# the grants, and only `availability_dependencies` — which deliberately names
+# none of these — can turn an Agent UNAVAILABLE). So on a deployment with
+# Salesforce staged but no Tier-3 release, this agent stays AVAILABLE with
+# `read.external.crm.contact` quietly absent, and the run then correctly refuses
+# to draft because it has no governed recipient. The turn's refusal is honest;
+# the CATALOG's "available" is the part that is coarse. That is accepted as
+# scoped for a single-user demo box where both tiers are staged together —
+# recorded here, not discovered from a run that would not draft.
+optional_tool_grants = [
+  "write.internal.crm.note",
+  "read.external.crm.account",
+  "read.external.crm.contact",
+  "read.kg.disaster_declarations",
+  "read.kg.customers_in_counties",
+  "read.kg.autoloans_for_customer",
+  "read.kg.payments_due_window",
+  "read.kg.servicing_notes_for_loan",
+]
+# Tier 3 is the Oxigraph RDF release the `read.kg.*` tools read, declared
+# exactly as the Analyst declares it. It serves NO chunk-store corpus, so it
+# contributes nothing to a `read.knowledge.search` filter and cannot widen one
+# (`ne.api.knowledge_scope`: KNOWLEDGE_SOURCE_CONNECTORS maps it to an EMPTY
+# tuple, and a scope naming only it is refused rather than silently widened).
+knowledge_sources = [
+  { source_id = "meridian-servicing", tiers = ["t1", "t2"] },
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+optional_knowledge_sources = [
+  { source_id = "meridian-servicing", tiers = ["t2"] },
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = [
+  # v3 (generation 24): the procedure covers the governed ladder in one request
+  # — resolve the subject from served evidence (graph path + CRM contact
+  # lookup), draft (Tier-0), submit the send for approval (Tier-2 parks) — AND
+  # ENDS THERE. v2 added a sixth step, the Tier-1 CRM note "after an approved
+  # send", which the platform makes unreachable: the resume executes the one
+  # approved effect and terminalizes. Removing the step is the fix; the
+  # alternative orderings were considered and rejected (a note written BEFORE
+  # approval would record an outreach the approver may still reject — a
+  # falsehood in a system of record, which is worse in a governance demo than
+  # a missing note). v3 also states the rule in Pitfalls, so a future author
+  # who reaches for a trailing step reads why it will not run. v1's "Do not
+  # send it" / "never convert a draft into a sent message" lines contradicted
+  # the owner's combined "send the outreach email" ask; v2 and v3 keep the
+  # honest floor as "the governed send tool's approval gate is the only path to
+  # a sent message".
+  { skill_id = "meridian-hardship-draft", version = 3, content_hash = "dbc78dc3c2416336b124ac5aab0ed38a0d267496db12f08e3366c3fee5e2fb9d" },
+]
+availability_dependencies = [
+  { kind = "tool", dependency_id = "read.skills.view" },
+  { kind = "tool", dependency_id = "read.knowledge.search" },
+  { kind = "tool", dependency_id = "read.knowledge.graph_path" },
+  { kind = "tool", dependency_id = "draft.email.create" },
+  { kind = "tool", dependency_id = "write.external.email.send" },
+  { kind = "knowledge", dependency_id = "meridian-servicing" },
+  { kind = "skill", dependency_id = "meridian-hardship-draft", version = 3, content_hash = "dbc78dc3c2416336b124ac5aab0ed38a0d267496db12f08e3366c3fee5e2fb9d" },
+  { kind = "model-policy", dependency_id = "agent.meridian-analyst.v2" },
+]
+
+[agents.visibility]
+# The ops group, NOT all-authenticated, and NOT the approver group — the same
+# separation-of-duties rule ne.api.platform._MERIDIAN_OPS_ONLY_TOOLS documents
+# for draft.email.create and the send: the shared Tier-2 gate grants on ANY
+# single named approver, so a principal who can both originate and approve the
+# same external write would collapse the exhibit. The pilot `ops` persona
+# carries the group; `approver` deliberately does not.
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+# COUNTED from the ONE whole-ladder ask this agent now exists to run
+# (NE-CS-WHOLE-LADDER, owner decision 2026-08-28: "Add the verified templates
+# to the customer support agent so one agent can do the whole ladder"; it
+# subsumed NE-CS-ONE-ASK's combined draft-send-record turn, whose trailing
+# record is gone as of generation 24): establish
+# disaster-hardship eligibility for ONE named loan from the governed
+# verified-answer templates, then draft and submit the send for approval — the
+# turn's last act. Still not copied from the Analyst, whose 34-call ceiling
+# funds a REPEATED 3-county / 11-customer / 8-loan population sweep; this
+# ceiling is counted for one subject's ladder. That is a BUDGET fact and NOT a
+# reachability fact: as the grant block above states, the multi-valued `read.kg.*`
+# arguments mean a single call can still fan out across the whole pilot set.
+#   The whole-ladder turn, worst case (asked about mer-loan-001):
+#    1  read.skills.view            the pinned procedure body
+#    2  read.knowledge.search       the hardship SOP + the approved program
+#                                   language (two queries when one result does
+#                                   not carry both)
+#    1  read.knowledge.graph_path   mer-loan-001 -> its Customer (id/class
+#                                   endpoints, NE-GRAPH-ANCHOR) — the customer
+#                                   identity, and the agentic-write evidence
+#                                   floor
+#    1  read.kg.disaster_declarations  takes NO args and returns every
+#                                   designated county in one call
+#    1  read.kg.customers_in_counties  `q_county` is MULTI-VALUED since
+#                                   NE-KG-MULTIKEY (`list_max = 4`, which is the
+#                                   whole county enum), so ONE call over every
+#                                   designated county establishes the customer's
+#                                   county of residence. The pre-multikey text
+#                                   here budgeted 3 single-county calls and was
+#                                   simply stale.
+#      +2                           DELIBERATE HEADROOM, not a correction to the
+#                                   ceiling: a model may still issue the sweep
+#                                   one county at a time, which is the shape the
+#                                   3 was counted for. Kept in the total so that
+#                                   `max_input_tokens` below remains the MEASURED
+#                                   figure it was derived as rather than a number
+#                                   re-cut to a new count.
+#    1  read.kg.autoloans_for_customer  the loan is active and belongs to this
+#                                   customer
+#    1  read.kg.payments_due_window     the payments-due check for the ONE loan
+#                                   over the SOP's 14-day window
+#    1  read.kg.servicing_notes_for_loan  no repossession, no prior hardship
+#                                   offer
+#    1  read.external.crm.contact   name -> the recorded email, from the system
+#                                   of record (when staged). The HANDLER still
+#                                   returns the parent Account id as well, but
+#                                   the procedure no longer uses it: skill v3
+#                                   deleted the CRM-note step that was its only
+#                                   consumer (see the grant docs above), so what
+#                                   this call establishes for the turn is the
+#                                   recipient address.
+#    1  draft.email.create          the governed Tier-0 draft
+#    1  write.external.email.send   parks at waiting_approval; a distinct
+#                                   approver decides; the resumed attempt
+#                                   executes THAT ONE approved send and the run
+#                                   terminalizes (`approved_effect_complete`)
+#   --
+#   14  = 12 counted calls + the 2 single-county-sweep calls retained above.
+#
+#   ⛔ WHY 14 AND NOT 15: THE TRAILING CRM NOTE IS NOT COUNTED, BECAUSE IT
+#   CANNOT HAPPEN. Every earlier revision of this block counted a 13th call —
+#   `write.internal.crm.note`, annotated "Tier-1, autonomous, after the send
+#   resumes" — and that call was never reachable. The resume executes exactly
+#   the one pinned effect the approver released and terminalizes; it does not
+#   re-enter the agent loop, so no step ordered after the gated send runs. Skill
+#   v3 removed that step (see the pin above), and this derivation now counts
+#   what the turn can actually issue rather than what the procedure wished for.
+#
+#   THE CEILING IS DELIBERATELY NOT RE-CUT to 14 + 2 = 16. `max_tool_calls`
+#   stays 17 and `max_steps` stays 23, and both reasons are enforcement facts
+#   rather than inertia:
+#     - every token figure below is the MEASURED 17-call / 23-request shape.
+#       Re-cutting the count would leave `max_input_tokens` a number nobody
+#       measured — precisely the defect the rest of this block spends eighty
+#       lines refusing to commit; and
+#     - `max_steps` x 10 s is the SUBTRAHEND of this deployment's published
+#       approval window. `packages/ne-runtime/tests/
+#       test_approval_window_is_honourable.py` derives it from this registry:
+#       23 -> 230 s, and 420 - 230 - 10 = the 180 s window the product claims it
+#       can honour. Moving `max_steps` in EITHER direction moves a governed,
+#       published number, which a documentation correction must not do.
+#   So the ceiling is stated honestly as 14 counted + 3 refinement headroom = 17
+#   — the Analyst's +2 policy plus the retired note's slot, kept rather than
+#   reclaimed. The 2 single-county-sweep calls remain inside the 14 for the same
+#   reason they always did: the multikey correction moved them from "counted" to
+#   "headroom", it did not shrink the turn.
+max_tool_calls = 17
+# `max_steps` = 23 > `max_tool_calls` = 17, so `max_tool_calls` is the BINDING
+# tool ceiling and the wall clock is 23 * 10s = 230s per attempt — the measured
+# ~8-10s/request rate with margin. An approval wait is NOT on this clock: the
+# attempt ends at the park and the resumed attempt gets its own.
+#
+# ⛔ 23 IS NO LONGER `model_request_limit(17)`, AND IT MUST NOT BE MADE SO.
+# NE-SHAPE-ALLOWANCE-4 moved `answer-shape` 3 -> 4, so that function returns 24.
+# Raising `max_steps` to 24 makes the approval-window subtrahend 240 s, drops the
+# honourable window from 180 s to 170 s, and REFUSES every
+# `write.external.email.send` park on this deployment (the derivation lives in
+# `deploy/opa/data/ne/config/data.json` and is enforced by
+# `packages/ne-runtime/tests/test_approval_window_is_honourable.py`). The clock
+# therefore funds 23 of the 24 requests the run may make; at the measured
+# 8-10 s/request the 24 still fit inside 230 s. DECLARED residual, not an
+# oversight — and the reason the Analyst's `max_steps` was left at 40 too.
+max_steps = 23
+# Token budget, the SAME method and constants as the Analyst's derivation above
+# (NE-TOKEN-BUDGET-14 lineage) — only S and the request counts differ.
+#   S  = 3871  the fixed prompt. The NE-CS-SPLIT chain measured this catalog to
+#              1932 (7 entries at 1665: the 4298-char swap against the
+#              Analyst's baseline epoch; +152 for NE-GRAPH-ANCHOR's grown
+#              graph_path entry and NE-CS-LOOKUP's contact entry; +115 for
+#              NE-ANSWER-THE-QUESTION's enumeration rule in the shared tail).
+#              NE-CS-WHOLE-LADDER adds exactly the five granted verified-answer
+#              catalog entries, MEASURED over the rendered `_catalog_text`
+#              lines as `build_verified_answer_tools` composes them TODAY (the
+#              same builder + renderer the boot check's
+#              `catalog_text_for_tool_specs` uses; each figure is the entry's
+#              JSON line plus the newline that joins it into the catalog):
+#                read.kg.disaster_declarations         443
+#                read.kg.customers_in_counties         935
+#                read.kg.autoloans_for_customer       1383
+#                read.kg.payments_due_window          1925
+#                read.kg.servicing_notes_for_loan      994
+#                                                   = 5680 chars
+#              5680 / 2.93 = 1939 tokens; 1932 + 1939 = 3871. (These entries
+#              are bigger per head than the deltas the Analyst's chain records
+#              because they carry everything the lane has accreted —
+#              CATALOG_SHAPE_CLAUSE, the date args' endpoint semantics, the
+#              per-argument NE-CAPTAB descriptions — measured whole here, where
+#              the Analyst's chain paid for each increment as it landed. The
+#              ungranted dispute templates contribute nothing.) The Skill index
+#              (201 chars) and question allowance are carried unchanged.
+#   C  = 1300, t = 80, F = 4000, R_res = 172, R_claim = 403 — all unchanged
+#              (same retrieval_top_k, same transport, same retry messages).
+#   W  = 439, R_wrap = 347, R_shape = 242 — the three NE-WRAPPED-CALL-FUNDED
+#              figures, MEASURED once in the Analyst's block above and used
+#              verbatim here: they are properties of the transport and of the
+#              two static correction strings, not of any one agent's catalog.
+#   requests 1..17  (tool-reading)  sum(S + k*1380 for k in 0..16)
+#                                   = 17*3871 + 1380*136
+#                                   = 65807 + 187680         =   253487
+#   request 18      (first answer)  S + 17*1380 = 3871 + 23460 =  27331
+#   requests 19..41 (the 23 retries) each re-pay 27331 plus every increment
+#                                   carried so far, in the four stages the
+#                                   Analyst's block sets out:
+#                                     residue     1 req  carried 252   = 27583
+#                                     wrapped    17 reqs +786 each,
+#                                                        last 13614    = 40945
+#                                     shape       4 reqs +4242 each,
+#                                                        last 30582    = 57913
+#                                     claim       1 req  carried 34985 = 62316
+#                                   23*27331 = 628613, plus the carried sums
+#                                   256655                   =   885268
+#   INPUT                                                       1166086
+#   OUTPUT  17*t + t + 17*W + 6F
+#           = 1360 + 80 + 7463 + 24000                   =        32903
+#   TOTAL                                                       1198989
+# minus the 4000 output budget leaves the figure below.
+#
+# CROSS-CHECK, the same discipline as the Analyst's: two separate moves from the
+# previous 240155, each attributable on its own.
+#   The five granted catalog entries, at the OLD 10-call/16-request shape:
+#     the fixed prompt re-sent, 16 requests x (3871 - 1932)  = +31024
+#                               240155 + 31024             = 271179.
+#   NE-CS-WHOLE-LADDER's ceiling move (10 -> 17 tool calls, at S = 3871) adds
+#   211197, and every token of it is one of the 7 added tool calls:
+#     the 7 new tool-reading requests   sum(S + k*1380 for k in 10..16)
+#                                       = 7*3871 + 1380*91  = 152677
+#     7 more tool turns of history, re-paid by each of the 6
+#     final-answer-stage requests       6 * 7 * 1380        =  57960
+#     7 more tool_call outputs          7 * 80              =    560
+#                               271179 + 211197            = 482376  exactly.
+#   NE-SHAPE-ALLOWANCE-4 then adds exactly ONE MORE `answer-shape` retry, by the
+#   same three terms as the Analyst's block — no grant moved and S is unchanged:
+#     the added retry request itself    S + 17*1380 + 17052   = +44383
+#     the claim-contract retry re-pays one more shape increment = +4200
+#     one more final answer written     F                     =  +4000
+#                               482376 + 52583             = 534959.
+#   NE-WRAPPED-CALL-FUNDED is the same TWO moves as the Analyst's block:
+#   (a) R_shape 200 -> 242, the measured correction: +42/+84/+126/+168 on the
+#       four shape retries and +168 on the claim retry
+#                               534959 + 588              = 535547.
+#   (b) the `wrapped-call` class, 17 rounds at W + R_wrap = 786:
+#       the 17 new retry requests  sum(27331 + 252 + 786n for n in 1..17)
+#                                  = 17*27583 + 786*153    = 589169
+#       the 4 shape + 1 claim retries re-pay the whole wrapped block
+#                                  5 * 786 * 17            =  66810
+#       17 wrapped replies written as output  17 * 439     =   7463
+#                               535547 + 663442           = 1198989.
+# No other retry constant moved and no other grant changed, which is the check
+# that the ceiling was COSTED rather than the budget rounded up around it.
+#
+# ⚠ THE WALL CLOCK NOW BINDS FIRST, AND `max_steps` CANNOT MOVE. 41 requests at
+# the measured 8.3-9.5 s/request cost 340-390 s against this agent's 230 s
+# clock, so a run that wrapped every rung is stopped by the CLOCK at roughly its
+# 24th-27th request. That terminal is named (`budget-exhausted`/`wall-clock`)
+# and is not the one this change exists to prevent; 23 steps is the subtrahend
+# of the published 180 s approval window and is not available to be raised.
+# Funding the token budget to the full permitted stack is still what keeps a
+# run from reporting `tokens` when the cause was the answer contract.
+#
+# LANE HEADROOM, AND A RECORDED UNFIXED GAP. The largest SINGLE request
+# is S + 17*1380 + 34985 = 62316: the 262144-window primary lanes (224460 input
+# allowance) serve it 3x over. On a 32768-window lane (27033) every ordinary
+# tool-reading request still fits (the deepest, request 17, costs
+# S + 16*1380 = 25951), but the FIRST-ANSWER request of a full 17-call turn
+# (27331) exceeds it by 298 tokens.
+#
+# THAT GAP IS A REAL, UNFIXED DEFECT. It is recorded here rather than guarded,
+# and the reason it is not guarded is itself load-bearing — read both halves.
+#
+# THE FAILURE. The sealed / no-`--gpu-vllm` bring-up declares `private-default`
+# at `context_window = 32768` and configures NO SECOND LANE
+# (NE-DEMO-NO-CPU-FALLBACK: these tasks FAIL rather than degrade), and this
+# agent routes there. A whole-ladder turn can therefore execute its governed
+# writes — `draft.email.create`, a REAL M365 draft already committed, and
+# `write.external.email.send`, parked at waiting_approval — and only THEN die on
+# lane exhaustion, leaving an orphan draft and an unresolved parked approval with
+# no answer explaining either.
+#
+# WHY NO CEILING IS DERIVED FROM THE NUMBERS ABOVE, AND WHY ONE MUST NOT BE.
+# EVERY figure in this derivation is in MODEL tokens (chars / 2.93). EVERY
+# enforcement site is in a DIFFERENT unit: `ne.gateway.gateway`'s budget
+# pre-flight and `ne.runtime.model`'s trim both use `ByteTokenEstimator`
+# (`ne.contracts.tokens`: bytes / 1.5 + 8, the ADR-0012 oracle-selected default,
+# overridden nowhere in live.py, the pilot compose or the chart) applied to the
+# SERIALIZED request. Measured on this tree with the real renderers
+# (`packages/ne-api/tests/test_agent_budget_units.py`): the five granted catalog
+# entries are 5680 chars = 1939 model tokens by the arithmetic above, but 3795
+# tokens to the estimator that actually enforces — and the full rendered catalog
+# for those five of this agent's thirteen tools is 4098, already MORE than the
+# 3871 this derivation computes for the WHOLE fixed prompt. The two units differ
+# by ~1.96x.
+#
+# So a ceiling computed from S and the 1380 step would be wrong by roughly half
+# AND wrong in the UNSAFE direction (S is the subtrahend, so understating it
+# yields a ceiling that is too generous). A governed number that under-protects
+# while claiming to protect is a worse exhibit than a stated known limitation —
+# it is the same defect class as the false `list_max` claims corrected above.
+#
+# TWO THINGS ANY REAL FIX MUST DO, neither of which is a manifest field:
+#   1. compute in `ByteTokenEstimator` units over the serialized request, not in
+#      the model-token unit this derivation (and the Analyst's, and the Overdue
+#      Credit Review's, and the Grounded Analyst's) is written in; and
+#   2. bound the OUTPUT-REPAIR RETRY stack, not just the first final-answer
+#      request. The retries are where the overflow actually lands and they run
+#      AFTER the writes, so a first-answer-only ceiling does not prevent the
+#      orphan draft at all (the carried increments are staged above and now
+#      reach 34985 across 23 retries since NE-WRAPPED-CALL-FUNDED, so the
+#      overflow the retry stack can reach grew with it).
+# That is a live, measured, in-loop budget check in the agentic runner — a real
+# feature, deliberately not built here.
+#
+# SCOPE OF THE EXPOSURE, so the size of the risk is not overstated: this bites
+# ONLY the CPU-only sealed bring-up. The demo box runs `--gpu-vllm`, where
+# `private-default` is 262144 (224460 input allowance) and serves the largest
+# single request of this agent three times over, so nothing here binds there.
+max_input_tokens = 1194989
+# Held at 4000 for the same serving-lane reason as the Analyst.
+max_output_tokens = 4000
+
+[[agents]]
+# NE-GA-RUN2 (generation 21): the agent the NE-GA-RUN1 grounding gate is
+# actually SCOPED to. The gate's corpus is built ONLY from recorded
+# VerifiedAnswers (the `current_answer_recorder` seam fires inside the
+# `read.kg.*` verified-template handlers and nowhere else), so the ONE honest
+# shape for a gated agent is one whose source-bearing grants are verified
+# templates and nothing else. This agent grants EXACTLY the two dispute
+# templates — no `read.knowledge.search`, no `read.knowledge.graph_path` —
+# so everything it retrieves is inside what the gate can see, and a withheld
+# answer means the answer genuinely asserted more than its retrieved rows
+# prove, never that the agent read evidence the gate is blind to. The
+# Meridian Analyst stays UNGATED for exactly the inverse reason (its chunk
+# corpus never enters the gate's corpus; see
+# `OntologySettings.grounded_run_agent_ids`).
+# Gating itself is deployment config (`NE_ONTOLOGY_GROUNDED_RUN_AGENT_IDS`
+# naming this agent_id), never a registry field — this entry is a valid
+# ungated agent wherever that setting is absent, which is why the description
+# below is deployment-CONDITIONAL ("where a deployment gates it"), never a
+# categorical promise the registry cannot enforce. The Run gate's tier is its
+# own knob (`NE_ONTOLOGY_GROUNDING_RUN_STRICTNESS`, default strict): the demo
+# runs this agent STRICT while chat stays STANDARD, because this agent's whole
+# retrievable corpus is gate-visible so strict's cost is honest here. The tier
+# only ever moves VOCABULARY enforcement; a gated run that completed zero
+# verified reads is withheld at EVERY tier by the Run path's own
+# non-empty-evidence invariant (NE-GA-RUN5) — an evidence rule, not a finding
+# class, so no allowlist phrasing and no tier choice can evade it.
+#
+# DOCUMENTED RESIDUALS (U11 review; disclosed, not discovered). What the gate
+# PROVES is containment and fact-anchoring — numbers, identifiers and
+# citations verified against the retrieved rows with same-sentence provenance
+# anchors; every other token required to come from the rows, the question, or
+# the fixed allowlist; and (NE-GA-RUN5) zero-fetch runs withheld outright.
+# NE-GROUND-REL (generation 23): wrong-row pairing — formerly residual #1
+# here — is now ENFORCED: a `relation-ungrounded` FACT class (withholds at
+# every tier) refuses a sentence pairing one dispute's name with another
+# dispute's status unless a fetched row, a named row, a same-column
+# enumeration, or a gate-recomputed aggregate supports the pairing. The spec's
+# bar ("no unverified fact") is the standing REQUIREMENT; the remaining
+# distance stays disclosed below, never promoted to working-as-intended:
+#   1. Swapped compound (open): a sentence naming BOTH rows and BOTH values
+#      passes even with the pairings swapped — the bag-of-tokens fixed point
+#      the numeral row-binding shares; attribution is likewise
+#      sentence-scoped (cross-sentence pronoun claims are not bound).
+#   2. Prompt echo (design-accepted): the gate certifies containment in
+#      corpus ∪ question ∪ allowlist, so a question that embeds its own
+#      answer is affirmable without matching fetched rows (the zero-fetch
+#      case is now closed by NE-GA-RUN5; echo over a non-empty corpus
+#      remains). Numerals stay prompt-inexempt; echo counts are stamped into
+#      provenance (prompt_echo_count) rather than enforced.
+#   3. Allowlist-only phrasing (by design): sentences composed entirely of
+#      core-allowlisted connective vocabulary produce no findings at any
+#      tier — over a NON-empty corpus such prose rides on the run's proven
+#      rows without asserting a checkable fact token. The allowlist is what
+#      keeps ordinary connective prose from tripping the gate; it is not
+#      pruned to fake semantic coverage.
+# The description below is written to promise exactly what the mechanism
+# delivers and no more.
+agent_id = "agt_01k3groundedanalyst000000000"
+# Version 3 / generation 23 (NE-GROUND-REL, owner ruling 2026-08-29): the
+# grounding gate now enforces semantic row binding (the `relation-ungrounded`
+# fact class), so the DESCRIPTION is corrected again — the spec's guarantee is
+# stated as the standing requirement the gate is being held to, what is now
+# mechanically enforced is named, and the remaining distance is disclosed
+# rather than narrowed away. No grant, budget, model policy or instruction
+# changed — the definition hash moves on prose alone, and immutability
+# demands the version move with it.
+#
+# Version 4 / generation 26 (NE-SHAPE-ALLOWANCE-4): the `answer-shape` retry
+# allowance moved 3 -> 4, and this agent's token budget is DERIVED from the
+# request ceiling that allowance sets, so `max_input_tokens` is re-derived below
+# (131523 -> 165321). A budget left at the 5-retry figure would have made the
+# funded ceiling fictional. Nothing else moved.
+#
+# Version 5 / generation 27 (NE-WRAPPED-CALL-FUNDED): the pool gained the
+# ladder-sized `wrapped-call` class, `model_request_limit(4)` moved 11 -> 15,
+# and the same DERIVED budget is re-derived again (165321 -> 226437). Nothing
+# else moved.
+version = 5
+label = "Meridian Grounded Analyst"
+description = "Answers Meridian debit-card dispute questions strictly from governed verified record reads. Where a deployment gates it, a deterministic whole-answer grounding gate holds answers to the spec bar of no unverified fact: zero-fetch runs are withheld, every number, identifier and citation must be proven against the fetched rows, and pairing fetched values in a relation no fetched row states is withheld. Disclosed gap: naming both rows and both values can pass with pairings swapped."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["agentic"]
+default_strategy = "agentic"
+# The SAME model policy and serving lane as the Analyst, deliberately (the
+# Customer Support precedent): the exhibit is the gate, not a second routing
+# decision, and the gateway's task map carries exactly this id.
+model_policy_id = "agent.meridian-analyst.v2"
+# The SAME instruction posture as the Analyst, dispute-scoped — evidence-only
+# answering, honest refusal, read-only. Deliberately NOTHING beyond the
+# Analyst's own standing rules: the gate is enforcement infrastructure, not a
+# prompt, and an instruction set tuned to provoke (or suppress) withholds
+# would stage the exhibit either way. 442 chars = 151 tokens at 2.93, re-paid
+# on every one of the 10 permitted model requests (budget below).
+instructions = "You are the Meridian dispute records reviewer, a read-only agent. Answer dispute questions strictly from the verified record rows your tools return during this run. Never state or imply anything the served rows do not themselves state; when the rows do not support an answer, say so plainly instead of guessing. You cannot draft, send, or modify anything: if asked to email a customer or take any other action, explain that you are read-only."
+# EXACTLY the Analyst's two dispute-lane templates, REQUIRED (not optional):
+# this agent is nothing without them — no chunk store, no graph walk — so a
+# deployment missing the release keeps an honestly UNAVAILABLE agent rather
+# than an available one with zero tools. Deliberately NOT granted:
+# `read.kg.overdue_provisional_credit_disputes` (the materialised-deadline
+# template) — the SAME scoping the Analyst already embodies for the S9
+# exhibit: overdue-ness is a determination the served policy tiers + dates
+# support making, not a row this agent reads pre-made; and deliberately no
+# other `read.kg.*` template, because an over-granted agent in a governance
+# demo is a worse exhibit than a refusal.
+tool_grants = [
+  "read.kg.disputes_directory",
+  "read.kg.open_disputes_by_status",
+]
+knowledge_sources = [
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "tool", dependency_id = "read.kg.disputes_directory" },
+  { kind = "tool", dependency_id = "read.kg.open_disputes_by_status" },
+  { kind = "knowledge", dependency_id = "meridian-governed-local-t3" },
+  { kind = "model-policy", dependency_id = "agent.meridian-analyst.v2" },
+]
+
+[agents.visibility]
+all_authenticated = true
+principals = []
+groups = []
+roles = []
+departments = []
+
+[agents.budgets]
+# COUNTED from the dispute asks this agent exists to serve, not copied.
+#    1  read.kg.open_disputes_by_status  `q_status` is ONE enum value; the
+#                                        dispute questions read "open".
+#    1  read.kg.disputes_directory       the recorded-credit / issue-date
+#                                        fields an open-dispute answer
+#                                        cross-checks (and the whole answer
+#                                        to a directory ask).
+#   --
+#    2  the worst single ask, plus 2 refinement headroom — the same +2 policy
+#       as the Analyst and Customer Support derivations.
+max_tool_calls = 4
+# `max_steps` = 10 > `max_tool_calls` = 4, so `max_tool_calls` is the BINDING
+# tool ceiling and the wall clock is 10 * 10s = 100s per attempt — the measured
+# 8.3-9.5s/request rate with margin (the S9-shaped dispute ask measured 82.3s
+# warm on the Analyst's LARGER prompt). Since NE-WRAPPED-CALL-FUNDED that is far
+# from `model_request_limit(4)`, which is now 2*4 + 7 = 15: the clock funds 10
+# of the 15 requests the run may make, and at the measured rate 15 cost
+# 124-142s against 100s, so a run that wrapped every rung is stopped by the
+# CLOCK — named `budget-exhausted`/`wall-clock`, not the `tokens` terminal the
+# funded budget below exists to prevent. Held at 10 for the same reason as the
+# Analyst's 40 and Customer Support's 23 — `max_steps` is a governed wall-clock
+# and admission-floor input, and Customer Support's cannot move at all, so none
+# of the three does.
+max_steps = 10
+# Token budget: the SAME method and constants as the derivations above
+# (NE-TOKEN-BUDGET-14 lineage) — C = 1300, t = 80, F = 4000, R_res = 172,
+# R_claim = 403, and the three NE-WRAPPED-CALL-FUNDED figures measured in the
+# Analyst's block, W = 439, R_wrap = 347, R_shape = 242. History increment
+# t + C = 1380; ten retry increments since the `wrapped-call` class was added
+# — 252, then 4 x 786, then 4 x 4242, then 4403, carrying to 24767.
+#   S  = 3026  the fixed prompt re-sent every request, MEASURED BOTTOM-UP
+#              with the real renderers on this tree (RE-MEASURED 2026-08-28 on
+#              the train-57 merged tree for the generation-21 registry; the
+#              branch draft's 2953 was measured against a base that no longer
+#              exists) rather than carried by lineage delta, itemised at ~2.93
+#              chars/token:
+#                manifest instructions            442 chars =  151
+#                in-band tool catalog message    2219 chars =  757
+#                  (the rendered `_catalog_text` for exactly these two
+#                   specs: disputes_directory entry 628 + open_disputes_
+#                   by_status entry 1051 + header/protocol/final-answer
+#                   clause 540)
+#                PromptedOutput schema block     3549 chars = 1211
+#                  (`_StructuredAgenticCompletion` instructions via
+#                   PromptedOutputSchema.build_instructions over the exact
+#                   PromptedOutput the runner constructs — the same 3549 the
+#                   S9 agentic derivation below measures on this tree)
+#                answer-transport tail           2505 chars =  855
+#                  (`_STRUCTURED_AGENTIC_COMPLETION_TAIL` + the two joining
+#                   newlines, the S9 measurement convention)
+#                question allowance               150 chars =   51
+#              = 8865 chars = 3026 tokens.
+#   requests 1..4   (tool-reading)  sum(S + k*1380 for k in 0..3)
+#                                   = 4*3026 + 1380*6         =    20384
+#   request 5       (first answer)  S + 4*1380 = 3026 + 5520  =     8546
+#   requests 6..15  (the 10 retries) re-pay 8546 plus the increments:
+#                                     residue  +252     =  8798
+#                                     wrapped  4 x +786,
+#                                              last 3396 = 11942
+#                                     shape    4 x +4242,
+#                                              last 20364 = 28910
+#                                     claim    +4403, 24767 = 33313
+#                                   10*8546 = 85460, plus the carried sums
+#                                   89891                     =   175351
+#   INPUT                                                          204281
+#   OUTPUT  4*t + t + 4*W + 6F
+#           = 320 + 80 + 1756 + 24000                    =          26156
+#   TOTAL                                                          230437
+# minus the 4000 output budget leaves the figure below.
+#   NE-SHAPE-ALLOWANCE-4 adds exactly ONE MORE `answer-shape` retry and nothing
+#   else — the same three terms as the Analyst's and Customer Support's blocks:
+#     the added retry request itself    S + 4*1380 + 17052    = +25598
+#     the claim-contract retry re-pays one more shape increment = +4200
+#     one more final answer written     F                     =  +4000
+#                               135523 + 33798             = 169321.
+#   NE-WRAPPED-CALL-FUNDED is the same TWO moves as the blocks above:
+#   (a) R_shape 200 -> 242              169321 + 588        = 169909.
+#   (b) the `wrapped-call` class, 4 rounds at 786:
+#       the 4 new retry requests  sum(8546 + 252 + 786n for n in 1..4)
+#                                 = 4*8798 + 786*10         =  43052
+#       the 4 shape + 1 claim retries re-pay the wrapped block
+#                                 5 * 786 * 4               =  15720
+#       4 wrapped replies as output  4 * 439                =   1756
+#                               169909 + 60528             = 230437.
+#
+# ⚠ LANE HEADROOM, AND A CLAIM AN EARLIER CHANGE FALSIFIED. The largest SINGLE
+# request is S + 4*1380 + 24767 = 33313 tokens. The 262144-window primary lanes
+# (224460 input allowance) still serve it 6x over. But this block used to say that
+# "unlike the Analyst this agent fits a 32768-window lane even at its deepest
+# retry — every lane in the deployment can serve every request of this run", and
+# that is NO LONGER TRUE: 33313 exceeds a 32768-window lane's 27033 input
+# allowance by 6280. Every ORDINARY tool-reading request still fits such a lane
+# (the deepest, request 4, costs S + 3*1380 = 7166), and so does the first
+# answer (8546); it is the retry worst case alone that no longer fits — the same
+# shape as Customer Support's recorded gap, one stage deeper. Stated rather than
+# quietly left standing, because the sentence it replaces was an assurance.
+max_input_tokens = 226437
+# Held at 4000 for the same serving-lane reason as the Analyst.
+max_output_tokens = 4000
+
+[[agents]]
+agent_id = "agt_01k3hardshipreview0000000000"
+version = 5
+label = "Meridian Hardship Review"
+description = "Runs the fixed Meridian B1 disaster-hardship population review under a versioned deterministic profile."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["deterministic"]
+default_strategy = "deterministic"
+model_policy_id = "agent.meridian-hardship-review.v3"
+tool_grants = [
+  "read.kg.customers_in_counties",
+  "read.kg.autoloans_for_customer",
+  "read.kg.payments_due_window",
+  "read.kg.servicing_notes_for_loan",
+]
+knowledge_sources = [
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "workflow-profile", dependency_id = "meridian-b1-disaster-hardship", version = 1, content_hash = "e90381d94480ee1d01f028380be39595b63c4c632d6aff89738b49a440e667e0" },
+]
+
+[agents.visibility]
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+max_steps = 1
+max_tool_calls = 100
+max_input_tokens = 8210
+max_output_tokens = 1
+
+[agents.workflow]
+profile_id = "meridian-b1-disaster-hardship"
+version = 1
+config_hash = "e90381d94480ee1d01f028380be39595b63c4c632d6aff89738b49a440e667e0"
+max_subjects = 5
+
+[agents.workflow.frozen_inputs]
+counties = ["Columbia", "Jefferson", "Richmond"]
+payment_window_start = 2026-08-18
+payment_window_end = 2026-09-01
+
+[[agents]]
+agent_id = "agt_01k3currentsopreview000000000"
+version = 2
+label = "Meridian Current SOP Review"
+description = "Runs the fixed Meridian B2 current-SOP dispute review under a versioned deterministic profile."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["deterministic"]
+default_strategy = "deterministic"
+model_policy_id = "agent.meridian-hardship-review.v3"
+tool_grants = [
+  "read.kg.disputes_directory",
+  "read.kg.open_disputes_by_status",
+]
+knowledge_sources = [
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "workflow-profile", dependency_id = "meridian-b2-current-sop", version = 1, content_hash = "7209a37006427bdc938c34f8e8c3ce798953a1aefa031bb6c81c5d32ffc97fce" },
+]
+
+[agents.visibility]
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+max_steps = 1
+max_tool_calls = 100
+max_input_tokens = 8210
+max_output_tokens = 1
+
+[agents.workflow]
+profile_id = "meridian-b2-current-sop"
+version = 1
+config_hash = "7209a37006427bdc938c34f8e8c3ce798953a1aefa031bb6c81c5d32ffc97fce"
+max_subjects = 5
+
+[agents.workflow.frozen_inputs]
+
+[[agents]]
+agent_id = "agt_01k3fabricationrefusal000000"
+version = 2
+label = "Meridian Fabrication Refusal"
+description = "Runs the fixed Meridian B3 unsupported-total refusal under a versioned deterministic profile."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["deterministic"]
+default_strategy = "deterministic"
+model_policy_id = "agent.meridian-hardship-review.v3"
+tool_grants = [
+  "read.kg.disputes_directory",
+]
+knowledge_sources = [
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "workflow-profile", dependency_id = "meridian-b3-fabrication-refusal", version = 1, content_hash = "5a70614b9270673416f4f5c521b4d3541a22ff131813d00bf925ddbdc2f6e23a" },
+]
+
+[agents.visibility]
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+max_steps = 1
+max_tool_calls = 100
+max_input_tokens = 8210
+max_output_tokens = 1
+
+[agents.workflow]
+profile_id = "meridian-b3-fabrication-refusal"
+version = 1
+config_hash = "5a70614b9270673416f4f5c521b4d3541a22ff131813d00bf925ddbdc2f6e23a"
+max_subjects = 5
+
+[agents.workflow.frozen_inputs]
+
+[[agents]]
+# S9 (owner decision 2026-08-28): the AGENTIC half of the S9 side-by-side. The
+# demo beat is the same question to two agents: the Meridian Analyst retrieves
+# every fact and then converts "N business days" into a date comparison at
+# answer time — and warm runs get it wrong more often than right (measured 1
+# correct in 8; it counts calendar days where the SOP says business days). This
+# agent keeps the familiar chat surface (prompt box, steps, prose answer) but
+# holds ONE tool: the argument-free verified read whose fixed query compares two
+# SERVED cells (the snapshot as-of date against the load-time-materialised
+# provisional_credit_deadline_date, provenance on the row). The numbers come
+# from the governed template; the model only narrates them. Its deterministic
+# twin (no model in the answer path at all) is the next block down.
+# Knowledge grants are the read.kg verified lane ONLY — no
+# read.knowledge.search, no graph_path: there is nothing else this agent should
+# be able to reach, and an over-granted agent in a governance demo is a worse
+# exhibit than a refusal.
+agent_id = "agt_01k3overduecreditreview00000"
+# Version 2 / generation 26 (NE-SHAPE-ALLOWANCE-4): the `answer-shape` retry
+# allowance moved 3 -> 4 and this budget is DERIVED from the request ceiling
+# that allowance sets, so `max_input_tokens` is re-derived below (114710 ->
+# 146985). Nothing else about the definition moved.
+#
+# Version 3 / generation 27 (NE-WRAPPED-CALL-FUNDED): the pool gained the
+# ladder-sized `wrapped-call` class, `model_request_limit(3)` moved 10 -> 13,
+# and the same DERIVED budget is re-derived again (146985 -> 187221). Nothing
+# else about the definition moved.
+version = 3
+label = "Meridian Overdue Credit Review"
+description = "Answers the overdue-provisional-credit question from one governed verified read: served as-of date strictly past each dispute's materialised SOP deadline. The model narrates the served rows; it never recomputes a deadline."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["agentic"]
+default_strategy = "agentic"
+# Required for an agentic agent with zero Skill pins (the NE-ANALYST-INSTRUCTIONS
+# rule). Deliberately SHORT: 500 chars = 171 tokens, re-paid on every one of the
+# run's 9 permitted model requests (budget derivation below). It carries only
+# what the tool schema cannot say: served-rows-only answering, no run-time
+# deadline arithmetic, and the honest refusal for anything the rows do not
+# serve.
+instructions = "You are the Meridian overdue-credit reviewer, a read-only agent. Answer using only the rows your one governed verified read returns during this run: each served row already carries the dispute's SOP deadline as a materialised date. Report the served dispute ids and dates exactly; never recompute deadlines, count days, or state anything the rows do not themselves state. If asked anything the served rows do not answer, say so plainly instead of guessing. You cannot draft, send, or modify anything."
+# The SAME model policy as the Analyst and Customer Support, deliberately: same
+# serving lane, and a second policy id would be routing ceremony with no second
+# routing decision behind it.
+model_policy_id = "agent.meridian-analyst.v2"
+tool_grants = [
+  "read.kg.overdue_provisional_credit_disputes",
+]
+# The grant is REQUIRED, not optional, and that is deliberate: unlike the
+# Analyst (which still answers t1/t2 questions without the verified lane), this
+# agent has NOTHING it can do without its one read — an "available" agent that
+# cannot call its only tool would be the dishonest posture. Hence the explicit
+# tool availability dependency below, which the Analyst's optional lane
+# deliberately avoids.
+knowledge_sources = [
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "tool", dependency_id = "read.kg.overdue_provisional_credit_disputes" },
+  { kind = "model-policy", dependency_id = "agent.meridian-analyst.v2" },
+]
+
+[agents.visibility]
+# ops, exactly like the deterministic reviews: the read.kg workflow tools'
+# static visibility is ops-scoped (ne.api.platform._MERIDIAN_OPS_ONLY_TOOLS),
+# and the demo persona that drives S9 carries the group.
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+# COUNTED for the one question this agent exists to answer, by the same method
+# and constants as the Analyst / Customer Support derivations above
+# (NE-TOKEN-BUDGET-14 lineage) — only S, the tool count, and the request count
+# differ.
+#   1  read.kg.overdue_provisional_credit_disputes — argument-free; one call
+#      returns the complete served answer, deadline column and provenance
+#      included.
+#   2  refinement headroom — the same +2 policy the Analyst's and Customer
+#      Support's derivations use (a re-read of a result the model
+#      mis-summarised).
+#   --
+#   3  max_tool_calls; max_steps = 9 > 3, so max_tool_calls is the BINDING tool
+#      ceiling and the wall clock is 9 * 10s = 90s. Since NE-WRAPPED-CALL-FUNDED
+#      that is far from model_request_limit(3), which is now 2*3 + 7 = 13: the
+#      clock funds 9 of the 13 requests the run may make, and at the measured
+#      8.3-9.5s/request the 13 cost 108-124s against 90s, so a run that wrapped
+#      every rung is stopped by the CLOCK — named `budget-exhausted`/
+#      `wall-clock`, not the `tokens` terminal the funded budget below exists to
+#      prevent. Held at 9 for the same reason the other three agentic agents
+#      hold theirs — `max_steps` is a governed wall-clock and admission-floor
+#      input, and Customer Support's is pinned by the published approval window,
+#      so none moves.
+#
+# S = 2883, and unlike the Analyst's / Customer Support's chained figures it is
+# MEASURED ABSOLUTELY on this tree, component by component, with the repo's own
+# renderers (2026-08-28):
+#   catalog message   1744 chars  catalog_text_for_tool_specs over this agent's
+#                                 one composed ToolSpec (the template's
+#                                 description + CATALOG_SHAPE_CLAUSE + its empty
+#                                 args schema; entry line 1206 chars), with the
+#                                 structured runner's final-answer clause
+#                                 (_STRUCTURED_AGENTIC_FINAL_ANSWER) in place of
+#                                 the plain-text default.
+#   schema block      3549 chars  pydantic-ai's prompted-output instructions for
+#                                 _StructuredAgenticCompletion
+#                                 (StructuredTextOutputSchema.build_instructions
+#                                 over the exact PromptedOutput the runner
+#                                 constructs), re-sent every request by
+#                                 _StructuredAgenticGatewayModel._assemble.
+#   transport tail    2503 chars  _STRUCTURED_AGENTIC_COMPLETION_TAIL + the two
+#                                 joining newlines (2505 with the join).
+#   instructions       500 chars  the manifest string above, verbatim.
+#   question           150 chars  the standing allowance.
+#   TOTAL             8448 chars / 2.93 = 2883 tokens.
+# STATED PLAINLY: the Analyst's S = 3358 and Customer Support's S = 3871 are
+# chains of measured deltas whose base epochs predate the current schema block,
+# so this absolute figure is not comparable to them head-to-head; it is simply
+# what this agent's fixed prompt measures today, whole.
+#   C = 1300, t = 80, F = 4000, R_res = 172, R_claim = 403 — all unchanged; and
+#   W = 439, R_wrap = 347, R_shape = 242, the three NE-WRAPPED-CALL-FUNDED
+#   figures measured once in the Analyst's block and used verbatim here.
+#   requests 1..3  (tool-reading)  sum(S + k*1380 for k in 0..2)
+#                                  = 3*2883 + 1380*3          =   12789
+#   request 4      (first answer)  S + 3*1380 = 2883 + 4140   =    7023
+#   requests 5..13 (the 9 retries) re-pay 7023 plus the carried increments,
+#                                  in the four stages the Analyst's block sets
+#                                  out:
+#                                    residue  +252     =  7275
+#                                    wrapped  3 x +786,
+#                                             last 2610 =  9633
+#                                    shape    4 x +4242,
+#                                             last 19578 = 26601
+#                                    claim    +4403, 23981 = 31004
+#                                  9*7023 = 63207, plus the carried sums
+#                                  82565                     =   145772
+#   INPUT                                                       165584
+#   OUTPUT  3*t + t + 3*W + 6F
+#           = 240 + 80 + 1317 + 24000                   =        25637
+#   TOTAL                                                       191221
+# minus the 4000 output budget leaves the figure below.
+#   NE-SHAPE-ALLOWANCE-4 adds exactly ONE MORE `answer-shape` retry and nothing
+#   else — the same three terms as the other derivations:
+#     the added retry request itself    S + 3*1380 + 17052    = +24075
+#     the claim-contract retry re-pays one more shape increment = +4200
+#     one more final answer written     F                     =  +4000
+#                              118710 + 32275              = 150985.
+#   NE-WRAPPED-CALL-FUNDED is the same TWO moves as the blocks above:
+#   (a) R_shape 200 -> 242             150985 + 588        = 151573.
+#   (b) the `wrapped-call` class, 3 rounds at 786:
+#       the 3 new retry requests  sum(7023 + 252 + 786n for n in 1..3)
+#                                 = 3*7275 + 786*6          =  26541
+#       the 4 shape + 1 claim retries re-pay the wrapped block
+#                                 5 * 786 * 3               =  11790
+#       3 wrapped replies as output  3 * 439                =   1317
+#                              151573 + 39648              = 191221.
+#
+# ⚠ LANE HEADROOM, AND A CLAIM AN EARLIER CHANGE FALSIFIED. The largest SINGLE
+# request is the last retry, 31004 tokens. This block used to say the run was
+# "servable WHOLE on every lane the gateway routes"; that is NO LONGER TRUE.
+# 31004 exceeds a 32768-window lane's 27033 input allowance by 3971, so the
+# retry worst case is not servable there. Everything short of it still is: the
+# deepest ordinary tool-reading request costs S + 2*1380 = 5643, the first
+# answer 7023, and the retry stage stays under 27033 through its eighth request
+# (26601). The 262144-window primary lanes (224460) serve the worst case 7x
+# over. Recorded rather than left standing, because the sentence it replaces was
+# an assurance.
+max_steps = 9
+max_tool_calls = 3
+max_input_tokens = 187221
+# Held at 4000 for the same serving-lane reason as the Analyst.
+max_output_tokens = 4000
+
+[[agents]]
+# S9 (owner decision 2026-08-28): the deterministic contrast for the S2 question
+# "Which open debit-card disputes are overdue for provisional credit under the
+# SOP?". The agentic Analyst retrieves every fact and then makes a JUDGEMENT
+# call — converting "N business days" into a date comparison at answer time —
+# and warm runs get it wrong more often than right (see ASK_SCENARIOS.md S9).
+# This agent makes no judgement calls AND no model request at all: its one grant
+# is an argument-free verified read whose fixed query compares two SERVED cells
+# (the snapshot as-of date against the load-time-materialised
+# provisional_credit_deadline_date, provenance on the row), and its runner only
+# re-verifies what the served row already states — the same row hash every run.
+# Its agentic twin (same single grant, model-narrated) is the block above.
+# Knowledge grants are the read.kg verified lane ONLY — no
+# read.knowledge.search, no graph_path.
+agent_id = "agt_01k3overduecreditreviewdet00"
+version = 1
+label = "Meridian Overdue Credit Review (Deterministic)"
+description = "Answers the overdue-provisional-credit question with one argument-free verified read: served as-of date strictly past each dispute's materialised SOP deadline. No model in the answer path, no run-time business-day arithmetic; the same row hash every run."
+owner_label = "Meridian Servicing Operations"
+lifecycle = "active"
+allowed_strategies = ["deterministic"]
+default_strategy = "deterministic"
+model_policy_id = "agent.meridian-hardship-review.v3"
+tool_grants = [
+  "read.kg.overdue_provisional_credit_disputes",
+]
+knowledge_sources = [
+  { source_id = "meridian-governed-local-t3", tiers = ["t3"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "workflow-profile", dependency_id = "meridian-s9-overdue-provisional-credit", version = 1, content_hash = "f36c68400c64dbbd49f02f38e52cf3face440f9607485de126de5031a60f4708" },
+]
+
+[agents.visibility]
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+# SAME derivation as the three deterministic reviews above (pinned by
+# test_agent_catalog_composition's minimum-budget test), RE-DERIVED on this tree
+# 2026-08-28 with the registry's own method:
+#   max_input_tokens = CONTINUITY_PROMPT_RESERVE_TOKENS (8192)
+#                    + max(len(canonical_input_bytes)) over max_subjects 1..5
+#   canonical input {"max_subjects":N} = 18 bytes for every N in 1..5
+#   8192 + 18 = 8210.
+# A deterministic run makes no model request: max_output_tokens stays 1 and
+# max_steps 1; max_tool_calls 100 is the shared deterministic ceiling.
+max_steps = 1
+max_tool_calls = 100
+max_input_tokens = 8210
+max_output_tokens = 1
+
+[agents.workflow]
+profile_id = "meridian-s9-overdue-provisional-credit"
+version = 1
+config_hash = "f36c68400c64dbbd49f02f38e52cf3face440f9607485de126de5031a60f4708"
+max_subjects = 5
+
+[agents.workflow.frozen_inputs]
+
+[[agents]]
+# NE-ITEM1-INERT-PARK (generation 24). THE GOVERNANCE SELF-TEST AGENT.
+# NE-INERT-BUDGET (generation 25 / version 2): `max_steps` 6 -> 23, the
+# ONLY change. See the budget derivation at the bottom of this entry — at 6
+# the enforced turn wall clock is 60 s and this Agent's own ladder costs
+# more than that on this box, so it could not park even once.
+#
+# WHY IT EXISTS. POST_DEMO item 1 — "parked runs can never terminalize" — is
+# fixed, and the fix is deployed, but the terminalization path is
+# resume/decision-triggered and NO RUN HAS PARKED SINCE. That is a zero
+# denominator, not a passing test, and it stays one as long as the only way to
+# park a canonical Run on this deployment is `write.external.email.send` on
+# Meridian Customer Support — which cannot be exercised without a REAL
+# Microsoft Graph send into the live tenant.
+#
+# This Agent exists to make that arc runnable with structurally zero outward
+# effect: it reads governed knowledge, then calls
+# `write.external.demo.send`, whose handler
+# (`ne.api.demo_seams._demo_writeback_handler`) performs NO I/O of any kind —
+# its entire body returns a constant string. The whole governed chain above it
+# is real (guardrails -> PDP -> tier-2 human gate -> durable park -> approve /
+# reject / expire -> terminalize); only the effect at the bottom is nothing.
+#
+# ⛔ IT IS NOT A DEMO EXHIBIT AND MUST NEVER BE PRESENTED AS ONE. Its label
+# says so, its description says so, and its `instructions` forbid it claiming
+# anything was sent. The rule it obeys — an inert stand-in is never shown as a
+# real write — stands on its own footing here; the two demo-honesty laws in
+# the repo state the general case and this is the specific one:
+# the demo playbook ("**Never fake.** Every value on screen is
+# real or honestly labeled absent … There is no demo-mode mock data.") and
+# the console walkthrough ("**The one rule:** never fake a beat.
+# Where a surface uses seeded demo data or a demo seam, this script says so *at
+# the point of use, out loud*."). This Agent is the OPERATOR's self-test for
+# the approval lifecycle, deliberately separate from the headline Meridian
+# agents so that proving the lifecycle never changes what the demo agents can
+# do.
+#
+# ⚠ ACCEPTED RISK, STATED RATHER THAN GLOSSED: keeping the inert binding
+# registered in live-writeback / graph-authority mode puts
+# `write.external.demo.send` on the CHAT tool menu in live mode too. Chat runs
+# over the process-wide governed executor and offers the WHOLE registered set
+# (`ne.runtime.agent.DepartmentAgentSession.run`:
+# `[self._build_tool(spec, principal) for spec in self._executor.tool_specs]`) —
+# it does NOT scope by `tool_grants`. The Run path DOES
+# (`ne.runtime.agent_capabilities.project_agent_capabilities` intersects the
+# registered specs with this Agent's exact grants), so no Meridian Agent can
+# reach the inert action on a canonical Run. Three things bound the chat
+# exposure and none of them is the grant list:
+#   * nothing DRIVES it in live mode — `ne.cli.demo.live._writeback_action`
+#     returns `write.internal.crm.note` off the live marker and
+#     `ne.cli.demo.arc._writeback_prompt` renders "please call the
+#     write.internal.crm.note tool with arguments …", naming the real action;
+#   * it is TIER-2, so a chat call parks for a human decision under its own
+#     action name rather than completing quietly; and
+#   * it self-labels three times over — the tool NAME contains `demo`, the
+#     spec description reads "demo external write-back (governed tier-2, no
+#     egress)", and the handler returns "external note queued (demo
+#     write-back — no egress)".
+# The residual is an off-script free-form chat turn where the model picks the
+# inert action over the real one AND the narrator restates the result without
+# its qualifier. Accepted; not eliminated. ⛔ The honest scope statement for
+# this change is therefore NOT "zero production runtime code changed":
+# `tools/ne-cli/.../demo/live.py` and `.../demo/preflight.py` are production
+# CLI that decide the deployed environment, and the deployed live-mode tool
+# menu is one tool longer than it was.
+#
+# ⚠ AVAILABLE ONLY WHERE THE INERT SEAM IS ON. `write.external.demo.send` is
+# registered exactly when `ApiSettings.demo_writeback_tool` is true, so the
+# `tool` availability dependency below makes this Agent honestly UNAVAILABLE
+# ("tool-unavailable") on any deployment without it rather than present with a
+# procedure it cannot follow.
+#
+# ⚠ AND THE TIER-2 PARK NEEDS EVIDENCE BELOW IT. `middleware
+# ._run_source_references` refuses a Tier-2 park whose Run served no protected
+# source reference ("a Tier-2 effect with no server-observed evidence never
+# parks an approval"), so `read.knowledge.search` is a REQUIRED grant, not a
+# convenience: without it this Agent could not park at all.
+agent_id = "agt_01k3inertparkselftest0000000"
+version = 2
+label = "Governance Self-Test (Inert Write-Back)"
+description = "Operator self-test for the Tier-2 approval lifecycle: reads governed knowledge, then calls an inert write-back that performs no I/O, so a canonical Run can park, be decided, and terminalize with zero outward effect. Not a demo exhibit."
+owner_label = "Neutron Platform Engineering"
+lifecycle = "active"
+allowed_strategies = ["agentic"]
+default_strategy = "agentic"
+# The SAME model policy the other agentic agents route on; a second policy id
+# would be routing ceremony with no second routing decision behind it.
+model_policy_id = "agent.meridian-analyst.v2"
+instructions = "You are the governance self-test agent. Your only job is to exercise the platform's approval lifecycle end to end. First call read.knowledge.search once to retrieve any governed passage about the Meridian hardship programme, then call write.external.demo.send exactly once with `to` set to the literal string \"governance-self-test\". That second tool is inert: it performs no network call and sends nothing to anyone, and it requires a human approval before it runs. Say plainly that you are waiting for that approval. Never claim anything was sent, delivered, or written anywhere."
+tool_grants = [
+  "read.knowledge.search",
+  "write.external.demo.send",
+]
+# The same t1/t2 servicing corpus the Analyst reads. It is what makes the
+# governed read serve a protected source reference at all.
+knowledge_sources = [
+  { source_id = "meridian-servicing", tiers = ["t1", "t2"] },
+]
+optional_knowledge_sources = [
+  { source_id = "meridian-servicing", tiers = ["t2"] },
+]
+skills = []
+availability_dependencies = [
+  { kind = "tool", dependency_id = "read.knowledge.search" },
+  { kind = "tool", dependency_id = "write.external.demo.send" },
+  { kind = "knowledge", dependency_id = "meridian-servicing" },
+  { kind = "model-policy", dependency_id = "agent.meridian-analyst.v2" },
+]
+
+[agents.visibility]
+# `ops` only, and deliberately NOT `approver`: the shared Tier-2 gate grants on
+# any single named approver, so a principal who could both originate and
+# approve the same park would collapse the very lifecycle this Agent exists to
+# exercise. Same separation-of-duties rule as Meridian Customer Support.
+all_authenticated = false
+principals = []
+groups = ["ops"]
+roles = []
+departments = []
+
+[agents.budgets]
+# COUNTED for the two-call ladder this Agent runs, and DELIBERATELY SMALL.
+#   1  read.knowledge.search      the governed read that serves the ONE
+#                                 protected source reference the tier-2 park
+#                                 binds
+#   1  write.external.demo.send   the inert tier-2 call that parks
+#   2  headroom for one re-read after a rejected query
+#   --
+#   4  max_tool_calls
+#
+# ⛔ max_steps IS CAPPED BY A DERIVATION ELSEWHERE, not chosen freely.
+# `packages/ne-runtime/tests/test_approval_window_is_honourable.py` derives the
+# deployment's honourable approval window as
+# `console renew trigger (420 s) - max(max_steps) * 10 s over every agent
+# holding a tier-2-or-higher grant - 10 s clock-skew leeway`, and the shipped
+# declared window is 180 s. This Agent HOLDS such a grant
+# (`write.external.demo.send`, tier 2 by `tiers.rego`'s `write.external.`
+# prefix), so it is IN that maximum. Meridian Customer Support sits at 23, so
+# 23 is the CEILING here: at 24 the subtrahend becomes 240, the ceiling drops
+# to 170, the declared 180 s no longer fits, and every
+# `write.external.email.send` park REFUSES. This entry is at the ceiling, NOT
+# above it — the maximum is unchanged, so the published window is unchanged.
+#
+# ⭐ NE-INERT-BUDGET (generation 25 / version 2): 6 -> 23, BECAUSE AT 6 THIS
+# AGENT COULD NOT PARK ON THIS BOX AT ALL. Six steps buys a 60.0 s enforced
+# turn wall clock (`ne.api.agent_execution_caps._SECONDS_PER_STEP` = 10,
+# hard-cancelled by `asyncio.timeout` around `agent.run` in
+# `ne.runtime.runner`). Measured on the deployed stack, the two-call ladder
+# above costs more than that before it ever reaches the park:
+#
+#   ~24 s   warm per-run overhead ahead of the first tool call
+#   108-207 s  the ONE governed `read.knowledge.search`
+#              (`ne.brain.pipeline` `rerank_ms`, n=8 over 24 h:
+#              108138-207318 ms). `ne-pilot-tei-rerank-1` runs
+#              `BAAI/bge-reranker-v2-m3` on 12 CPUs with NO GPU and issues two
+#              rerank calls of 22-117 s each, mostly queue time.
+#   --
+#   ~135 s  CHEAPEST observed ladder, against a 60 s budget.
+#
+# Three live attempts produced ZERO parks. The read is not optional headroom:
+# `middleware._run_source_references` refuses a Tier-2 park whose Run served no
+# protected source reference, so the ladder cannot be shortened to fit 60 s.
+#
+# ⚠ 23 IS THE ONLY VALUE WITH REAL MARGIN, AND IT IS STILL NOT A GUARANTEE.
+# 230 s clears the cheapest ladder by ~95 s and clears seven of the eight
+# observed reads. The SLOWEST observed draw does not fit: 207.3 s of governed
+# read plus ~24 s of warm overhead is ~231 s, so a tail draw is still
+# hard-cancelled BEFORE the park, and the run terminalizes on the wall clock
+# instead. That residual is the RERANKER's, not this budget's — it cannot be
+# bought off here, because 24 is unreachable without shrinking a governed
+# number. Anything below 23 trades margin away for nothing: `max_steps` only
+# narrows `max_tool_calls` (`min(23, 4)` is still 4) and sets the clock, so
+# this move changes the wall clock and NOTHING else — same tool ceiling, same
+# token budget, same one parked write.
+#
+# ⚠ THE MODEL-REQUEST CEILING IS NO LONGER 'SAME': NE-WRAPPED-CALL-CLASS made
+# the retry pool a function of `max_tool_calls`, so this agent's ceiling moved
+# 11 -> 15. Its `max_input_tokens` is a CHOSEN 16384, not an equality pin like
+# the four demo agents', so nothing forced a re-derivation and no test covers
+# it — it was under-funded for its permitted worst case before this change and
+# still is. It is the ops self-test (inert, no external effect), never a demo
+# exhibit, which is why it is recorded here rather than re-cut in this train.
+#
+# ⚠ AND IT RAISES THIS AGENT'S ADMISSION FLOOR. `ne.api.run_credential_floor`
+# requires `wall clock + 20 s dispatch` of credential life at admission, so a
+# Run of this Agent now needs 250 s rather than 80 s. That is still under the
+# deployment bound `RUN_CREDENTIAL_FLOOR_BOUND_SECONDS = 420` (the Meridian
+# Analyst's 40 steps set that), so the shipped constant does not move.
+max_steps = 23
+max_tool_calls = 4
+# CONTINUITY_PROMPT_RESERVE_TOKENS (8192) plus headroom for the one served
+# passage; the same reserve the deterministic profiles size against.
+max_input_tokens = 16384
+max_output_tokens = 1024

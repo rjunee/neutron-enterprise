@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# tools/supply-chain holds supply-chain CI assets (license policy, scanner
+# install script, VEX scaffold, cosign verify script) — NOT a Python package.
+# This pyproject exists only so the root `tools/*` workspace glob resolves it as
+# a non-package member (root [tool.uv.workspace] is a shared file we must not edit).
+[project]
+name = "ne-supply-chain"
+version = "0.1.0"
+description = "Neutron Enterprise supply-chain CI assets (non-package)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+
+[tool.uv]
+package = false

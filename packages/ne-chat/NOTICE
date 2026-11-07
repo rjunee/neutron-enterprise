@@ -1,0 +1,46 @@
+Neutron Enterprise — ne-chat
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+FastAPI / 0.139.0 / MIT / https://github.com/fastapi/fastapi
+
+Starlette / 1.3.1 / BSD-3-Clause / https://github.com/encode/starlette
+  (transitive via FastAPI; imported for ASGI types and TestClient)
+
+httpx / 0.28.1 / BSD-3-Clause / https://github.com/encode/httpx
+
+PyJWT / 2.15.0 / MIT / https://github.com/jpadilla/pyjwt
+  (NE-080 Teams adapter: Bot Framework activity JWT validation. ALREADY
+  repo-locked via ne-connect/ne-identity — ne-chat only gains an already-locked
+  dependency edge, no new lock entry.)
+
+cryptography / 49.0.0 / Apache-2.0 OR BSD-3-Clause / https://github.com/pyca/cryptography
+  (NE-080 Teams adapter: RSA JWK/JWKS handling behind PyJWT. ALREADY repo-locked
+  via ne-connect/ne-identity — an already-locked dependency edge, no new lock
+  entry.)
+
+Slack platform / — / — / https://api.slack.com
+  (external service; the Slack Web API is consumed at runtime over HTTPS and the
+  chat app is created from src/ne/chat/slack/manifest.json — nothing is
+  distributed with this package, no Slack SDK is embedded. slack_sdk / slack-bolt
+  were deliberately NOT adopted: their own urllib/aiohttp transport stacks would
+  bypass the C2 egress import allowlist and the mandated httpx.MockTransport
+  fixture-first CI, so a thin httpx client is used instead — the merged NE-045
+  build-vs-adopt precedent. This mirrors the Keycloak external-service note in
+  ne-identity/NOTICE.)
+
+FastAPI and its transitive Starlette are embedded Python dependencies. httpx is
+the WRITE-side Slack Web API client transport (and the TestClient transport).
+Slack is an external service. No Slack SDK is embedded or distributed.
+
+Microsoft Bot Framework / Azure Bot Service / — / — / https://dev.botframework.com
+  (external service; the Bot Framework Connector REST API is consumed at runtime
+  over HTTPS and inbound activity JWTs are validated against the OpenID metadata
+  at login.botframework.com — nothing is distributed with this package. NO
+  botbuilder / Microsoft 365 Agents SDK is embedded: the Bot Framework SDK was
+  archived Dec 2025 and the M365 Agents SDK migration guidance itself delegates
+  inbound auth to plain JWT validation left to the host, so a thin first-party
+  httpx client implements the documented REST wire protocol — the same
+  build-vs-adopt call NE-045 made for slack_sdk. PyJWT + cryptography above are
+  already repo-locked via ne-connect/ne-identity, so this adds no new lock entry.)

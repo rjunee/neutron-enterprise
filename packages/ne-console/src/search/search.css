@@ -1,0 +1,346 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §6 — SEARCH, screen-local only.
+ *
+ * The table, the toolbar, the chips, the buttons, the state blocks and the
+ * detail pane are all the shared standard (src/styles/table.css); nothing here
+ * restyles them. What is left is the handful of things only this screen has: the
+ * query row, the two-line excerpt clamp, the comparison caption, and the pane's
+ * full-text / metadata / related-entity blocks.
+ *
+ * Every value resolves through a token. No raw colour, no px font-size, and no
+ * theming of --brand-teal. */
+
+.ne-search {
+  display: contents;
+}
+
+/* -------------------------------- query row ------------------------------- */
+
+.ne-search__query {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) 0;
+}
+
+.ne-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  color: var(--text);
+  font: var(--type-body);
+}
+
+.ne-search__input:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+
+/* The elapsed counter is MEASURED — it is the one number this row may show
+ * while a run is in flight, and it sits beside its own Cancel. */
+.ne-search__inflight {
+  color: var(--text-dim);
+  font: var(--type-cell);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --------------------------------- table ---------------------------------- */
+
+/* CR-B7 (screens/search.html) NAMED DIVERGENCE, NOTES.md "Named divergences
+ * from the round-2 CSS baseline": a result row is a name plus the text that
+ * matched, so it is two-line (~56px), NOT the shared 40px single-line
+ * `--row-height` every other table keeps (audit, config history, compare).
+ * Literal px, deliberately off the --space-* scale — this is the render's own
+ * approximate row geometry, not a spacing unit. Scoped to `.ne-search` so
+ * every other screen's table is byte-identical. */
+.ne-search .ne-tr {
+  height: auto;
+  min-height: 56px;
+}
+
+.ne-search .ne-td {
+  vertical-align: top;
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+/* §6.3: the excerpt is a two-line clamp. A cell that grows with its prose turns
+ * a ranked list into a page of paragraphs, and the row height is a user setting
+ * (§2.1), not something a long chunk gets to override. */
+.ne-search__excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  color: var(--text-dim);
+}
+
+/* The fallback identity (source path / record id / hash) stands in for a name
+ * the document did not serve — dimmed and monospace is the visible cue that
+ * this is NOT the document's own title, matching the render's
+ * `.ne-result__title .ne-mono` treatment (its own local 12px/400 restated here
+ * through the nearest declared mono token, per the token-hardcode guardian). */
+.ne-search__identity--fallback {
+  font: var(--type-mono);
+  color: var(--text-dim);
+}
+
+/* The score column's quiet 56px meter — decoration over the SAME served
+ * number, never a second figure. Literal 56px/2px: the render's own meter
+ * geometry, off the --space-* scale on purpose. */
+.ne-search__scorecell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.ne-search__scoreval {
+  font: var(--type-cell);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-search__scorebar {
+  display: block;
+  height: 2px;
+  width: 56px;
+  background: var(--rule);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.ne-search__scorebar i {
+  display: block;
+  height: 100%;
+  background: var(--cherenkov-deep);
+}
+
+:root[data-theme="light"] .ne-search__scorebar i {
+  background: var(--cherenkov);
+}
+
+/* §Search: the query terms, verbatim, where they occur in the served text —
+ * a fact about the text, never a claim about the ranking. Background is the
+ * SAME tint a selected row takes; underline is the deep cherenkov line; text
+ * colour is inherited, never recoloured (NOTES.md "Named divergences"). */
+mark.ne-hit {
+  background: var(--selected-tint);
+  color: inherit;
+  border-bottom: 1px solid var(--cherenkov-deep);
+  padding: 0 1px;
+}
+
+:root[data-theme="light"] mark.ne-hit {
+  border-bottom-color: var(--cherenkov);
+}
+
+/* §6.5's one-line caption, directly above the comparison table. */
+.ne-search__caption {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* ------------------------------- detail pane ------------------------------ */
+
+.ne-search__full {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: var(--type-body);
+  color: var(--text);
+}
+
+.ne-search__meta {
+  margin: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* A structured metadata value (provenance) rendered as its own labelled rows,
+ * stepped in under its parent key. */
+.ne-search__meta--nested {
+  padding-left: var(--space-12);
+  border-left: 1px solid var(--rule);
+}
+
+.ne-search__metarow {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+  gap: var(--space-8);
+}
+
+.ne-search__metarow dt {
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+
+.ne-search__metarow dd {
+  margin: 0;
+  font: var(--type-cell);
+  overflow-wrap: anywhere;
+}
+
+.ne-search__related {
+  margin-top: var(--space-16);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-12);
+}
+
+.ne-search__relatedhead {
+  margin: 0 0 var(--space-8);
+  font: var(--type-label);
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.ne-search__chips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.ne-search__chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ------------------------------ recent searches --------------------------- */
+
+.ne-search__history {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-search__historyhead {
+  margin: 0;
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.ne-search__historylist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-search__historyrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  border-top: 1px solid var(--rule);
+  padding: var(--space-4) 0;
+}
+
+.ne-search__historyopen {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-12);
+  background: none;
+  border: none;
+  padding: var(--space-4);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-search__historyopen:hover .ne-search__historyquery,
+.ne-search__historyopen:focus-visible .ne-search__historyquery {
+  color: var(--cherenkov);
+}
+
+.ne-search__historyopen:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+
+.ne-search__historyquery {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ne-search__historymeta {
+  flex: none;
+  color: var(--text-dim);
+  font: var(--type-small);
+  white-space: nowrap;
+}
+
+.ne-search__historynote {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* ------------------------------- cached banner ---------------------------- */
+
+.ne-search__cached {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: var(--space-8) var(--space-12);
+}
+
+.ne-search__cachedline {
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+/* 015A0-ENFORCEMENT — the authority-limited notice. It sits with the result
+ * count rather than in the table, because it describes the SERVER's scan and
+ * not the rows the table happens to be showing.
+ *
+ * CR-B7 BUG FIX: this rule previously referenced --space-1/-2/-3, --line-strong,
+ * --radius-sm, --surface-raised, --text-primary, --text-secondary and
+ * --type-mono-sm — none of which `tokens.css` declares, so every property here
+ * was resolving to nothing (unset). Remapped onto the real tokens; the
+ * background is `--gated-tint`, matching the render's own neutral drawing of
+ * both completeness statements (screens/states.html Search block) — the SAME
+ * neutral wash the two "authority-limited" / "completeness unstated"
+ * statements share, never the fault colour. */
+.ne-search__authority {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--gated-tint);
+}
+
+.ne-search__authorityline {
+  color: var(--text);
+  font: var(--type-body);
+}
+
+.ne-search__authoritybounds {
+  color: var(--text-dim);
+  font: var(--type-mono);
+}

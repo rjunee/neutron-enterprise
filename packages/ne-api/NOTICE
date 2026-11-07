@@ -1,0 +1,38 @@
+Neutron Enterprise — ne-api
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  fastapi            / >=0.139.0,<1  / MIT / https://github.com/fastapi/fastapi
+    (ASGI app + routing; the same pin already used by ne-identity/ne-chat.)
+  uvicorn            / >=0.51,<1     / BSD-3-Clause / https://github.com/encode/uvicorn
+    (the tree's FIRST direct server dependency. Already
+    present in uv.lock transitively via the mcp>=1.30.0 closure and already covered
+    by `ne check licenses`; this unit merely promotes it to a direct, documented
+    dependency of ne-api. Entry point: `python -m ne.api`.)
+  starlette          (via fastapi)   / BSD-3-Clause / https://github.com/encode/starlette
+  sqlalchemy         / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+  anyio              / >=4,<5        / MIT / https://github.com/agronholm/anyio
+  pydantic           / >=2.13.4,<3   / MIT / https://github.com/pydantic/pydantic
+  pydantic-settings  / >=2.14.2,<3   / MIT / https://github.com/pydantic/pydantic-settings
+  ne-contracts       (workspace)     / Apache-2.0
+  ne-identity        (workspace)     / Apache-2.0
+  ne-runtime         (workspace)     / Apache-2.0
+  ne-govern          (workspace)     / Apache-2.0
+  ne-brain           (workspace)     / Apache-2.0
+  ne-brain-graph     (workspace)     / Apache-2.0
+  ne-audit           (workspace)     / Apache-2.0
+  ne-eval            (workspace)     / Apache-2.0
+  ne-flywheel        (workspace)     / Apache-2.0
+  ne-gateway         (workspace)     / Apache-2.0
+  ne-permissions     (workspace)     / Apache-2.0
+  ne-events          (workspace)     / Apache-2.0
+  ne-schema          (workspace)     / Apache-2.0
+  ne-secrets         (workspace)     / Apache-2.0
+  ne-obs             (workspace)     / Apache-2.0
+    (read-only NE-068 U-P-B collectors — populates /v1/kpi/summary via collect_window.)
+
+Test-only:
+  httpx              / >=0.28.1,<1   / BSD-3-Clause / https://github.com/encode/httpx
+    (ASGITransport in-process client + MockTransport-scripted OPA wire, dev-only)

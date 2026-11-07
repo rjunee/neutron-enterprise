@@ -1,0 +1,34 @@
+{
+  "display_information": {
+    "name": "neutron-acme-seeder",
+    "description": "DEV-ONLY seeder that pushes the synthetic Acme corpus slice into a dev workspace (NE-102). NOT the shipped read-only connector app."
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "neutron-acme-seeder",
+      "always_online": false
+    }
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "channels:history",
+        "channels:join",
+        "channels:manage",
+        "channels:read",
+        "channels:write.invites",
+        "chat:write",
+        "groups:history",
+        "groups:read",
+        "groups:write",
+        "groups:write.invites",
+        "users:read"
+      ]
+    }
+  },
+  "settings": {
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

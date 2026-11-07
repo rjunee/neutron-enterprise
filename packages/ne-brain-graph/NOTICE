@@ -1,0 +1,57 @@
+Neutron Enterprise — ne-brain-graph
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+psycopg / 3.3.4 / LGPL-3.0-only / https://github.com/psycopg/psycopg
+psycopg-binary / 3.3.4 / LGPL-3.0-only / https://github.com/psycopg/psycopg
+sqlalchemy / 2.0.51 / MIT / https://github.com/sqlalchemy/sqlalchemy
+pydantic / 2.11.x / MIT / https://github.com/pydantic/pydantic
+regex / 2026.6.28 / Apache-2.0 AND CNRI-Python / https://github.com/mrabarnett/mrab-regex
+
+NOTE: psycopg (LGPL-3.0-only) is used unmodified as the Apache AGE driver,
+confined to the single chokepoint module ne/brain_graph/_pg.py (the LGPL surface
+is auditable and swappable in one file — the ne.gateway._litellm / ne.mcp._sdk
+pattern; enforced by the additive .importlinter c3-psycopg-chokepoint contract).
+It is already pinned+hash-verified in the workspace uv.lock via sibling packages
+(ne-connect: `psycopg[binary]>=3.3.4,<4`), so ne-brain-graph adds NO new lock
+entry, and it is already owner-approved with an explicit case-by-case override in
+tools/supply-chain/license-policy.toml (used unmodified, dynamically imported —
+the LGPL dynamic-linking exception applies). `ne check licenses` needs no policy
+edit for this unit.
+
+NOTE: sqlalchemy (MIT) backs the graph sync ledger (ne/brain_graph/construct/
+ledger.py); pydantic (MIT) backs the frozen model + settings types. Both are
+already pinned+hash-verified in the workspace uv.lock via sibling packages
+(ne-brain / ne-connect), so neither adds a new lock entry.
+
+NOTE: regex (Apache-2.0 AND CNRI-Python) is used solely for deterministic
+partial-match search when deriving constraint-conforming sample values in
+extraction/prompt.py (NE-T2X-PROMPT-SCHEMA REVISE, Argus P3). It is already
+pinned+hash-verified in the workspace uv.lock via tiktoken, so this package
+adds a dependency EDGE, not a new lock entry. The CNRI-Python operand is
+already allowlisted with rationale in tools/supply-chain/license-policy.toml
+(the comment there names this exact package and version). `ne check licenses`
+needs no policy edit for this unit.
+
+Apache AGE (Apache-2.0) itself is a PostgreSQL EXTENSION loaded into the
+customer's Postgres server (`LOAD 'age'`), not a Python dependency — it never
+enters uv.lock or the C4 Python license gate. The production pin is
+PostgreSQL 17 + AGE 1.7.0 (see README §R2); live conformance tests run against
+`apache/age:release_PG17_1.6.0` (the newest published PG17 Docker image) over
+the openCypher subset common to 1.6.0/1.7.0.
+
+SIDECAR-ONLY (OUT-OF-PROCESS, NOT in uv.lock — C4): the Tier-2 Splink and LightRAG
+closures live ONLY in git-ignored, hash-pinned sidecar venvs
+(ne.envbuild.ensure_sidecar_venv; splink_env/ and lightrag_env/) and are invoked
+as SUBPROCESSES over JSON files. None enters the platform uv.lock or the C4 Python
+license gate (proven by tests/test_no_gpl_sidecar_leak.py and the .importlinter
+t2-sidecars-out-of-process contract):
+splink / 4.0.16 / MIT / https://github.com/moj-analytical-services/splink (sidecar-only)
+igraph / (Splink transitive) / GPL-2.0-or-later / https://igraph.org (SIDECAR/OUT-OF-PROCESS ONLY per C4 — never linked platform-side)
+duckdb / 1.5.4 / MIT / https://github.com/duckdb/duckdb (Splink in-process ER backend, sidecar-only)
+lightrag-hku / 1.5.4 / MIT / https://github.com/HKUDS/LightRAG (library-only; the bundled API SERVER is BANNED — CVE-2026-30762 / CVE-2026-39413 / CVE-2025-6773; sidecar-only)
+
+This package also consumes in-workspace packages (ne-contracts, ne-schema,
+ne-brain, ne-connect, ne-events, ne-audit, ne-flywheel, ne-envbuild at runtime;
+ne-permissions test-only) whose own third-party components are recorded in their
+respective NOTICE files.

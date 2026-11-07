@@ -1,0 +1,102 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# OFF-BY-DEFAULT CDC FRESHNESS LANE (NE-084) — a STANDALONE overlay project.
+#
+# This is a SEPARATE compose project (`name: ne-cdc`), NOT part of the pilot
+# stack: the default pilot compose ships NO Debezium service (the exact-match
+# pilot guardian proves it). Bring it up ONLY AFTER the pilot is running, and
+# ONLY when a customer opts into the sub-minute CDC lane:
+#
+#   docker compose -f deploy/compose/cdc/compose.yaml --profile cdc up -d
+#
+# It joins the running pilot's network as EXTERNAL (`ne-pilot_default`) so
+# Debezium Server can reach `ne-api:8000` in-network, and is its OWN guardian
+# (tools/ne-cli/tests/test_cdc_addon.py). See README.md for source-DB prereqs,
+# secret generation, and the MySQL / SQL Server connector-class alternates.
+#
+# SECURITY INVARIANTS (guardian-enforced):
+#   * C11 — the image is tag@sha256 digest-pinned (quay.io). quay garbage-collects
+#     superseded digests, so a stale pin 404s instead of pulling an old image —
+#     re-verify the digest before a release (see README provenance).
+#   * C2 — Debezium publishes NO ports (outbound-only: the source DB + the
+#     in-network ne-api sink); OTEL_SDK_DISABLED=true (no phone-home).
+#   * C12 — ZERO secret literals; every credential is a ${NE_CDC_*:?...} required
+#     interpolation resolved from the operator's secret store at bring-up.
+#   * C4 — Debezium Server is Apache-2.0, out-of-process, NEVER in uv.lock.
+#   * least privilege — no-new-privileges, cap_drop ALL, resource limits,
+#     healthcheck.
+
+name: ne-cdc
+
+services:
+  debezium:
+    # quay.io/debezium/server:3.6.0.Final — digest captured 2026-09-27 via the quay
+    # tag API (Docker Hub STOPPED publishing debezium/server at 3.0.0.Final; quay is
+    # the live registry). quay's tag history shows one digest for this tag since
+    # 2026-07-28T04:09:49Z (end_ts null); quay garbage-collects superseded digests —
+    # the digest pinned before this one returns HTTP 404 (verified 2026-09-27) — so
+    # a stale pin fails to pull rather than pulling an old image. Re-verify before a
+    # release (see README.md provenance table).
+    image: quay.io/debezium/server:3.6.0.Final@sha256:0c5e1eeb2bcaf44facb386a7fdad53d4bb232b812979b4068e989b6ed1008b5c
+    # The generic product lane remains `cdc`. The second, deliberately specific
+    # profile is used only with meridian-fee-postings.yaml; neither profile is a
+    # Compose default, so normal pilot/demo bring-up remains byte-for-byte OFF.
+    profiles: ["cdc", "meridian-fee-postings"]
+    environment:
+      # --- sink: the governed ne-api webhook (in-network, Standard-Webhooks HMAC)
+      DEBEZIUM_SINK_TYPE: http
+      DEBEZIUM_SINK_HTTP_URL: http://ne-api:8000/cdc/v1/events
+      DEBEZIUM_SINK_HTTP_AUTHENTICATION_TYPE: standard-webhooks
+      DEBEZIUM_SINK_HTTP_AUTHENTICATION_WEBHOOK_SECRET: ${NE_CDC_WEBHOOK_SECRET:?set from your secret store — see README.md}
+      DEBEZIUM_SINK_HTTP_TIMEOUT_MS: "30000"
+      DEBEZIUM_SINK_HTTP_RETRIES: "10"
+      DEBEZIUM_SINK_HTTP_RETRY_INTERVAL_MS: "3000"
+      # --- value/key format: payload-only JSON (schemas.enable=false)
+      DEBEZIUM_FORMAT_VALUE: json
+      DEBEZIUM_FORMAT_VALUE_SCHEMAS_ENABLE: "false"
+      DEBEZIUM_FORMAT_KEY: json
+      # --- source: Postgres (see README for MySQL / SQL Server alternates)
+      DEBEZIUM_SOURCE_CONNECTOR_CLASS: io.debezium.connector.postgresql.PostgresConnector
+      DEBEZIUM_SOURCE_DATABASE_HOSTNAME: ${NE_CDC_SOURCE_DB_HOST:?set the source DB host — see README.md}
+      DEBEZIUM_SOURCE_DATABASE_PORT: ${NE_CDC_SOURCE_DB_PORT:-5432}
+      DEBEZIUM_SOURCE_DATABASE_USER: ${NE_CDC_SOURCE_DB_USER:?set the source DB user — see README.md}
+      DEBEZIUM_SOURCE_DATABASE_PASSWORD: ${NE_CDC_SOURCE_DB_PASSWORD:?set from your secret store — see README.md}
+      DEBEZIUM_SOURCE_DATABASE_DBNAME: ${NE_CDC_SOURCE_DB_NAME:?set the source DB name — see README.md}
+      DEBEZIUM_SOURCE_TOPIC_PREFIX: ne-cdc
+      DEBEZIUM_SOURCE_PLUGIN_NAME: pgoutput
+      DEBEZIUM_SOURCE_TABLE_INCLUDE_LIST: ${NE_CDC_TABLE_INCLUDE_LIST:?set the captured tables — see README.md}
+      DEBEZIUM_SOURCE_SNAPSHOT_MODE: ${NE_CDC_SNAPSHOT_MODE:-initial}
+      # --- durable offsets on the named volume (survive a restart)
+      DEBEZIUM_SOURCE_OFFSET_STORAGE_FILE_FILENAME: /debezium/data/offsets.dat
+      DEBEZIUM_SOURCE_OFFSET_FLUSH_INTERVAL_MS: "5000"
+      # --- C2: no telemetry / phone-home
+      OTEL_SDK_DISABLED: "true"
+    volumes:
+      - cdc-data:/debezium/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    healthcheck:
+      # ubi8/openjdk-21 ships curl; Quarkus health lives at :8080/q/health.
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/q/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  cdc-data:
+
+# Join the RUNNING pilot's network as external so Debezium can reach ne-api:8000
+# in-network. Debezium publishes NO ports of its own (outbound-only).
+networks:
+  default:
+    name: ne-pilot_default
+    external: true

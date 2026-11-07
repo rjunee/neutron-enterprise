@@ -1,0 +1,15 @@
+# The status-check contexts the `main` branch ruleset REQUIRES.
+#
+# A required context must never be skippable: a SKIPPED job reports as a
+# PASSING required check, and a `continue-on-error` job reports a FAILING run
+# as a passing one. Keep every job named here free of a job-level `if:`, a
+# `needs:`, and `continue-on-error`, and change this list together with the
+# live ruleset.
+#
+# One context per line. Blank lines and `#` comments are ignored. These names
+# are GitHub Actions JOB IDS; none of these jobs sets a `name:` override.
+check
+frontend
+review-gate
+typecheck
+vuln-scan

@@ -1,0 +1,4 @@
+{
+  "value": [{"id": "u-ada", "displayName": "Ada L. (updated)", "userPrincipalName": "ada@contoso.example"}],
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/users/delta?$deltatoken=USERTOKEN2"
+}

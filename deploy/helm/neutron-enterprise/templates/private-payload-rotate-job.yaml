@@ -1,0 +1,66 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# PRE-009A (A3) — the Agent Run private-payload KEK rotation, as a ONE-SHOT Job on
+# the EXACT first-party image, not `kubectl exec` into a scaled-zero pod.
+#
+# Why a Job and not exec: rotation must run on the same immutable, digest-pinned
+# image whose code is being trusted to open and reseal every stored DEK. An exec
+# into a surviving pod runs whatever that pod happens to be, after a scale-down
+# that leaves no record; a Job records its image digest, its exit status and its
+# logs, and cannot start at all if the digest is unavailable. It is also the only
+# form that survives the scale-to-zero the rotation itself requires -- there is no
+# pod left to exec into once both roots are stopped.
+#
+# The operator scales BOTH roots to zero first; the CLI refuses without
+# --roots-stopped, and the composition root independently refuses to serve while
+# retained rows sit under another key, so a half-finished rotation cannot be
+# papered over by simply restarting.
+#
+# Default OFF. Rendering it is a deliberate, once-per-rotation act.
+{{- if .Values.agentPrivatePayloadRotation.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ne-private-payload-rotate
+  labels:
+    app: ne-private-payload-rotate
+    app.kubernetes.io/part-of: neutron-enterprise
+  annotations:
+    # The rotation is not idempotent across generations: re-running it advances the
+    # key again. The generation makes an accidental re-apply visible.
+    neutron.dev/rotation-generation: {{ .Values.agentPrivatePayloadRotation.generation | quote }}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: {{ .Values.agentPrivatePayloadRotation.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        app: ne-private-payload-rotate
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      restartPolicy: Never
+      {{- include "neutron.podSecurityContext" (dict "uid" 10001 "gid" 10001 "openshift" .Values.global.openshift) | nindent 6 }}
+      containers:
+        - name: rotate
+          # The EXACT first-party image the roots run -- same digest, same code.
+          image: {{ include "neutron.firstPartyImageRef" . }}
+          {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 10 }}
+          command:
+            - /app/.venv/bin/ne
+            - private-payload-keys
+            - rotate
+            - --bundle
+            - {{ .Values.agentPrivatePayloadRotation.bundlePath | quote }}
+            - --database-url
+            - $(NE_RUNTIME_SESSION_DATABASE_URL)
+            - --roots-stopped
+          env:
+            - name: NE_PILOT_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_PILOT_POSTGRES_PASSWORD
+            - name: NE_RUNTIME_SESSION_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+{{- end }}

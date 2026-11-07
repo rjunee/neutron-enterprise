@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+[Unit]
+Description=Stable socket for the Neutron inference target operator
+
+[Socket]
+ListenStream=/run/neutron/inference-operator/operator.sock
+FileDescriptorName=inference-operator
+SocketUser=root
+SocketGroup=10001
+SocketMode=0660
+DirectoryMode=0750
+RemoveOnStop=true
+
+[Install]
+WantedBy=sockets.target

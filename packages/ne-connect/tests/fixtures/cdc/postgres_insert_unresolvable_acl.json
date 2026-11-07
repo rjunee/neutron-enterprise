@@ -1,0 +1,18 @@
+{
+  "before": null,
+  "after": {
+    "id": 3,
+    "name": "Cy Synthetic",
+    "email": "cy@synthetic.example",
+    "acl_group": null
+  },
+  "source": {
+    "connector": "postgresql",
+    "db": "appdb",
+    "schema": "public",
+    "table": "customers",
+    "lsn": 1005
+  },
+  "op": "c",
+  "ts_ms": 1720000003000
+}

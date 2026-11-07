@@ -1,0 +1,56 @@
+Neutron Enterprise — ne-govern
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+filelock / 4.2.9 / MIT / https://github.com/tox-dev/filelock
+sqlalchemy / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+
+Test-only:
+  psycopg[binary] / >=3.3.4,<4 / LGPL-3.0 / https://github.com/psycopg/psycopg
+  The live-Postgres concurrency proof (tests/test_guardrail_concurrency_postgres.py)
+  runs the NE-070H atomic reservation against real Postgres. Dynamically linked,
+  unmodified; same pin already accepted in-workspace via ne-events / ne-connect
+  (LGPL-3.0, C4 case-by-case, dev/test-group only).
+
+  Optional [cedar] extra + dev/test (parity suite) only — NOT in the default
+  runtime closure: cedarpy / >=4.8.6,<5 / Apache-2.0 /
+  https://github.com/k9securityio/cedar-py (in-process Python bindings for the
+  Cedar Policy engine (Rust) 4.8.2, Apache-2.0; no structured PyPI license
+  metadata — repo LICENSE verified Apache-2.0 on 2026-07-09; not an official
+  AWS/Cedar-team project). Backs CedarGovernedPdp, the "no vendor bet"
+  PolicyDecisionPoint alternate (NE-092); an OPA-only deployment never
+  installs or imports it.
+
+External services consumed at runtime (not distributed):
+- Open Policy Agent (OPA) — 1.18.2 — Apache-2.0 — https://www.openpolicyagent.org/
+  The PolicyDecisionPoint queries an OPA sidecar over HTTP (the v1 Data API). OPA
+  is a CNCF-graduated external policy engine run as a separate service (dev-stack
+  pin openpolicyagent/opa:1.18.2-debug); it is not code shipped with this package.
+  Verified against https://github.com/open-policy-agent/opa/releases on 2026-07-04.
+
+External components used via an ISOLATED hash-pinned environment
+(not distributed in, nor resolved into, the platform lock/SBOM — SPEC §11/C4):
+The C12 PII-redaction stage ADOPTS Presidio VIA ISOLATION: its spaCy +
+en_core_web_lg closure lives only in packages/ne-govern/presidio_env/ (a
+hash-pinned venv driven over a subprocess), never the platform uv.lock. Verified
+against https://pypi.org/pypi/presidio-analyzer/json et al. on 2026-07-06.
+- presidio-analyzer — 2.2.363 — MIT —
+  https://github.com/data-privacy-stack/presidio (project of the data-privacy-stack
+  org, formerly microsoft/presidio; license unchanged).
+- presidio-anonymizer — 2.2.363 — MIT —
+  https://github.com/data-privacy-stack/presidio
+- spaCy — 3.8.13 — MIT — https://github.com/explosion/spaCy
+  (the presidio-analyzer 2.2.363 pin excludes the newest 3.8.14).
+- en_core_web_lg (spaCy English NER model) — 3.8.0 — MIT —
+  https://github.com/explosion/spacy-models
+- cryptography — 49.0.0 — Apache-2.0 OR BSD-3-Clause — https://github.com/pyca/cryptography
+  Floor forced to >=48.0.1 via presidio_env/overrides.txt (GHSA-537c-gmf6-5ccf remediation;
+  presidio-anonymizer 2.2.363's declared <47 ceiling is stale — no upstream release relaxes it).
+  Unpin trigger: a presidio-anonymizer release with cryptography ceiling >=48. Verified against
+  https://pypi.org/pypi/cryptography/json on 2026-07-06.
+
+Attribution:
+- The adversarial RBAC-style PDP test taxonomy (per-tier allow/deny/require-approval,
+  stricter-wins escalation, missing-principal / unclassified deny, no-bypass) is
+  informed by ABI test suites (MIT License, Copyright (C) 2025 Naas.ai). No ABI code
+  is included — only the test SHAPES were used as a checklist.

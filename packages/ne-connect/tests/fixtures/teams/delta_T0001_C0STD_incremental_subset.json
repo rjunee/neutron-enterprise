@@ -1,0 +1,14 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/teams/T0001/channels/C0STD/messages/delta?$deltatoken=STD2",
+  "value": [
+    {
+      "id": "m2",
+      "messageType": "message",
+      "createdDateTime": "2026-06-01T11:00:00Z",
+      "lastModifiedDateTime": "2026-06-01T11:00:00Z",
+      "subject": "Weekly sync",
+      "body": { "contentType": "text", "content": "Standard channel message two." },
+      "from": { "user": { "id": "29:user-bob", "displayName": "Bob" } }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# RENDER-ONLY fixture for `helm lint`/`helm template`/kubeconform in CI and the
+# parity guardian (tools/ne-cli/tests/test_helm_chart.py). NOT a real deploy —
+# global.image.digest and global.configHash are placeholder all-zero values,
+# and bundle.files carries tiny sample TOML strings so the ConfigMap render
+# path is exercised. A real install always uses `ne k8s render`'s live overlay.
+global:
+  hostname: ci.local
+  configHash: "0000000000000000000000000000000000000000000000000000000000000000"
+  image:
+    repository: ne-app
+    tag: "0.1.0"
+    digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  ingress:
+    keycloakHost: "auth.ci.local"
+
+bundle:
+  files:
+    ne-runtime.toml: |
+      # sample fixture — ne-runtime settings
+    ne-govern.toml: |
+      # sample fixture — ne-govern settings
+    ne-secrets.toml: |
+      # sample fixture — ne-secrets settings

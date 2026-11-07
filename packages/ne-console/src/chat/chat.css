@@ -1,0 +1,364 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §5 — ASK, the work screen, composed from design/round3/transcript/ask.html.
+ * Three regions: the question rail at left, the thread at centre on a 76ch prose
+ * measure, and the source pane at right (§1.4's detail pane, which brings its
+ * own geometry).
+ *
+ * THE TURN ITSELF IS NOT STYLED HERE. Question bubble, work band, gate card,
+ * answer, sources and receipt are src/transcript/transcript.css — one anatomy,
+ * two screens. What is left in this file is the room the thread sits in, and the
+ * Ask-owned controls the transcript renders in its slots: the citation chip, the
+ * two quiet signals, the promoted card's Ask-side contents, and the composer.
+ *
+ * Everything is drawn from tokens.css, so both themes and the density setting
+ * arrive without this file knowing about either. Nothing here declares a colour.
+ */
+
+/* CARRIED, NOT USED HERE. <CitationChip>'s optional PROVE segment is styled from
+ * this file. Ask no longer renders that segment — a citation opens the source
+ * pane — but dropping the rule would strip the control on a screen someone else
+ * is still rebuilding. It leaves with the last screen that renders one. */
+.ne-citation-chip__prove {
+  margin-left: var(--space-4);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--cherenkov);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.ne-citation-chip__prove:hover,
+.ne-citation-chip__prove:focus-visible {
+  text-decoration: underline;
+}
+
+/* Mounted in the Agent workspace's tab panel, Ask is no longer the whole
+   screen: the viewport-relative height above would overflow the panel by
+   exactly the header and tab strip above it. The panel is the flex parent that
+   owns the height instead. */
+.ne-ask--embedded {
+  height: 100%;
+  min-height: 0;
+}
+/* Two lines of the question, and then the row stops. A pane that grows a row to
+ * fit a long prompt turns a list of ten questions into a page of prose. */
+
+/* ================================= thread ================================= */
+/* The thread scrolls; the composer below it does not. The turns bring their own
+ * 76ch measure (transcript.css), so this only supplies the room around them. */
+.ne-ask__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 34px 22px;
+}
+
+/* --------- what Ask renders INSIDE the transcript's own slots --------- */
+
+/* The inline citation chip, after the answer's prose. The wire carries no span
+ * offsets, so the chips sit at the end of the answer, never at a guessed
+ * sentence position. */
+.ne-ask__citechip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 0 4px;
+  margin: 0 1px;
+  vertical-align: 2px;
+  border: 1px solid var(--cherenkov-deep);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--cherenkov);
+  font: var(--type-label);
+  font-family: var(--font-mono);
+  letter-spacing: normal;
+  cursor: pointer;
+}
+.ne-ask__citechip:hover {
+  background: var(--selected-tint);
+  border-color: var(--cherenkov);
+}
+.ne-ask__citechip:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+/* The two actions on a source line. They are ALWAYS drawn: an action that only
+ * exists on hover is an action a keyboard cannot reach, and the render draws
+ * both at rest. */
+.ne-ask__citeactions {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+/* Terminal-frame provenance, in the receipt's pill slot. These are not
+ * client-computed assurance states: each word is selected solely from the
+ * server's structural done-frame bits. A trace correlation upgrades the chip to
+ * a link without changing its shape. */
+.ne-ask__provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 2px 7px 2px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ne-ask__provenance::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ne-ask__provenance--verified,
+.ne-ask__provenance--grounded {
+  color: var(--state-affirm);
+  background: var(--affirm-tint);
+}
+.ne-ask__provenance--refused-ungrounded {
+  color: var(--red);
+  background: var(--red-tint);
+}
+a.ne-ask__provenance:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+a.ne-ask__provenance:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-ask__trace-link {
+  color: var(--text-dim);
+}
+
+/* The one control a promoted gate carries, and only when it resolves. */
+.ne-ask__gatelink {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  color: var(--text);
+  font: var(--type-small);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ne-ask__gatelink:hover {
+  background: var(--panel-overlay);
+  text-decoration: none;
+}
+.ne-ask__gatelink:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+/* ------------------ the promoted failure card's contents ------------------ */
+/* The card, its hue, its state word and the refusal's verbatim reason are all
+ * transcript.css; these are the things Ask puts in the FAULT card's foot. Each
+ * takes its own line, because a verbatim server string and a disclosure are not
+ * controls in a row of controls. */
+.ne-ask__turndetail {
+  margin: 0;
+  width: 100%;
+  font: var(--type-cell);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.ne-ask__unclassified {
+  width: 100%;
+}
+.ne-ask__rawlabel {
+  margin: var(--space-8) 0 0;
+  color: var(--red);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+}
+.ne-ask__rawframe,
+.ne-answerexport__block {
+  max-width: 100%;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-8);
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text-dim);
+  font: var(--type-cell-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ne-ask__rawframe {
+  border-color: var(--red-line);
+}
+
+.ne-answerexport {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+.ne-answerexport__note {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-answerexport__block {
+  flex-basis: 100%;
+}
+
+/* --------------------------------- signals --------------------------------- */
+.ne-ask__feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+/* ASK'S OWN quiet text control — the feedback thumbs, flag-citation, the
+ * approvals link, the export copy. Underlining every one of them turned the
+ * turn's footer into a row of links.
+ *
+ * THIS COMMENT USED TO READ "(render: .tr-receipt__quiet)", which recorded a
+ * rename that never happened and read like the transcript's class was handled
+ * here. It was not: `.tr-receipt__quiet` had no rule at all in the package, so
+ * every agents-surface control wearing it rendered as a browser default. That
+ * rule now lives in transcript/transcript.css, where the markup that uses it
+ * lives. These two are siblings, not duplicates — several of the controls below
+ * are not receipt actions. */
+.ne-ask__quiet {
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-dim);
+  font: var(--type-small);
+  cursor: pointer;
+}
+.ne-ask__quiet:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+.ne-ask__quiet:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+.ne-ask__quiet:disabled {
+  color: var(--text-dim);
+  cursor: default;
+}
+.ne-ask__signalnote {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ne-ask__signalerror {
+  font: var(--type-small);
+  color: var(--red);
+}
+
+/* ================================ composer ================================ */
+/* One raised card on the thread's own measure, holding the model row, the
+ * question box and the one action. */
+
+/* =============================== source pane =============================== */
+.ne-ask__sourcetext {
+  margin: 0 0 var(--space-16);
+  font: var(--type-body);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ne-ask__sourcelinks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+  font: var(--type-cell);
+}
+
+/* Narrow viewports: the pane keeps its place in the layout and in the toggle's
+ * state — it is narrowed, never hidden out from under the control that says it
+ * is open. */
+@media (max-width: 1100px) {
+  .ne-ask {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .ne-ask__scroll {
+    padding-left: var(--space-16);
+    padding-right: var(--space-16);
+  }
+}
+
+/* Phone presentation: the question list becomes a short first row, every
+ * evidence line wraps, and all interactive text remains visible without a
+ * hover dependency. At 390px the transcript owns one minmax(0, 1fr) column. */
+@media (max-width: 48rem) {
+  .ne-ask,
+  .ne-ask--nohistory {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+    height: auto;
+    min-width: 0;
+  }
+
+  .ne-ask__history {
+    max-height: 14rem;
+    padding: var(--space-8) 0;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .ne-ask__thread,
+  .ne-ask__scroll,
+  .ne-ask__composer {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ne-ask__scroll {
+    padding: var(--space-8) 0;
+  }
+
+  .ne-ask__composer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ne-ask__composer .ne-filter,
+  .ne-ask__composer .ne-filter__select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ne-ask__composer > .ne-btn {
+    align-self: flex-end;
+  }
+
+  .ne-ask__thread {
+    min-height: 60vh;
+    padding-top: var(--space-8);
+  }
+
+  .ne-ask__historytoggle {
+    position: static;
+    width: 32px;
+    height: 32px;
+  }
+
+  .ne-ask__citeactions,
+  .ne-ask__turndetail {
+    overflow-wrap: anywhere;
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": 20003,
+  "name": "Forged permission scheme",
+  "permissions": [
+    {
+      "permission": "BROWSE_PROJECTS",
+      "holder": {
+        "type": "group",
+        "group": {
+          "groupId": "acl:tenant-all"
+        }
+      }
+    }
+  ]
+}

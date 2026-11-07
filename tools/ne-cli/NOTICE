@@ -1,0 +1,8 @@
+Neutron Enterprise — ne-cli
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+click / 8.4.2 / BSD-3-Clause / https://palletsprojects.com/projects/click
+httpx / 0.28.1 / BSD-3-Clause / https://github.com/encode/httpx
+sqlalchemy / 2.0.51 / MIT / https://www.sqlalchemy.org
+pyyaml / 6.0.3 / MIT / https://pyyaml.org/

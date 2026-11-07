@@ -1,0 +1,112 @@
+[project]
+name = "ne-cli"
+version = "0.1.0"
+description = "The `ne` developer CLI for the Neutron Enterprise monorepo."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "click>=8.4.2",
+    "sqlalchemy>=2.0.51,<2.1",
+    "ne-contracts",
+    "ne-runtime",
+    "ne-backup",
+    "ne-govern",
+    "ne-secrets",
+    # NE-INGEST (P1-4): `ne connect sync` composes the governed platform
+    # (ne-api.build_platform) and invokes the connector syncs (ne-connect.runner).
+    # Mirrors the NE-069 note: an advertised command must WORK on a plain install,
+    # so these are runtime deps — the heavy closure is accepted, and every import in
+    # ne.cli.connect stays LAZY so `ne --help` startup stays fast.
+    "ne-api",
+    "ne-connect",
+    # NE-FIX-SYNC-INVOKERS (P2-20): `ne permissions sync` reads PermissionsSettings and
+    # calls ne.permissions.factory.build_principal_source directly — a direct import
+    # needs a declared dep (the ne-connect precedent above). Imports stay LAZY in
+    # ne.cli.permissions so `ne --help`/`ne check` startup stays fast.
+    "ne-permissions",
+    # NE-ONTOLOGY-INSPECT: the advertised `ne ontology` group inspects the live T3
+    # ontology store + verified-answer layer through ne-brain-ontology's public read
+    # surface (gateway steward SPARQL, template registry, conformance gate). An
+    # advertised command must WORK on a plain install, so this is a runtime dep; every
+    # import in ne.cli.ontology stays LAZY so `ne --help` startup stays fast.
+    "ne-brain-ontology",
+    # NE-DEMO: the narrated scenario derives canonical graph keys through
+    # ne.brain_graph (graph_document_key / entity_key_for), and the offline/test
+    # comparison harness retains build_graph_snapshot. The stock demo does NOT stage
+    # that snapshot into production. Every import stays LAZY (inside function bodies)
+    # so `ne --help` startup stays fast (test-asserted).
+    "ne-brain-graph",
+    # NE-DEMO: `ne demo` seeds the synthetic Acme corpus (ne-acme fixtures +
+    # org/ground-truth) and drives the narrated arc over ne-api via httpx. Same
+    # rationale as the NE-INGEST note above: an advertised command must WORK on a
+    # plain install, so these are runtime deps; every import in ne.cli.demo stays
+    # LAZY (ne.acme/ne.api/ne.connect touched only inside command bodies) so
+    # `ne --help` startup stays fast (test-asserted).
+    "ne-acme",
+    "httpx>=0.28.1,<1",
+    # NE-ESB-CLI (U3): `ne schema bootstrap` drives ne.schema_bootstrap's
+    # profiler/inferencer/emitter/round-trip-validator end to end — same
+    # ne-brain-ontology precedent above (NE-ONTOLOGY-INSPECT): an advertised
+    # command must WORK on a plain install, so this is a runtime dep. Every
+    # import in ne.cli.schema's `bootstrap` command stays LAZY (inside the
+    # command body) so `ne --help`/`ne schema --help` startup stays fast
+    # (test-asserted, test_schema_bootstrap_cli.py::test_cli_import_does_not_import_schema_bootstrap).
+    "ne-schema-bootstrap",
+    # NE-SEARCH-LATENCY: `ne demo up --gpu-rerank` validates the operator's rerank
+    # endpoint with the SAME shared classifier ne-api runs at boot, BEFORE writing
+    # it into the compose overlay (C12: an unvalidated URL carrying userinfo would
+    # otherwise reach the operator's workdir, and an unescaped one can inject YAML
+    # keys). ne-net is the stdlib-only leaf — no closure cost — and the import in
+    # `_write_demo_overlay` stays LAZY so `ne --help` startup is unchanged.
+    "ne-net",
+]
+
+[project.scripts]
+ne = "ne.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.cli"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-runtime = { workspace = true }
+ne-backup = { workspace = true }
+ne-govern = { workspace = true }
+ne-secrets = { workspace = true }
+ne-api = { workspace = true }
+ne-connect = { workspace = true }
+ne-permissions = { workspace = true }
+ne-acme = { workspace = true }
+ne-brain-graph = { workspace = true }
+ne-net = { workspace = true }
+ne-brain-ontology = { workspace = true }
+ne-schema-bootstrap = { workspace = true }
+ne-serve = { workspace = true }
+
+[dependency-groups]
+# ne-contracts/ne-runtime/ne-govern moved to [project].dependencies above (NE-069
+# continuation, Codex P2-B): the advertised `ne release fingerprint`/`ne release
+# bundle` commands compute the release config-hash via ne.contracts/ne.runtime/
+# ne.govern (compute_default_platform_config_hash), so on a plain wheel install
+# they must work rather than crash with ModuleNotFoundError. Imports stay lazy
+# inside ne.cli.fingerprint so `ne --help`/`ne check` startup stays fast.
+# Accepted trade-off: ne-cli's install closure now includes ne-runtime's (dbos,
+# pydantic-ai-slim, etc.) — correctness of the advertised surface wins.
+# pyyaml is genuinely test-only (the test_dev_stack + NE-DEMO-LIVE-SEAMS overlay
+# parse tests). ne-brain-graph is a runtime dep for canonical scenario graph keys
+# (see [project].dependencies), not for staging a production graph snapshot.
+# ne-brain-ontology stays CI-HARNESS-ONLY: the fixture-mode ne-api
+# (tools/ne-cli/tests/demo_fixture_harness.py) resolves a real oxigraph T3 store and
+# runs the boot lift, but the runtime `ne demo` command talks HTTP to a deployed
+# ne-api and never imports it.
+# ne-serve is TEST-ONLY: test_gpu_rig_model_guard.py cross-checks
+# deploy/inference-operator/vast-rig.sh model constants against ne.serve.models.MODEL_SOURCES;
+# ne.cli runtime code never IMPORTS ne.serve (src/ne/cli/demo/live.py instead
+# spawns `python -m ne.serve` as a SUBPROCESS in local demo mode — a different
+# dependency question this dev-group entry is not addressing either way).
+dev = ["pyyaml>=6.0.2", "ne-brain-ontology", "ne-serve"]

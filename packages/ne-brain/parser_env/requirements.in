@@ -1,0 +1,24 @@
+# Isolated parser env (C4): docling and its torch/NVIDIA-CUDA transitive
+# closure are confined here (packages/ne-brain/.parser-venv) and NEVER enter
+# the platform lock/SBOM (uv.lock). Same isolation pattern as
+# packages/ne-schema/codegen/requirements.in (linkml). Compile with:
+#
+#   uv pip compile packages/ne-brain/parser_env/requirements.in \
+#       --python-platform linux --python-version 3.12 --generate-hashes \
+#       -o packages/ne-brain/parser_env/requirements.txt
+#
+# LINUX-SCOPED, not --universal (2026-09-02): the deploy surface is linux only
+# (deploy/docker/ne-app stages this payload at /opt/ne/parser_env). Upstream
+# docling-core / docling-ibm-models cap transformers <5.9.0 ONLY on
+# sys_platform == "darwin"; a universal resolve therefore could never reach
+# the CVE-2026-9856 fixed floor (transformers 5.10.0). Scoping the lock to
+# linux takes the fix. Mac-local sidecar builds are no longer guaranteed by
+# this lock.
+#
+# NEVER hand-edit requirements.txt.
+docling==2.148.0
+
+# CVE-2026-9856 / GHSA-xrqw-3rrv-vx5w (transformers save_pretrained path
+# traversal via chat-template names; fixed upstream in 5.10.0): floor the
+# transitive transformers resolution at the fixed release.
+transformers>=5.10.0

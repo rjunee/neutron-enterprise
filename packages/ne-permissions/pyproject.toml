@@ -1,0 +1,45 @@
+[project]
+name = "ne-permissions"
+version = "0.1.0"
+description = "Principal store, ACL sync, and security trimming."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-events",
+    "ne-net",
+    "sqlalchemy>=2.0.51,<2.1",
+    "httpx>=0.28.1,<1",
+]
+
+[dependency-groups]
+# Test-only: ne-audit (in-workspace) provides the real PostgresAuditSink round
+# trip proving the principal-sync→AuditEvent seam. NOT a runtime dep — the
+# PrincipalSyncService emits into whatever AuditSink the hosting process
+# configures (frozen Protocol). Mirrors packages/ne-connect/pyproject.toml.
+dev = ["ne-audit"]
+
+[project.entry-points."ne.plugins.principal_source"]
+acl-mapping = "ne.permissions.mapping:AclMappingSource"
+entra = "ne.permissions.entra:EntraPrincipalSource"
+oidc-claims = "ne.permissions.oidc:OidcClaimsPrincipalSource"
+fixture = "ne.permissions.testing.fixtures:FixturePrincipalSource"
+
+[project.entry-points."ne.plugins.principal_resolver"]
+store = "ne.permissions.resolver:StorePrincipalResolver"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-events = { workspace = true }
+ne-net = { workspace = true }
+ne-audit = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.permissions"
+namespace = true

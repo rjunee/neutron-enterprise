@@ -1,0 +1,31 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Copy to terraform.tfvars and fill in. NO secret values belong here — this
+# file (and terraform.tfvars itself) is a plain-text config file; C12 secrets
+# (postgres_admin_password) are supplied via TF_VAR_ environment variables
+# sourced from the customer's own secret store, never written here.
+
+prefix   = "ne"
+location = "eastus2"
+hostname = "customer.example.com" # placeholder — the console/API vhost
+
+kubernetes_version = "1.35"
+
+egress_mode      = "firewall"
+frontier_fqdns   = ["api.anthropic.com"]
+
+gpu_node_pool    = false # owner-quota-gated (Risk R2)
+managed_postgres = false # stage-2 — set true for the managed-HA-postgres variant
+install_velero   = false # stage-2 — requires ops-runner inside the VNet/VPN (Risk R7)
+
+key_vault_id        = "" # "" = identity module creates one
+create_entra_broker = true # smoke-lane-only override — false skips the broker app + its private vault (NE-LP-AZURE-KV-REACH)
+
+# postgres_admin_password: DO NOT set here. Export TF_VAR_postgres_admin_password
+# from your secret store before `terraform apply` when managed_postgres = true.
+
+tags = {
+  environment = "prod"
+  managed_by  = "terraform"
+}

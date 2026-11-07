@@ -1,0 +1,69 @@
+{
+  "issues": [
+    {
+      "id": "30001",
+      "key": "ACME-1",
+      "fields": {
+        "summary": "Login button unresponsive",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Users cannot log in from Safari."
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Bug"
+        },
+        "updated": "2026-01-01T09:00:00.000+0000",
+        "security": null
+      }
+    },
+    {
+      "id": "30002",
+      "key": "ACME-2",
+      "fields": {
+        "summary": "Classified incident",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Restricted."
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Task"
+        },
+        "updated": "2026-01-02T09:00:00.000+0000",
+        "security": {
+          "id": "10000",
+          "name": "Confidential"
+        }
+      }
+    }
+  ],
+  "nextPageToken": "pg2tok",
+  "isLast": false
+}

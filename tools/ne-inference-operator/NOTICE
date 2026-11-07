@@ -1,0 +1,37 @@
+Neutron Enterprise — ne-inference-operator
+Copyright (c) 2026 Ryan Junee.
+
+Reviewed offline provider-control closure (name / version / license / homepage):
+vast-cli standalone / 1.5.2 / MIT / https://github.com/vast-ai/vast-cli
+requests / 2.34.2 / Apache-2.0 / https://requests.readthedocs.io
+certifi / 2026.7.22 / MPL-2.0 / https://github.com/certifi/python-certifi
+charset-normalizer / 3.5.1 / MIT / https://github.com/jawah/charset_normalizer
+idna / 3.19 / BSD-3-Clause / https://github.com/kjd/idna
+urllib3 / 2.8.0 / MIT / https://github.com/urllib3/urllib3
+
+The standalone Vast CLI is pinned to official signed tag v1.5.2, exact commit
+bc7356483dd0f922ee17975c5357741f0d5d81fc. This release includes the upstream
+fix that keeps API keys out of request URLs. The reviewed source digest, the
+two-line isolated-interpreter patch digest, and every pure-Python wheel digest
+are code-owned by deploy/inference-operator/vastai-offline-lock.json.
+The installer never downloads or resolves packages. Boot admission verifies
+the exact wheelhouse and every extracted imported file; runtime uses isolated
+Python with no system or user site packages. Upstream update checks are disabled
+in the admitted standalone source.
+
+Dependency review performed 2026-08-20: official origin, signed tag, exact
+artifact hashes, license, maintainer provenance, network/update behavior, and
+the full five-package closure were checked. pip-audit reported no known
+vulnerabilities in this reduced closure. The ordinary vastai 1.5.2 package was
+explicitly rejected: its much larger pinned optional dependency graph included
+known-vulnerable cryptography 49.0.0 and pillow 12.2.0 artifacts.
+urllib3 2.8.0 (wheel sha256
+0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3, official PyPI
+origin, MIT, requires-python >=3.10) was admitted 2026-09-23 for maintainer
+advisories GHSA-vxq7-64xx-v4gw, GHSA-8988-9cw3-xx77 and GHSA-gh4c-6fx4-qh6g; the
+other four wheels are unchanged.
+
+The provider broker, UDS protocol, nft activation policy, and SSH grant helper
+use only the Python standard library and host systemd/iproute2/nftables/sudo
+surfaces; this change adds no Python or JavaScript dependency. Provider network
+authority remains the pinned Vast CLI's exact console.vast.ai TLS origin.

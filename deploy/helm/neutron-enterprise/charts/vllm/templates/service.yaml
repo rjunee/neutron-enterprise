@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# ClusterIP `vllm` — the gateway private-vllm lane api_base http://vllm:8000/v1
+# resolves here (ne-api's NE_GATEWAY_MODELS). Named `vllm` in both gpu + cpu
+# modes so the menu resolves regardless of vllm.mode.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm
+  labels:
+    app: vllm
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  type: ClusterIP
+  selector:
+    app: vllm
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000

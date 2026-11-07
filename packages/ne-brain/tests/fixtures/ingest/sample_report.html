@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quarterly Infrastructure Review</title>
+</head>
+<body>
+<h1>Quarterly Infrastructure Review</h1>
+
+<h2>Executive Summary</h2>
+<p>This report summarizes the state of the platform's core infrastructure for the quarter ending in June. Overall availability remained above the ninety-nine point nine percent target across every tier. The operations team completed three planned maintenance windows without any customer-visible incident. Capacity headroom on the primary database cluster improved after the read-replica rollout finished in May. The security team closed out the previous quarter's audit findings and opened a new review cycle focused on secrets rotation. Cost per request declined for the second consecutive quarter as the caching layer matured. Engineering leadership approved the roadmap for the next two quarters, which prioritizes latency reduction and regional failover testing. This document walks through the details behind each of these headline results, starting with request volume and latency, moving into the incident record, and closing with the capacity table and the roadmap ahead. Readers who only need the numbers can skip to the capacity table near the end of the document. Everyone else should read straight through, since later sections build on definitions introduced here in the summary. The appendix list at the very end links out to the underlying dashboards for anyone who wants to reproduce these figures directly against the raw metrics store.</p>
+
+<h2>Traffic and Latency</h2>
+<p>Average daily request volume grew by twelve percent quarter over quarter, driven mostly by the new mobile client rollout in April. Peak concurrency during the mid-quarter marketing campaign reached just over four times the typical weekday baseline, and the autoscaling policy kept p99 latency under three hundred milliseconds throughout that spike. The edge cache hit rate improved from seventy-one percent to eighty-four percent after the cache-key normalization change shipped in week six. Median latency across all regions held steady at forty-two milliseconds. The slowest region, which serves the smallest share of traffic, saw latency drop from two hundred milliseconds to one hundred and thirty milliseconds after a routing fix. Synthetic monitoring ran every five minutes from six external vantage points and recorded zero missed checks. The team also retired the legacy load balancer configuration that had been flagged in the prior quarter's review. No regressions were observed in error rate during the retirement, which was staged over two weeks with a canary cohort receiving the new configuration first. Overall the traffic picture this quarter was one of steady, well-absorbed growth rather than any single dramatic event, and the latency curve for every region trended down rather than up, which the team considers the more important signal heading into the next quarter's larger regional expansion. The team also ran a series of load tests against a synthetic traffic profile modeled on last year's peak holiday shopping event, well ahead of the season, to validate that the current autoscaling policy would hold up under a much larger spike than anything actually observed this quarter. Those load tests found one bottleneck in the checkout service's database connection pool, which has since been resized and re-tested successfully under twice the original target load. A follow-up load test is scheduled for next quarter to validate the fix under production-like conditions rather than the synthetic profile used this time. The on-call rotation was also expanded from four engineers to six during the quarter, reducing the average time between on-call shifts and giving the team more room to invest in proactive reliability work rather than pure firefighting.</p>
+
+<h3>Regional Breakdown</h3>
+<p>The three serving regions each handled a different mix of traffic this quarter. The primary region carried just under sixty percent of total request volume and posted the best latency numbers of the three, benefiting from its proximity to the busiest customer segment and from an extra caching tier that has not yet been rolled out elsewhere. The secondary region carried roughly a third of total volume and matched the primary region's latency after the routing fix mentioned above closed most of the earlier gap between the two. The tertiary region remains the smallest by volume but is expected to grow quickly once the regional failover project reaches its second phase, at which point it will begin absorbing a meaningful share of primary-region overflow traffic during peak windows rather than sitting idle as a pure standby as it does today.</p>
+
+<h2>Incidents</h2>
+<p>Two incidents were logged this quarter, both classified as low severity with no customer-facing downtime. The first was a brief queue backlog in the notification service caused by a misconfigured retry policy; it was caught by an internal alert within four minutes and resolved within twenty-two minutes. The second was a certificate rotation that ran later than scheduled, which triggered a warning-level alert but never approached the expiry threshold that would have caused an outage. Both incidents produced short internal write-ups, and the retry-policy fix from the first incident has already been generalized into the shared client library so that other services benefit automatically going forward.</p>
+
+<table>
+<tr><th>Region</th><th>Avg Latency (ms)</th><th>Uptime (%)</th></tr>
+<tr><td>Primary</td><td>38</td><td>99.98</td></tr>
+<tr><td>Secondary</td><td>41</td><td>99.95</td></tr>
+<tr><td>Tertiary</td><td>55</td><td>99.90</td></tr>
+</table>
+
+<h2>Roadmap</h2>
+<p>The next two quarters focus on three workstreams: further latency reduction in the tertiary region, a full regional failover drill, and a secrets-rotation overhaul recommended by the security review. Each workstream has an owning team and a target completion date already logged in the planning tracker.</p>
+<ul>
+<li>Latency reduction: extend the caching tier used in the primary region to the tertiary region.</li>
+<li>Failover drill: run a full traffic cutover rehearsal between the primary and secondary regions.</li>
+<li>Secrets rotation: automate quarterly rotation for every service credential currently rotated by hand.</li>
+</ul>
+
+</body>
+</html>

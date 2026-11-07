@@ -1,0 +1,6 @@
+{ "value": [
+  { "id": "perm-org-1", "roles": ["read"],
+    "link": { "scope": "organization", "type": "view", "webUrl": "https://contoso.sharepoint.com/:w:/s/eng/org" } },
+  { "id": "perm-org-2", "roles": ["read"],
+    "link": { "scope": "existingAccess" } }
+] }

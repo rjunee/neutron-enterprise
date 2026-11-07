@@ -1,0 +1,4332 @@
+[
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0000",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0001",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0002",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0003",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0004",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0002",
+      "per-0003"
+    ],
+    "doc_id": "doc-0005",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0006",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0007",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0008",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0009",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0010",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0011",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0012",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0013",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0001",
+      "per-0002",
+      "per-0038",
+      "per-0033"
+    ],
+    "doc_id": "doc-0014",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0015",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0016",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0017",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0018",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0019",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0020",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0021",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0022",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0023",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0024",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0025",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0026",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0027",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0028",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0029",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0030",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0031",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0032",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0033",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0034",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0035",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0036",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0037",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0038",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0039",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0034",
+      "per-0005",
+      "per-0000"
+    ],
+    "doc_id": "doc-0040",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0041",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0042",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0043",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0044",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0045",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0046",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0047",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0048",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0049",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0050",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0051",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0052",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0053",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0054",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0001",
+      "per-0013"
+    ],
+    "doc_id": "doc-0055",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0056",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0002",
+      "per-0029",
+      "per-0025",
+      "per-0000",
+      "per-0037"
+    ],
+    "doc_id": "doc-0057",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0058",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0001",
+      "per-0028"
+    ],
+    "doc_id": "doc-0059",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0060",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0061",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0062",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0063",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0064",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0065",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0066",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0067",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0068",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0069",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0070",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0011",
+      "per-0009",
+      "per-0020"
+    ],
+    "doc_id": "doc-0071",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0072",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0073",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0074",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0075",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0031",
+      "per-0024"
+    ],
+    "doc_id": "doc-0076",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0038",
+      "per-0009",
+      "per-0029"
+    ],
+    "doc_id": "doc-0077",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0078",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0079",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0080",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0081",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0017",
+      "per-0022"
+    ],
+    "doc_id": "doc-0082",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0083",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0084",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0085",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0086",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0021",
+      "per-0022"
+    ],
+    "doc_id": "doc-0087",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0088",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0089",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0090",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0091",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0092",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0093",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0094",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0095",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0096",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0097",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0098",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0099",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0100",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0101",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0102",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0103",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0104",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0105",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0106",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0107",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0108",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0109",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0110",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0031",
+      "per-0022",
+      "per-0008"
+    ],
+    "doc_id": "doc-0111",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0112",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0113",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0114",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0115",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0116",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0011",
+      "per-0008",
+      "per-0019",
+      "per-0025"
+    ],
+    "doc_id": "doc-0117",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0118",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0119",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0120",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0121",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0122",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0123",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0124",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0125",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0011",
+      "per-0030"
+    ],
+    "doc_id": "doc-0126",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0127",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0128",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0129",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0130",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0131",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0132",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0133",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0134",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0135",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0136",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0137",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0138",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0139",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0140",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0141",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0142",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0143",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0144",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0145",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0146",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0147",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0148",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0149",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0150",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0151",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0152",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0153",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0022",
+      "per-0013",
+      "per-0033",
+      "per-0019",
+      "per-0030"
+    ],
+    "doc_id": "doc-0154",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0155",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0156",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0157",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0158",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0022",
+      "per-0033",
+      "per-0004",
+      "per-0020"
+    ],
+    "doc_id": "doc-0159",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0160",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0161",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0162",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0163",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0164",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0165",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0166",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0167",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0038",
+      "per-0028"
+    ],
+    "doc_id": "doc-0168",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0169",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0170",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0008",
+      "per-0038",
+      "per-0024"
+    ],
+    "doc_id": "doc-0171",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0172",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0173",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0174",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0175",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0176",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0177",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0178",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0179",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0180",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0181",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0030",
+      "per-0039",
+      "per-0034"
+    ],
+    "doc_id": "doc-0182",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0183",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0184",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0185",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0186",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0187",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0188",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0189",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0190",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0191",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0192",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0193",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0194",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0195",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0196",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0197",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0198",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0199",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0200",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0201",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0202",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0203",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0204",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0205",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-finance",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0206",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0207",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0208",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0209",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0038",
+      "per-0026",
+      "per-0027"
+    ],
+    "doc_id": "doc-0210",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0211",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0212",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0039",
+      "per-0031",
+      "per-0018"
+    ],
+    "doc_id": "doc-0213",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0037",
+      "per-0028",
+      "per-0038",
+      "per-0026",
+      "per-0007"
+    ],
+    "doc_id": "doc-0214",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0215",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0216",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0217",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0218",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0219",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0220",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0221",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0222",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0037",
+      "per-0030",
+      "per-0011",
+      "per-0018"
+    ],
+    "doc_id": "doc-0223",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0224",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0225",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0226",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0227",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0228",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0229",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0230",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0231",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0232",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0233",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0234",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0235",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0039",
+      "per-0027",
+      "per-0035",
+      "per-0001"
+    ],
+    "doc_id": "doc-0236",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0237",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0238",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0239",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0240",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0241",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0242",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0243",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0244",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0245",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0246",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0247",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0248",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0249",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0250",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0251",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0252",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0253",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0254",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0255",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0256",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0257",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0258",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0259",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0260",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0261",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0037",
+      "per-0000",
+      "per-0021",
+      "per-0027",
+      "per-0039"
+    ],
+    "doc_id": "doc-0262",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0263",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0264",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0265",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0266",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0039",
+      "per-0001",
+      "per-0035",
+      "per-0024"
+    ],
+    "doc_id": "doc-0267",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0268",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0269",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0270",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0271",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0272",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0037",
+      "per-0004"
+    ],
+    "doc_id": "doc-0273",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0274",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0275",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0037",
+      "per-0003"
+    ],
+    "doc_id": "doc-0276",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0277",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0278",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0279",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0280",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0281",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0282",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0283",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0284",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0285",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0286",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0287",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0288",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0289",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0290",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0291",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0292",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0293",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0294",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0295",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0296",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0297",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0298",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0299",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0300",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0038",
+      "per-0000",
+      "per-0031",
+      "per-0028",
+      "per-0026"
+    ],
+    "doc_id": "doc-0301",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0302",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0303",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0304",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0305",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0306",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0307",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0308",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0309",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0039",
+      "per-0006",
+      "per-0008"
+    ],
+    "doc_id": "doc-0310",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0311",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0312",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0313",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0039",
+      "per-0013",
+      "per-0030",
+      "per-0031",
+      "per-0004"
+    ],
+    "doc_id": "doc-0314",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0315",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0316",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0317",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0318",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0038",
+      "per-0010"
+    ],
+    "doc_id": "doc-0319",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0320",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0321",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0322",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0323",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0324",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0325",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0326",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0327",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0328",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0329",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0330",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0331",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0332",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0333",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0334",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0335",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0336",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0337",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0338",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0339",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0340",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0341",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0342",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0343",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0344",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0345",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0346",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0347",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0348",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0349",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0350",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0351",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0352",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0353",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0354",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0355",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0356",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0357",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0358",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0359",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0360",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0021",
+      "per-0014",
+      "per-0017"
+    ],
+    "doc_id": "doc-0361",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0362",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0363",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0025",
+      "per-0008"
+    ],
+    "doc_id": "doc-0364",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0365",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0366",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0367",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0368",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0369",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0026",
+      "per-0039",
+      "per-0037"
+    ],
+    "doc_id": "doc-0370",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0371",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0372",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0018",
+      "per-0003",
+      "per-0024"
+    ],
+    "doc_id": "doc-0373",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0374",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0375",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0376",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0016",
+      "per-0028"
+    ],
+    "doc_id": "doc-0377",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0378",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0379",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0380",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0381",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0382",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0383",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0384",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0385",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0386",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0387",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0388",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0389",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0022",
+      "per-0021",
+      "per-0009"
+    ],
+    "doc_id": "doc-0390",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0391",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0392",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0393",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0394",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0395",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0396",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0397",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0005",
+      "per-0008"
+    ],
+    "doc_id": "doc-0398",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0399",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0400",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0401",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0402",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0403",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0404",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0405",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0406",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0407",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0408",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0409",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0410",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0411",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0020",
+      "per-0023"
+    ],
+    "doc_id": "doc-0412",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0413",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0414",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0415",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0416",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0417",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0418",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0419",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0420",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0421",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0422",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0423",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0424",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0425",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0426",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0427",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0428",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0429",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0430",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0015",
+      "per-0010",
+      "per-0007",
+      "per-0035"
+    ],
+    "doc_id": "doc-0431",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0432",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0433",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0434",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0435",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0436",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0437",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0438",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0439",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0440",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0441",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0442",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0443",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0444",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0445",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0446",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0447",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0022",
+      "per-0007",
+      "per-0027"
+    ],
+    "doc_id": "doc-0448",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0017",
+      "per-0001",
+      "per-0034"
+    ],
+    "doc_id": "doc-0449",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0450",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0451",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0452",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0000",
+      "per-0016",
+      "per-0009",
+      "per-0002"
+    ],
+    "doc_id": "doc-0453",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0454",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0455",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0002",
+      "per-0021",
+      "per-0007"
+    ],
+    "doc_id": "doc-0456",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0457",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0458",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0459",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0460",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0461",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0462",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0463",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0464",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0465",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0466",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0467",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0468",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0469",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0470",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0471",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0015",
+      "per-0025",
+      "per-0001",
+      "per-0028"
+    ],
+    "doc_id": "doc-0472",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0473",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0474",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-support",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0475",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0476",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0477",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0478",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0479",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0480",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0481",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "dept-executive",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0482",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0483",
+    "visibility": "exec_only"
+  },
+  {
+    "allowed_groups": [
+      "dept-hr",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0484",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0037",
+      "per-0016",
+      "per-0000",
+      "per-0039"
+    ],
+    "doc_id": "doc-0485",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-engineering",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0486",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0487",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0488",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0034",
+      "per-0021",
+      "per-0017"
+    ],
+    "doc_id": "doc-0489",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "dept-sales",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0490",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0002",
+      "per-0034",
+      "per-0037"
+    ],
+    "doc_id": "doc-0491",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0492",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0005",
+      "per-0014",
+      "per-0025",
+      "per-0007"
+    ],
+    "doc_id": "doc-0493",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0494",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0002",
+      "per-0004",
+      "per-0000",
+      "per-0034"
+    ],
+    "doc_id": "doc-0495",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [],
+    "allowed_people": [
+      "per-0015",
+      "per-0000",
+      "per-0032",
+      "per-0011"
+    ],
+    "doc_id": "doc-0496",
+    "visibility": "named"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0497",
+    "visibility": "public"
+  },
+  {
+    "allowed_groups": [
+      "dept-legal",
+      "executive"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0498",
+    "visibility": "department"
+  },
+  {
+    "allowed_groups": [
+      "all-employees"
+    ],
+    "allowed_people": [],
+    "doc_id": "doc-0499",
+    "visibility": "public"
+  }
+]

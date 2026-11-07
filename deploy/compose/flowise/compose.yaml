@@ -1,0 +1,153 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# FLOWISE OPTIONAL ADD-ON (NE-088). A THIN, OFF-BY-DEFAULT integration profile —
+# NOT a fork of Flowise. SPEC §8 lists a visual workflow-DSL builder as a
+# "Flowise optional add-on ONLY", so this overlay lets a customer OPTIONALLY run
+# the OSS Flowise visual LLM-flow builder as a separate service whose platform
+# tool calls are GOVERNED by OUR PDP (C6) via POST /api/v1/flowise/tools/execute.
+#
+# This is a SEPARATE compose project (name: ne-flowise) with its OWN profile gate.
+# It NEVER edits deploy/compose/pilot/compose.yaml and NEVER trips the pilot
+# exact-match service-matrix guardian (tools/ne-cli/tests/test_pilot_stack.py) —
+# the default pilot deploy provably ships NO flowise service (guardian:
+# tools/ne-cli/tests/test_flowise_addon.py::test_default_pilot_compose_has_no_flowise).
+#
+# INVARIANTS (guardian-enforced by tools/ne-cli/tests/test_flowise_addon.py):
+#   * OFF BY DEFAULT — separate project + `flowise` profile gate; bring up only
+#     with `docker compose -f ... --profile flowise up -d` AFTER the pilot stack.
+#   * C11 — the image is tag@sha256 digest-pinned (Node app, DIGEST-pinned upstream
+#     image; NEVER vendored into our Python tree, NEVER in uv.lock).
+#   * C4 — Flowise OSS core is Apache-2.0; the COMMERCIAL enterprise edition surface
+#     (packages/server/src/enterprise + IdentityManager.ts) is EXCLUDED by never
+#     setting the EE activation env vars (FLOWISE_EE_LICENSE_KEY / LICENSE_URL /
+#     OFFLINE). See deploy/compose/flowise/README.md for the license-boundary analysis.
+#   * C2 — in-network only (rides the pilot ne-pilot_default network); publishes
+#     LOOPBACK-only (UI via SSH tunnel); telemetry disabled.
+#   * C12 — ZERO secret literals; every credential is a ${NE_FLOWISE_*:?} required
+#     interpolation resolved from the customer secret store at bring-up.
+#
+# ⭐ HARDENING (NE-088 owner decision (b), SPEC §11) — defense-in-depth for a
+#    CVSS-10 / KEV-history component. See deploy/compose/flowise/README.md.
+#   * (H1) DISABLED_NODES broadened from `customMCP` to the FULL code-execution /
+#     arbitrary-eval node class verified file-by-file at tag flowise@3.1.3 (23
+#     `this.name` identifiers) so a FUTURE sibling-node CVE in this class is
+#     pre-disabled. Guardian: test_flowise_code_exec_node_class_fully_disabled.
+#   * (H2) tightest ENFORCEABLE network isolation in compose: loopback-only
+#     publish + zero egress grants + a provably flowise-unaware sealed pilot
+#     stack (guardians). Per-container egress deny is NOT compose-enforceable on a
+#     NAT bridge — the K8s-enforceable clamp is the Helm flowise-egress-clamp
+#     NetworkPolicy (honest boundary documented in the README).
+#   * (H3) explicit accept-the-risk enable-gate: NE_FLOWISE_ACCEPT_CVE_RISK must
+#     be exactly "true" at BOTH compose config-time (:? required interpolation)
+#     AND container runtime (entrypoint refusal) — the add-on can never start by
+#     accident.
+#
+# SECURITY / KEV RE-CHECK (dependency-intake §2, re-checked 2026-08-05) — every known
+# Flowise RCE lives in the H1-disabled node class and is patched at or before 3.1.3:
+#   * CVE-2025-59528 — CVSS 10.0, unauthenticated RCE via CustomMCP, CISA-KEV,
+#     exploited ~Apr 2026; patched >=3.0.6.
+#   * CVE-2026-40933 — CustomMCP stdio → OS command exec; patched 3.1.0.
+#   * CVE-2026-41264 — CSV-Agent LLM-generated-Python RCE (CVSS 9.2); patched
+#     3.1.0 (the CSVAgent node no longer exists at the 3.1.3 tag).
+#   * CVE-2026-58057 — Windows-only, authenticated NODE_OPTIONS denylist bypass in
+#     CustomMCP stdio (CVSS 2.3); patched IN 3.1.3 (exploit-db 52623's "Flowise
+#     3.1.3" title names the FIXED release — see README security table).
+#   * GHSA-8gj2-2cvc-6xx7 — unauthenticated /api/v1/text-to-speech/generate abuses
+#     any known chatflow-UUID's stored OpenAI/ElevenLabs TTS credential (financial
+#     abuse / quota-exhaustion DoS; GH medium, CVSS 6.3, no CVE id). NOT in the H1
+#     node class (whitelisted REST controller, not a flow node) — the 3.1.4 bump IS
+#     the fix. Patched 3.1.4.
+#   CISA KEV lists NO Flowise entry other than CVE-2025-59528 → no new unpatched
+#   actively-exploited KEV RCE at 3.1.4.
+
+name: ne-flowise
+
+services:
+  flowise:
+    # C11 digest pin — flowiseai/flowise 3.1.4 (>= 3.0.6, the CVE-2025-59528 fix
+    # floor; >= 3.1.4, the GHSA-8gj2-2cvc-6xx7 TTS credential-abuse fix). Multi-arch
+    # index digest captured 2026-08-05 (see the provenance table in README.md). The
+    # runtime image ships curl (Dockerfile at tag flowise@3.1.4), used by the healthcheck below.
+    image: flowiseai/flowise:3.1.4@sha256:3922767afb52a5777759fd8b28a3c9eee864daea96018a791f2429eae2a76571
+    # Belt-and-braces: even this standalone file is profile-gated so a bare
+    # `docker compose up` in this project starts nothing.
+    profiles: ["flowise"]
+    ports:
+      # LOOPBACK ONLY — the UI is reached via an SSH tunnel (documented). Flowise
+      # never publishes off-box; governed tool calls ride the in-network endpoint.
+      - "127.0.0.1:3100:3000"
+    # (H3) Belt-and-braces runtime refusal. The upstream image's ENTRYPOINT is
+    # ["flowise","start"] (node:24-alpine, /bin/sh + curl present); we wrap it so
+    # a container that somehow starts without the exact-string "true" ack DIES
+    # loud (exit 78) instead of running. `$$` is the compose-escape so the SHELL
+    # reads the CONTAINER env at runtime (a single `$` would be interpolated away
+    # by compose at config-time); `exec` keeps flowise PID 1 (healthcheck stays
+    # valid). NOTE: with the config-time :? gate above already required, this only
+    # fires if the env is set to a NON-"true" value.
+    entrypoint: ["/bin/sh", "-c", "if [ \"$$NE_FLOWISE_ACCEPT_CVE_RISK\" != \"true\" ]; then echo 'ne-flowise: REFUSING TO START — NE_FLOWISE_ACCEPT_CVE_RISK must be exactly \"true\" (CVE-2025-59528 risk acceptance, see deploy/compose/flowise/README.md)' >&2; exit 78; fi; exec flowise start"]
+    environment:
+      # (H3) EXPLICIT ACCEPT-THE-RISK ENABLE-GATE. This add-on can never start by
+      # accident: the `:?` makes even `docker compose --profile flowise config`
+      # FAIL LOUD at config-time when unset, and the entrypoint below refuses any
+      # value != "true" at runtime. Read the Security section of README.md before
+      # setting it. See guardians test_flowise_accept_risk_gate_required_interpolation
+      # + test_flowise_entrypoint_refuses_without_ack + test_flowise_profile_without_ack_does_not_start.
+      NE_FLOWISE_ACCEPT_CVE_RISK: ${NE_FLOWISE_ACCEPT_CVE_RISK:?explicit risk acknowledgment required — read the Security section of deploy/compose/flowise/README.md and set to "true" to accept the CVE-2025-59528 (CVSS 10.0 KEV RCE) residual risk}
+      PORT: "3000"
+      # C2 — no PostHog phone-home.
+      DISABLE_FLOWISE_TELEMETRY: "true"
+      # (H1) Disable the FULL dynamic-code-execution / arbitrary-eval node class
+      # (23 `this.name` identifiers verified file-by-file at tag flowise@3.1.3),
+      # not just customMCP — so a future sibling-node CVE in this class is
+      # pre-disabled. Every known Flowise RCE (CVE-2025-59528/2026-40933/
+      # 2026-41264/2026-58057) lives in this class. Flow authors keep Agentflow
+      # v2 + the HTTP/Requests tool node against the governed ne-api endpoint +
+      # plain promptTemplate (see README "Disabled node class (H1)"). Do NOT
+      # retype this list — a single mistyped identifier silently no-ops its
+      # disable (note the literal capital-C `ChatflowTool`).
+      DISABLED_NODES: "customMCP,customMcpServerTool,customTool,customFunction,ifElseFunction,customFunctionAgentflow,customDocumentLoader,codeInterpreterE2B,chatPromptTemplate,openAPIToolkit,agentAsTool,ChatflowTool,seqAgent,seqCondition,seqConditionAgent,seqCustomFunction,seqEnd,seqExecuteFlow,seqLLMNode,seqLoop,seqStart,seqState,seqToolNode"
+      DATABASE_TYPE: sqlite
+      DATABASE_PATH: /data/.flowise
+      SECRETKEY_STORAGE_TYPE: local
+      SECRETKEY_PATH: /data/.flowise
+      STORAGE_TYPE: local
+      BLOB_STORAGE_PATH: /data/storage
+      # C12 — every credential is a required interpolation resolved from the
+      # customer secret store at bring-up; NO literals. .env.example ships empties.
+      FLOWISE_SECRETKEY_OVERWRITE: ${NE_FLOWISE_SECRETKEY:?set from your secret store — see README.md}
+      JWT_AUTH_TOKEN_SECRET: ${NE_FLOWISE_JWT_AUTH_SECRET:?set from your secret store — see README.md}
+      JWT_REFRESH_TOKEN_SECRET: ${NE_FLOWISE_JWT_REFRESH_SECRET:?set from your secret store — see README.md}
+      EXPRESS_SESSION_SECRET: ${NE_FLOWISE_SESSION_SECRET:?set from your secret store — see README.md}
+      TOKEN_HASH_SECRET: ${NE_FLOWISE_TOKEN_HASH_SECRET:?set from your secret store — see README.md}
+      # C4 EE-EXCLUSION: FLOWISE_EE_LICENSE_KEY / LICENSE_URL / OFFLINE are
+      # DELIBERATELY ABSENT — setting any of them would activate the commercial
+      # enterprise edition. Guardian-enforced (test_flowise_ee_surface_excluded).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    volumes:
+      - flowise-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.0"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/v1/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  flowise-data: {}
+
+networks:
+  # C2 — ride the pilot project's network as an EXTERNAL (already-created) network,
+  # so the governed endpoint (ne-api behind Caddy) is reachable in-network. Requires
+  # the pilot stack (`ne up --profile core`) to be up first.
+  default:
+    name: ne-pilot_default
+    external: true

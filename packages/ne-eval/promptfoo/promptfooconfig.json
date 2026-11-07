@@ -1,0 +1,34 @@
+{
+  "description": "ne-eval RAG gate",
+  "providers": [
+    {
+      "id": "file://gate_provider.py",
+      "label": "ne-eval-suite"
+    }
+  ],
+  "tests": [
+    {
+      "assert": [
+        {
+          "type": "javascript",
+          "value": "JSON.parse(output).metrics[\"recall_at_10\"] >= 0.83"
+        },
+        {
+          "type": "javascript",
+          "value": "JSON.parse(output).metrics[\"faithfulness\"] >= 0.77"
+        },
+        {
+          "type": "javascript",
+          "value": "JSON.parse(output).metrics[\"context_precision\"] >= 0.67"
+        },
+        {
+          "type": "javascript",
+          "value": "JSON.parse(output).metrics[\"context_recall\"] >= 0.77"
+        }
+      ],
+      "vars": {
+        "suite": "rag"
+      }
+    }
+  ]
+}

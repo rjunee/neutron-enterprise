@@ -1,0 +1,39 @@
+template_id = "autoloans-for-customer"
+version = 1
+description = "Every Meridian auto loan attributed to one or more validated customer identifiers. q_customer_id accepts a single id OR a list of up to 24 distinct ids; rows carry customer_id, and any requested id that holds no auto loan is reported as an empty member. Every row also carries the servicing snapshot's as_of_date — the date these servicing facts are current as of, and the anchor from which any policy window measured from the as-of date starts. principal_balance_dollars is the exact dollar rendering of principal_balance_cents ($X.YY), served so an answer can state the balance in dollars."
+max_rows = 20
+sparql = """
+SELECT ?loan ?loan_id ?customer_id ?status ?principal_balance_cents ?next_due_date ?as_of_date ?principal_balance_dollars WHERE {
+  #BINDINGS#
+  ?loan a <https://neutron.enterprise/schema/meridian/AutoLoan> .
+  ?loan <https://neutron.enterprise/schema/meridian/loan_id> ?loan_id .
+  ?loan <https://neutron.enterprise/schema/meridian/customer_id> ?customer_id .
+  ?loan <https://neutron.enterprise/schema/meridian/status> ?status .
+  ?loan <https://neutron.enterprise/schema/meridian/principal_balance_cents> ?principal_balance_cents .
+  ?loan <https://neutron.enterprise/schema/meridian/principal_balance_dollars> ?principal_balance_dollars .
+  ?loan <https://neutron.enterprise/schema/meridian/next_due_date> ?next_due_date .
+  ?loan <https://neutron.enterprise/schema/meridian/as_of_date> ?as_of_date .
+  FILTER(?customer_id = ?q_customer_id)
+}
+"""
+
+[args.q_customer_id]
+description = "Meridian customer identifier, format mer-cus-NNN (e.g. mer-cus-004). Pass one id, or a JSON array of up to 24 distinct ids to sweep several customers in one call; a requested id holding no auto loan is reported back as an empty member, never dropped."
+type = "str"
+pattern = "^mer-cus-[0-9]{3}$"
+max_length = 11
+# 24 = the meridian-v1 customer population (15) with ~1.6x headroom: enough to sweep
+# every customer a pilot county set can produce in one call, never enough to be a scan.
+list_max = 24
+key_column = "customer_id"
+
+[scope]
+graph_classes = ["bank.servicing.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["loan", "loan_id", "customer_id", "status", "principal_balance_cents", "next_due_date", "as_of_date", "principal_balance_dollars"]
+citation_var = "loan"
+contributor_vars = ["loan"]
+source_status = "source_bearing"
+count_total_rows = true

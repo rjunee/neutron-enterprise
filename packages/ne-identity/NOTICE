@@ -1,0 +1,32 @@
+Neutron Enterprise — ne-identity
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+PyJWT / 2.15.0 / MIT / https://github.com/jpadilla/pyjwt
+
+cryptography / 49.0.0 / Apache-2.0 OR BSD-3-Clause / https://github.com/pyca/cryptography
+
+FastAPI / 0.139.0 / MIT / https://github.com/fastapi/fastapi
+
+Starlette / 1.3.1 / BSD-3-Clause / https://github.com/encode/starlette
+  (transitive via FastAPI; imported for ASGI types and TestClient)
+
+httpx / 0.28.1 / BSD-3-Clause / https://github.com/encode/httpx
+  (test-only, via fastapi.testclient.TestClient)
+
+Keycloak / 26.7.4 / Apache-2.0 / https://www.keycloak.org
+  (external identity-broker service; consumed at runtime over HTTP and
+  configured via deploy/compose — not distributed with this package, no code
+  embedded)
+
+hermes-agent / v0.18.0 / MIT / https://github.com/NousResearch/hermes-agent
+  Copyright (c) Nous Research. The agent-credential rotation/cooldown pool in
+  ne/identity/agents/pool.py lifts the credential_pool PATTERN (selection
+  strategies, per-failure-class cooldowns, consecutive-failure parking) from
+  hermes-agent under MIT attribution per SPEC §5 NE-036; it is an independent
+  Python implementation — no hermes-agent code is vendored or distributed.
+
+PyJWT, cryptography, FastAPI, and its transitive Starlette are embedded Python
+dependencies. httpx is a test-only dependency. Keycloak is an external service.
+The hermes-agent credential_pool is a PATTERN lift only (no code embedded).

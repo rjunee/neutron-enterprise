@@ -1,0 +1,91 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# kind-specific trims for the live smoke (helm-smoke.yml `kind-smoke` job and
+# the local pre-flight). Combined with the LIVE digest.json overlay from
+# `ne release push` and the real bundle overlay from `ne k8s render`
+# (`-f digest.json -f values-kind.yaml`, user values LAST-wins).
+#
+# Replica counts and resource REQUESTS are trimmed for a single-node kind
+# cluster on a GitHub-hosted runner (a handful of vCPUs total): the umbrella
+# defaults' combined requests (ne-api x2 @1 cpu + ne-worker @1 + postgres @1 +
+# keycloak @1 + opa x2 @0.5 = 6 cpu requested) starve the scheduler on a small
+# node (verified live — `0/1 nodes are available: 1 Insufficient cpu`, NE-071a
+# pre-flight). LIMITS are left at the umbrella defaults (headroom, not a
+# hardening change); only REQUESTS + replica counts shrink for the smoke.
+# ne-worker replicas stay 1 (the default); only its request shrinks.
+#
+# NE-071c: qdrant/tei ride the DEFAULT deploy (profiles.brain), so their
+# single-node request/storage trims live here too. obs (otel-collector) trims
+# are ALSO here, but this file MUST stay ZARF-SAFE: it does NOT set
+# profiles.obs=true — zarf-package.yml copies this file verbatim as its tuning
+# overlay, and otel-collector is NOT vendored in zarf.yaml (default-OFF profile),
+# so flipping obs on here would make the SEALED zarf deploy fail to pull it. The
+# kind smoke enables obs via a SEPARATE one-line overlay
+# (deploy/helm/tests/values-kind-obs.yaml), passed only in helm-smoke.yml. serve
+# (vllm) stays render-only — never scheduled on kind.
+postgres:
+  storage:
+    size: 2Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+keycloak:
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: "100m"
+
+ne-api:
+  replicas: 1
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+ne-worker:
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+opa:
+  replicas: 1
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: "50m"
+
+qdrant:
+  storage:
+    size: 2Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: "100m"
+
+tei:
+  embed:
+    storage:
+      size: 5Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: "100m"
+  rerank:
+    storage:
+      size: 5Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: "100m"
+
+# obs trims only — profiles.obs is flipped on by the separate values-kind-obs.yaml
+# overlay (zarf-safety; see the header comment).
+obs:
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: "50m"

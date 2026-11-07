@@ -1,0 +1,78 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * AssuranceChip (NE-T2X-5, design §6.1) — the "LLM-extracted — unconfirmed"
+ * flag. Amber (the platform's standing warning/attention token) distinguishes
+ * it from the cherenkov-blue confirm/prove affordances elsewhere.
+ */
+
+.ne-assurance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--amber-tint);
+}
+
+.ne-assurance-chip__label {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--amber);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ne-assurance-chip__ref {
+  font: var(--type-mono);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+.ne-assurance-chip__confirm {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--cherenkov);
+  white-space: nowrap;
+}
+
+.ne-assurance-chip__confirm:hover,
+.ne-assurance-chip__confirm:focus-visible {
+  text-decoration: underline;
+}
+
+.ne-provisional-banner {
+  font: var(--type-small);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--amber-tint);
+  padding: var(--space-8) var(--space-12);
+  margin: var(--space-8) 0;
+}
+
+.ne-provisional-placard {
+  font: var(--type-small);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  background: var(--amber-tint);
+  padding: var(--space-8) var(--space-12);
+  margin-top: var(--space-8);
+}
+
+.ne-provisional-placard__refs {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-provisional-placard__ref {
+  font: var(--type-mono);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}

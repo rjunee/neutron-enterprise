@@ -1,0 +1,13 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-071c kind-smoke obs overlay — a ONE-KNOB file that turns the obs profile
+# (otel-collector) ON for the live helm-smoke kind job ONLY. It is deliberately
+# SEPARATE from values-kind.yaml because zarf-package.yml copies values-kind.yaml
+# verbatim as its tuning overlay, and otel-collector is NOT vendored in
+# deploy/airgap/zarf/zarf.yaml (default-OFF profile) — flipping obs on in
+# values-kind.yaml would make the SEALED zarf deploy fail to pull the image.
+# Passed as an extra `-f` to `ne k8s up` in .github/workflows/helm-smoke.yml.
+# serve (vllm) stays render-only and is NEVER enabled here (no GPU on kind).
+profiles:
+  obs: true

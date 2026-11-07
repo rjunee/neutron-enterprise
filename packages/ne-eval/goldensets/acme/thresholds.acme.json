@@ -1,0 +1,27 @@
+[
+  {
+    "metric": "recall_at_10",
+    "threshold": 0.85,
+    "tolerance": 0.02
+  },
+  {
+    "metric": "faithfulness",
+    "threshold": 0.8,
+    "tolerance": 0.03
+  },
+  {
+    "metric": "context_precision",
+    "threshold": 0.7,
+    "tolerance": 0.03
+  },
+  {
+    "metric": "context_recall",
+    "threshold": 0.8,
+    "tolerance": 0.03
+  },
+  {
+    "metric": "permission_trap_pass_rate",
+    "threshold": 1.0,
+    "tolerance": 0.0
+  }
+]

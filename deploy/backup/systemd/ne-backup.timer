@@ -1,0 +1,17 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Daily pilot backup schedule. This IS the stated RPO ≤ 24h mechanism: a backup
+# every day at 02:00 local (jittered up to 15m to avoid thundering herds), and
+# Persistent=true so a missed run (host was off at 02:00) fires on next boot.
+[Unit]
+Description=Daily Neutron Enterprise pilot backup (RPO <= 24h)
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+RandomizedDelaySec=15m
+Persistent=true
+Unit=ne-backup.service
+
+[Install]
+WantedBy=timers.target

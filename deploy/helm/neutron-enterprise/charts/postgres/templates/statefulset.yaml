@@ -1,0 +1,80 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# StatefulSet reproduction of deploy/compose/pilot/compose.yaml's postgres
+# service. uid/gid/fsGroup 70 is the verified alpine postgres image user
+# (/var/lib/postgresql is postgres-owned 1777 so a non-root start works).
+# readOnlyRootFilesystem is FALSE for postgres (design §1.5 Q3 — accepted;
+# tightening with targeted emptyDirs is a follow-up, not 071a scope).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 70 "gid" 70 "fsGroup" 70 "openshift" .Values.global.openshift) | nindent 8 }}
+      containers:
+        - name: postgres
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" .Values.image.repository "tag" .Values.image.tag "digest" .Values.image.digest) }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" false) | nindent 12 }}
+          env:
+            - name: POSTGRES_USER
+              value: ne
+            - name: POSTGRES_DB
+              value: neutron
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_PILOT_POSTGRES_PASSWORD
+          volumeMounts:
+            - name: pg-data
+              mountPath: /var/lib/postgresql
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "ne", "-d", "neutron"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "ne", "-d", "neutron"]
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: initdb
+          configMap:
+            name: postgres-initdb
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: {{ .Values.storage.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.size }}

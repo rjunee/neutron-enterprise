@@ -1,0 +1,35 @@
+template_id = "t3-records-in-class"
+version = 1
+description = "Every Tier-3 record of one declared Meridian class the caller may see, one row per record with its class IRI. q_class is the closed class vocabulary of the meridian-v1 release; the caller's ACL graphs trim the result, so a class whose graph the caller does not hold returns no rows. This is the governed enumeration half of the Tier-3 record browser — a fixed, reviewed query, never an ad-hoc scan."
+max_rows = 100
+sparql = """
+SELECT ?record ?class WHERE {
+  #BINDINGS#
+  ?record a ?class .
+  FILTER(?class = IRI(CONCAT("https://neutron.enterprise/schema/meridian/", ?q_class)))
+}
+"""
+
+[args.q_class]
+type = "str"
+max_length = 32
+enum = [
+  "AutoLoan",
+  "Customer",
+  "DisasterDeclaration",
+  "DisputePolicy",
+  "PaymentSchedule",
+  "RegEDispute",
+  "ServicingNote",
+]
+
+[scope]
+graph_classes = ["bank.customer.read", "bank.servicing.read", "bank.dispute.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["record", "class"]
+citation_var = "record"
+contributor_vars = ["record"]
+source_status = "source_bearing"
+count_total_rows = true

@@ -1,0 +1,39 @@
+[project]
+name = "ne-serve"
+version = "0.1.0"
+description = "vLLM serving profile plus model menu."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-net",
+    "httpx>=0.28.1,<1",
+    "huggingface-hub>=1.22,<2",
+]
+
+[project.scripts]
+ne-serve = "ne.serve.__main__:main"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-net = { workspace = true }
+ne-gateway = { workspace = true }
+
+[dependency-groups]
+# ne-gateway is TEST-ONLY: the menu-consistency test compares
+# docs/model-menu.md and ne.serve.models.MODEL_SOURCES against
+# ne.gateway.menus.DEFAULT_MENUS. ne.serve runtime never imports ne.gateway
+# (keeps ne-serve free of the litellm closure; enforced by the C3
+# import-linter contract). pyyaml is used by the compose-validation tests.
+dev = [
+    "pyyaml>=6.0.2",
+    "ne-gateway",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.serve"
+namespace = true

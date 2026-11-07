@@ -1,0 +1,887 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# HARDENED SINGLE-VM PILOT TIER (NE-070). Composed from the additive serve tier
+# via compose `include`; profiles core / brain / obs select the service set.
+# Drive it with `ne up --profile pilot --bundle <dir>` (NEVER `docker compose`
+# directly) — the installer runs preflights, injects secrets from the
+# per-customer bundle's SecretStore into an ephemeral 0600 env file, and waits
+# on healthchecks. See deploy/compose/pilot/README.md.
+#
+# SECURITY INVARIANTS (guardian-enforced by tools/ne-cli/tests):
+#   * C11 — every image is tag@sha256 digest-pinned (air-gap reproducible).
+#   * TLS everywhere — Caddy is the ONLY service publishing off-box (443/8443,
+#     TLS-terminated); every other service binds 127.0.0.1 (on-VM only).
+#   * C12 — ZERO secret literals here; every credential is a ${NE_PILOT_*:?...}
+#     required interpolation, resolved from the bundle SecretStore at `ne up`.
+#   * C2 — telemetry-off flags on every service; Caddy `tls internal` = local CA
+#     (no ACME/egress); `admin off`. No OpenBao (pilot SecretStore = sops-file,
+#     SPEC §3.3); no Langfuse.
+#   * least privilege — no-new-privileges everywhere, cap_drop ALL on the
+#     stateless proxies/sidecars, resource limits + healthchecks on all.
+#
+# Image provenance (tag@digest, license, verification date, source) is recorded
+# in deploy/compose/pilot/README.md — do not bump an image here without updating
+# that table AND tools/ne-cli/tests/test_pilot_stack.py.
+
+name: ne-pilot
+
+include:
+  - path: ../serve/compose.yaml
+
+# PRE-009C: one Compose scalar owns the first-party image reference for BOTH
+# application roots. The governed Pilot executors resolve this local tag to one
+# exact sha256 image ID before any cutover; a role-local image override is not a
+# supported deployment shape.
+x-ne-app-image: &ne-app-image ne-app:0.1.0
+
+# Persistent T2 substrate. This is the exact local image ID produced and
+# vulnerability-scanned by deploy/airgap/scripts/build-ne-postgres-age.sh at
+# source revision 7b7cede3. An image ID (not a mutable tag) plus pull_policy:
+# never makes replacement impossible at Compose resolution time.
+x-ne-postgres-age-image: &ne-postgres-age-image sha256:6ba66e01b43cbfde0f0a03699f609fed1e218612aab7b2119052e0fd5aeb4f26
+x-ne-postgres-age-source-revision: &ne-postgres-age-source-revision 7b7cede30d7af58ac3259b51cf59c76f1e95754c
+
+# NE-103c: the SHARED ne-app environment. ne-api AND ne-worker are the SAME ne-app
+# image, different command ("one image, diff command"), and MUST see IDENTICAL frozen
+# settings — the composed config_hash covers ApiSettings/RuntimeSettings/etc., so any
+# env value differing between the two processes would fork the hash and split audit
+# correlation (design §6.2/Q5). Both reference this anchor; ne-worker adds only its
+# NE_WORKER_* placement knobs (deliberately NOT in the frozen hash).
+x-ne-app-env: &ne-app-env
+  # PRE-009C: exact protected transport/wire generation shared by both roots.
+  # `ne agent-transport cutover` treats a matched legacy absence as a quiesced
+  # cutover boundary and rejects mixed or foreign values; this is configuration
+  # identity, never caller input.
+  NE_AGENT_TRANSPORT_GENERATION: agent-transport-v1
+  # PRE-010G: the canonical default-Ask activation pass-through, the OTHER half
+  # of the readiness gate the line above opens. The generated `ne demo` overlay
+  # writes the exact generation only when its existing live-writeback staging has
+  # admitted the Meridian source/model producer path. Ordinary `ne up`, including
+  # the pilot pseudo-profile, leaves it absent. build_platform holds the default
+  # Ask closed unless the Run store composed, the transport generation matches,
+  # AND this is exactly `default-ask/canonical-run/v1`. ApiSettings types it as a
+  # CLOSED Literal, so an arbitrary generation is a settings-load failure here,
+  # not a silently different activation.
+  #
+  # SHARED anchor, like the generation above: ne-api ADMITS the Ask and ne-worker
+  # EXECUTES the canonical Run, so a pin only one root inherits produces a
+  # deployment that accepts work it cannot run.
+  #
+  # The admitted live-demo pin MOVES the default config_hash (it is a real ApiSettings
+  # value and ne-api is unconditionally in the frozen preimage). Both roots move
+  # together and both Appendix-E capture phases carry the same new hash, so the
+  # phase comparison is unaffected. Base/no-egress bring-ups omit the key from
+  # BOTH roots, leaving the API, worker and database fence dormant.
+  NE_API_DEFAULT_ASK_GENERATION:
+  NE_API_BIND_HOST: "0.0.0.0"
+  NE_API_QDRANT_URL: http://qdrant:6333
+  # DECIDED collection name (no prior convention): pilot ingestion must target
+  # `ne_chunks` (documented in deploy/compose/pilot/README.md).
+  NE_API_QDRANT_COLLECTION: ne_chunks
+  NE_API_TEI_URL: http://tei-embed:80
+  # PRE-008: one byte-identical, read-only declarative registry in both roots.
+  NE_API_AGENT_MANIFEST_PATH: /etc/neutron/agents/registry.toml
+  # PRE-011F: one byte-identical, read-only Skill bundle in both roots. Only the
+  # worker reconciles it; the API app factory verifies it once before composition.
+  NE_SKILLS_BUNDLE_DIR: /etc/neutron/skills
+  NE_SKILL_BUNDLE_RAW_SHA256: ${NE_SKILL_BUNDLE_RAW_SHA256:?set by governed Compose executor}
+  # Model gateway menu — one private-vllm (open-weight, in-VPC) entry; enough to
+  # boot + pass /healthz (LiteLLM config is lazy). See the NE-103b decision note in
+  # the README (tracked follow-up NE-BUNDLE-GATEWAY-CONFIG).
+  NE_GATEWAY_MODELS: >-
+    [{"name":"private-default","litellm_model":"hosted_vllm/${NE_VLLM_SERVED_NAME:-qwen3.6-35b-a3b}","provider":"hosted_vllm","lane":"private-vllm","api_base":"http://vllm:8000/v1","context_window":32768}]
+  NE_GOVERN_OPA_URL: http://opa:8181
+  NE_IDENTITY_OIDC__ISSUER: https://${NE_PILOT_HOSTNAME:?set via the config bundle (ne up --bundle)}:8443/realms/ne-pilot
+  NE_IDENTITY_OIDC__AUDIENCE: ne-console
+  # NE-103b: serve the console dist the NE-103a image carries same-origin with /api.
+  NE_API_SERVE_CONSOLE_DIST: /app/console-dist
+  # NE-103b OIDC-live JWKS wiring + TRACKED residual (NE-IDENTITY-JWKS-CA): the token
+  # `iss` stays the EXTERNAL https issuer; only the KEY FETCH goes in-network.
+  NE_IDENTITY_OIDC__JWKS_URI: http://keycloak:8080/realms/ne-pilot/protocol/openid-connect/certs
+  NE_IDENTITY_OIDC__ALLOW_INSECURE_HTTP: "true"
+  NE_API_APPROVER_ROLES: '["approver"]'
+  NE_API_OPS_ROLES: '["ops"]'
+  NE_API_STEWARD_ROLES: '["steward"]'
+  # NE-103c: BOTH processes run durability=dbos (config_hash parity, design §6.2) and
+  # ne-api enqueues turns to the worker; the browser SSE stays byte-identical.
+  NE_RUNTIME_DURABILITY: "dbos"
+  NE_API_TURN_EXECUTION: "enqueue"
+  NE_API_TURN_TIMEOUT_S: "300"
+  # The DBOS system database URL (ne-api's DBOSClient enqueue + stream read). Same
+  # dedicated `ne_dbos` database the worker launches. Plain ${...} interpolation (C12
+  # secret-hygiene: a mid-DSN ${...:?} false-trips the literal scanner — the
+  # postgres service's own ${...:?} on the pw var keeps fail-closed).
+  NE_API_DBOS_SYSTEM_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/ne_dbos
+  # The five module DB URLs the composition root reads — all the SAME platform
+  # Postgres (user ne, db neutron). PermissionsSettings now overrides the base
+  # NeSettings env_prefix (NE-CLEAN4, resolving NE-PERMISSIONS-FOLLOWUP), so its
+  # database_url reads NE_PERMISSIONS_DATABASE_URL consistently with its siblings
+  # (NE_RUNTIME_/NE_AUDIT_/NE_FLYWHEEL_). A bare/unprefixed permissions DB key would
+  # be silently ignored and PermissionsSettings would default to a CWD sqlite file,
+  # unwritable on the read-only rootfs — the NE-103a pilot crash that rename fixes.
+  NE_RUNTIME_SESSION_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  NE_AUDIT_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  NE_PERMISSIONS_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  NE_FLYWHEEL_SIGNAL_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  NE_API_EVAL_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  # Tier-2 graph over the admitted persistent AGE substrate. The DSN and graph
+  # name carry REAL values (non-secret, and both roots MUST address the identical
+  # graph); ACTIVATION is the NULL-VALUED pass-through key below, the NE-087
+  # NE_REBAC_* idiom. Unset => compose OMITS NE_BRAIN_GRAPH_ENABLED from the
+  # container env ENTIRELY => BrainGraphSettings.enabled is False and the default
+  # config_hash is byte-identical. `ne up --graph` writes it into the ephemeral
+  # 0600 --env-file, and `ne up`/`ne down` scrub ambient NE_BRAIN_GRAPH_* from the
+  # compose subprocess env so a stale operator export cannot hold the tier ON
+  # across a rollback. All four keys sit in the SHARED anchor because a
+  # per-service copy is exactly how ne-api and ne-worker come to freeze different
+  # config_hashes over one graph.
+  #
+  # NE_BRAIN_GRAPH_SOURCES is deliberately ABSENT rather than null-valued: this
+  # tier declares no connector-sync source, so a population mapping declared here
+  # would map nothing. Activation composes graph READ over whatever the admitted
+  # AGE volume already holds; it populates nothing by itself.
+  NE_BRAIN_GRAPH_DATABASE_URL: postgresql://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  # AgeGraphStore consumes the raw libpq DSN above through psycopg directly, while
+  # the sync ledger consumes this SQLAlchemy URL.  Name psycopg explicitly: the
+  # ne-app runtime ships psycopg 3 and intentionally does not ship psycopg2.
+  NE_BRAIN_GRAPH_LEDGER_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/neutron
+  NE_BRAIN_GRAPH_GRAPH_NAME: ne_graph
+  NE_BRAIN_GRAPH_ENABLED:
+  # NE-087 (O-4) OpenFGA ReBAC — five NULL-valued pass-through keys (FIX-1). Docker
+  # compose OMITS a null-valued env key from the container ENTIRELY when it is unset
+  # in the --env-file, and flows the value through when set. Plain `ne up` writes
+  # none (and scrubs ambient NE_REBAC_* from the compose subprocess env), so the
+  # default-off container env is BYTE-IDENTICAL (no NE_REBAC_* key at all) and the
+  # config_hash is unchanged; `ne up --profile rebac` writes all five from the
+  # bundle SecretStore (token) + config/ne-rebac.toml (ids) so the RebacSettings
+  # resolver ACTUALLY activates. Both ne-api AND ne-worker share this anchor so the
+  # frozen config_hash stays identical across the two processes.
+  NE_REBAC_ENABLED:
+  NE_REBAC_API_URL:
+  NE_REBAC_STORE_ID:
+  NE_REBAC_AUTHORIZATION_MODEL_ID:
+  NE_REBAC_API_TOKEN:
+
+  # PRE-009A (A3) Agent Run private payloads — two NULL-VALUED pass-through keys,
+  # the same NE-087 idiom as the five above. They sit in this SHARED anchor on
+  # purpose: ne-api and ne-worker MUST receive the byte-identical secret reference,
+  # and a per-service copy is exactly how two roots come to hold different keys.
+  #
+  # NULL-VALUED, never a literal: `NE_AGENT_PRIVATE_PAYLOAD_KEY_ID` matches the
+  # pilot hygiene scanner's credential-key regex (`_key`), so a literal value here
+  # would trip test_pilot_secret_hygiene. The material is resolved from the bundle
+  # SecretStore into the ephemeral 0600 --env-file by `ne up`, never written here,
+  # and `ne up` additionally scrubs ambient NE_AGENT_PRIVATE_PAYLOAD_* so a stale
+  # host value cannot win. Unset ⇒ compose OMITS both keys ⇒ the composition root
+  # stays dormant; set ⇒ both flow through and the root asserts current-key
+  # readiness before it serves.
+  NE_AGENT_PRIVATE_PAYLOAD_KEY_ID:
+  NE_AGENT_PRIVATE_PAYLOAD_KEK_B64:
+
+  # 015A0-AUTHORITY-CORE source-authority continuation key — two more NULL-VALUED
+  # pass-through keys in this SAME shared anchor, for the same reason: ne-api and
+  # ne-worker must receive the byte-identical secret reference, and a per-service
+  # copy is exactly how two roots come to hold different keys and stop honouring
+  # each other's continuation tokens.
+  #
+  # NULL-VALUED, never a literal: both names match the pilot hygiene scanner's
+  # credential-key regex (`_key`). The material is resolved from the bundle
+  # SecretStore into the ephemeral 0600 --env-file by `ne up`. Unset => compose
+  # OMITS both keys => continuation is simply not ready on the replica; the rest
+  # of the deployment serves normally.
+  NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_ID:
+  NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_B64:
+
+  # 015A0-AUTHORITY-M365 sub-SLA permission sweep. NON-SECRET, so these carry real
+  # values rather than the null-valued pass-through idiom above: they are sweep
+  # ARITHMETIC, and a deployment that cannot state them has no business claiming a
+  # quiet M365 item is still fresh.
+  #
+  # They live in the SHARED anchor because the API projects the same contract
+  # descriptor the worker admits under; a per-service copy is how the two roots
+  # come to report different epochs for one connector scope.
+  #
+  # The plan must satisfy ceil(max_points / batch_size) * (cadence +
+  # max_batch_duration) < SLA. With the connector's PT1H (3600s) default:
+  # ceil(500 / 50) * (120 + 60) = 1800 < 3600. Authority itself is OFF by default —
+  # a connector never acquires authority-issuance capability just by being
+  # configured — so these values only take effect once it is switched on.
+  NE_M365_AUTHORITY_ENABLED: "false"
+  NE_M365_AUTHORITY_SWEEP_CADENCE_SECONDS: "120"
+  NE_M365_AUTHORITY_SWEEP_BATCH_SIZE: "50"
+  NE_M365_AUTHORITY_SWEEP_MAX_BATCH_DURATION_SECONDS: "60"
+  NE_M365_AUTHORITY_SWEEP_MAX_POINTS_PER_SCOPE: "500"
+
+  # The ONE non-NE_ key in this anchor, and deliberately so: a glibc allocator
+  # tunable, not a setting. It is the lever the host resource policy
+  # already specified and deferred ("MALLOC_ARENA_MAX=2 on the app containers …
+  # add it if a future burst reappears, not speculatively"). The burst has
+  # reappeared: ne-api rests at 1133-1145 MiB anon against this service's 2 GiB
+  # cap, and /proc/<pid>/smaps shows 156 anon regions including five fully
+  # resident 64 MiB secondary arenas — the fragmentation signature
+  # packages/ne-audit/src/ne/audit/verify.py names itself ("each burst grew a
+  # fresh glibc arena that is never returned to the OS"). The driver is the
+  # audit-chain-anchor-refresher, which walks a chain that grew 140,275 rows
+  # (09-01) -> 315,023 rows / 402 MB on an anyio worker thread every 300 s; each
+  # such thread that allocates concurrently gets its OWN arena, and glibc only
+  # returns memory at the TOP of an arena, so a fragmented arena stays mapped at
+  # its high-water mark forever. Capping the pool at 2 collapses that
+  # amplification for ANY future to_thread burst.
+  #
+  # OUTSIDE THE FROZEN config_hash, proven not asserted: the preimage is
+  # model_dump(mode="json") over pydantic settings models (ne-contracts
+  # config.py compute_platform_config_hash), NeSettings is the only BaseSettings
+  # base in the tree, it sets env_prefix="NE_" + extra="forbid", and every
+  # module subclass narrows that prefix (NE_API_, NE_GOVERN_, …). A key with no
+  # NE_ prefix cannot bind to any field, so this is NOT the NE_GOVERN_OPA_URL
+  # case that moved a frozen hash. It stays in the SHARED anchor anyway: both
+  # roots run the same image and the same to_thread paths, and a lever only one
+  # root inherits is how the two come to have different allocator behaviour.
+  MALLOC_ARENA_MAX: "2"
+
+services:
+  # --- core profile ----------------------------------------------------------
+  caddy:
+    image: caddy:2.11.4@sha256:af5fdcd76f2db5e4e974ee92f96ee8c0fc3edb55bd4ba5032547cbf3f65e486d
+    profiles: ["core"]
+    # THE ONLY off-box publisher. 443 = console + /api same-origin via ne-api
+    # (NE-103b), 8443 = Keycloak — both TLS-terminated by Caddy.
+    ports:
+      - "443:443"
+      - "8443:8443"
+    environment:
+      NE_PILOT_HOSTNAME: ${NE_PILOT_HOSTNAME:?set via the config bundle (ne up --bundle)}
+    volumes:
+      - ${NE_PILOT_CADDYFILE:-./caddy/Caddyfile}:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      # Caddy binds 443/8443 (privileged ports) inside the container; keep ONLY
+      # the one capability that requires, everything else dropped.
+      - NET_BIND_SERVICE
+    restart: unless-stopped
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      # NE-103b: 443 now reverse_proxies ne-api, so the front door must not come
+      # up before ne-api is healthy (else `ne up --wait` returns on a 502).
+      ne-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1"
+    healthcheck:
+      # Caddy exposes a loopback-only plaintext /healthz on :2020 (see Caddyfile)
+      # so the probe never fights the self-signed TLS cert.
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:2020/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  postgres:
+    image: *ne-postgres-age-image
+    platform: linux/amd64
+    pull_policy: never
+    profiles: ["core"]
+    command: ["-c", "listen_addresses=*"]
+    ports:
+      # Loopback only — on-VM processes (gateway/worker) reach it; never off-box.
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: ne
+      POSTGRES_PASSWORD: ${NE_PILOT_POSTGRES_PASSWORD:?set via the config bundle (ne up --bundle)}
+      POSTGRES_DB: neutron
+    volumes:
+      # PostgreSQL 18 images mount data at /var/lib/postgresql (see README).
+      - pg-data:/var/lib/postgresql
+      # The admitted Chainguard/Wolfi entrypoint processes first-boot SQL from
+      # /var/lib/postgres/initdb (not the official-image initdb.d path).
+      - ./initdb:/var/lib/postgres/initdb:ro
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ne -d neutron"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  age-admission:
+    image: *ne-postgres-age-image
+    platform: linux/amd64
+    pull_policy: never
+    profiles: ["core"]
+    # Entrypoint preflight. Docker materialises a MISSING bind-mount source as a
+    # DIRECTORY, and `/bin/sh <directory>` exits 0 — as does `/bin/sh <empty file>`.
+    # Either state satisfies this sidecar's `service_completed_successfully` gate
+    # while admission never runs, and nothing downstream can tell. The check cannot
+    # live in the admission script: the script is the thing that does not run.
+    #
+    # `head -c 1` rather than `[ -r ]` because this sidecar runs as uid 0, and
+    # `[ -r ]` reports a chmod-000 file READABLE for root even under cap_drop ALL
+    # while the actual read is denied. Only an attempted read discriminates.
+    # No `$` appears below, so compose interpolation cannot rewrite the guard.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        [ -f /usr/local/share/neutron/postgres-age-admission.sh ] || { echo 'age-admission: script path is missing or not a regular file' >&2; exit 78; }
+        head -c 1 /usr/local/share/neutron/postgres-age-admission.sh >/dev/null 2>&1 || { echo 'age-admission: script path is not readable' >&2; exit 78; }
+        [ -s /usr/local/share/neutron/postgres-age-admission.sh ] || { echo 'age-admission: script path is empty' >&2; exit 78; }
+        exec /bin/sh /usr/local/share/neutron/postgres-age-admission.sh
+    environment:
+      NE_PILOT_POSTGRES_PASSWORD: ${NE_PILOT_POSTGRES_PASSWORD:?set via the config bundle (ne up --bundle)}
+      NE_POSTGRES_AGE_IMAGE_DIGEST: *ne-postgres-age-image
+      NE_POSTGRES_AGE_SOURCE_REVISION: *ne-postgres-age-source-revision
+    volumes:
+      - ./postgres-age-admission.sh:/usr/local/share/neutron/postgres-age-admission.sh:ro
+      - age-admission-data:/var/lib/neutron-age-admission
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4@sha256:82a77884f3af238beab1e7afd63b5f530e1b5c0590bd7aa60b40a40463e29b2c
+    profiles: ["core"]
+    # Production `start` (NOT start-dev) behind Caddy: HTTP enabled on the
+    # in-network port, proxy headers trusted from the ingress only, external
+    # hostname is the TLS 8443 vhost Caddy serves.
+    command:
+      - "start"
+      - "--http-enabled"
+      - "true"
+      - "--proxy-headers"
+      - "xforwarded"
+      # NE-103b: import the checked-in pilot realm (ne-pilot) on start. Import is
+      # SKIPPED for an already-existing realm — see keycloak/README.md.
+      - "--import-realm"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${NE_PILOT_KEYCLOAK_ADMIN_PASSWORD:?set via the config bundle (ne up --bundle)}
+      KC_HOSTNAME: https://${NE_PILOT_HOSTNAME:?set via the config bundle (ne up --bundle)}:8443
+      KC_HEALTH_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ne
+      KC_DB_PASSWORD: ${NE_PILOT_POSTGRES_PASSWORD:?set via the config bundle (ne up --bundle)}
+      # NE-103b: the realm-import JSON substitutes ${NE_PILOT_HOSTNAME} into the
+      # ne-console redirectUris at `start --import-realm` (Keycloak env-placeholder
+      # substitution). Required for the browser auth-code redirect to resolve.
+      NE_PILOT_HOSTNAME: ${NE_PILOT_HOSTNAME:?set via the config bundle (ne up --bundle)}
+      # NE-BEW-INJECT: Entra broker (NE-BEW-REALM's disabled-by-default 'entra'
+      # identityProvider). Same NULL-VALUE pass-through idiom as the NE-087
+      # NE_REBAC_* anchor at ~:93-97: a bare key with NO value. Compose OMITS
+      # the key from the container env ENTIRELY when it is unset in the
+      # --env-file, and flows the value through when set. NEVER `:?` (absence
+      # must never parse-fail) and NEVER `:-` (that DEFINES the var as an
+      # empty string inside the container instead of omitting it — the exact
+      # defect this idiom avoids). Keycloak's realm-import env substitution
+      # resolves them into the disabled entry when present.
+      NE_PILOT_ENTRA_TENANT_ID:
+      NE_PILOT_ENTRA_BROKER_CLIENT_ID:
+      NE_PILOT_ENTRA_BROKER_CLIENT_SECRET:
+    volumes:
+      # NE-103b: the pilot realm JSON, imported read-only on start.
+      - ./keycloak:/opt/keycloak/data/import:ro
+    # NO published ports — reached only through Caddy (TLS 8443).
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2"
+    healthcheck:
+      # Gate on ACTUAL readiness (/health/ready on the 9000 management port),
+      # not just an open socket — so `ne up --wait` does not return before
+      # Keycloak serves realms (first-boot DB migration takes a while). The
+      # image has bash but no curl; do the HTTP GET over bash /dev/tcp.
+      test:
+        - "CMD-SHELL"
+        - 'exec 3<>/dev/tcp/127.0.0.1/9000; printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3; grep -q "200 OK" <&3'
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  ne-api:
+    # The first-party ne-app image (NE-103a). BUILD-IN-SEAL + LOCAL-DIGEST PIN
+    # (owner dec ii): built during the egress-permitted air-gap staging window
+    # (deploy/airgap/scripts/build-ne-app.sh) BEFORE the netns seal, then pinned
+    # by its --iidfile image id (asserted in air-gap Phase A). It has no
+    # published registry digest, so the C11 tag@sha256 rule cannot apply — the
+    # narrow, guardian-tested first-party exception (semver local tag +
+    # pull_policy:never + no registry prefix) covers it, and NO third-party image
+    # may adopt it. `pull_policy: never` blocks docker.io/library/ne-app squatting
+    # AND makes `compose pull` skip this service (the sealed stack never egresses).
+    # Reached ONLY via Caddy (wired in NE-103b); PARKED to 103b: console static
+    # serving, Caddy 443 vhost, the pilot Keycloak realm, OIDC-live auth. PARKED to
+    # 103c: the ne-worker role (a one-line `command:` override — no ENTRYPOINT).
+    image: *ne-app-image
+    pull_policy: never
+    profiles: ["core"]
+    labels:
+      neutron.dev/agent-registry-sha256: ${NE_AGENT_REGISTRY_RAW_SHA256:?set by governed Compose executor}
+      neutron.dev/skill-bundle-sha256: ${NE_SKILL_BUNDLE_RAW_SHA256:?set by governed Compose executor}
+    # NO ports — this service publishes nothing off-box (Caddy remains the sole
+    # off-box publisher; reached in-network in 103b).
+    # NE-103c: the shared ne-app env anchor (config_hash parity with ne-worker).
+    environment: *ne-app-env
+    volumes:
+      - ../../agents/registry.toml:/etc/neutron/agents/registry.toml:ro
+      - ../../skills:/etc/neutron/skills:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # BOUNDED. An uncapped `- /tmp` defaults to half of host RAM (`df` inside the
+    # container reported ~31 GB) while EVERY page is charged to this service's
+    # 2 GiB memory cgroup — the limit that binds is one no `df` shows. That is
+    # exactly how the 2026-09-05 kills happened (AS-BUILT PR #965): the kernel
+    # dump is `constraint=CONSTRAINT_MEMCG`, `usage 2097168kB limit 2097152kB`,
+    # `shmem 1780142080` vs `anon 306941952` — 1.78 GB of the cap was tmpfs and
+    # only 0.31 GB was process memory, seven kills at ~3-minute intervals, and
+    # the tmpfs itself was never close to full.
+    #
+    # WHY 512m, from the measurements and not from taste:
+    #   * UPPER BOUND. For the cap to do its job the write must fail BEFORE the
+    #     cgroup does: size + peak anon < 2048 MiB. ne-api's measured peak anon
+    #     is 1133-1145 MiB, so 1145 + 512 = 1657 MiB = 81% of the limit. The next
+    #     round value up disqualifies itself arithmetically — 1145 + 1024 = 2169
+    #     MiB is OVER the cap, i.e. a 1g tmpfs would still OOM ne-api and buy
+    #     nothing. 512m is the largest round size that actually guarantees
+    #     ENOSPC-before-OOM at the measured footprint.
+    #   * LOWER BOUND. The same 09-05 profile measured "/tmp minus the [uv] cache
+    #     … 8.0K": with the multi-gigabyte writer redirected (uv now derives its
+    #     cache from the venv root, ne-envbuild sidecar.py uv_cache_dir), the
+    #     entire remaining /tmp working set is the ne-worker heartbeat marker,
+    #     per-document tempfile.mkdtemp scratch (ne-brain docling_parser.py,
+    #     ne-connect m365/content.py), and $HOME dotfiles. 512 MiB is ~65,000x
+    #     the measured steady state — the cap cannot plausibly be the thing that
+    #     breaks ingestion.
+    #   * AGAINST THE ACTUAL INCIDENT. The kill came at 1698 MiB of shmem; a
+    #     512 MiB cap stops the same runaway 3.3x earlier and turns a 95-minute
+    #     OOM crash-loop into one ENOSPC that names the offending path.
+    tmpfs:
+      - /tmp:size=512m
+    restart: unless-stopped
+    depends_on:
+      age-admission:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      opa:
+        condition: service_healthy
+      ne-worker:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          # == the 2-vCPU CI runner cap, so no compose.ci.yaml override is needed.
+          #
+          # DELIBERATELY NOT RAISED to 3g alongside the two bounds above. The
+          # 2026-09-05 kills were shmem, not anon (1.78 GB tmpfs vs 0.31 GB
+          # process), and the runaway reached its full 3.3 GB before dying — a
+          # 3 GiB cap would have failed at 3 GiB instead of 2, so the size= bound
+          # is the fix and a bigger limit is not. For the resting footprint,
+          # MALLOC_ARENA_MAX attacks the mechanism (retained 64 MiB arenas)
+          # whereas a bigger limit just raises the ceiling glibc may fragment up
+          # to. And the host headroom is not free: MemFree looks large but
+          # SwapFree is 1.45 of 16.8 GB (91% used) and Committed_AS already
+          # exceeds CommitLimit, so there is nowhere left to evict a container
+          # that grows into a larger ceiling. Revisit only on a MEASUREMENT of
+          # resting anon after MALLOC_ARENA_MAX=2 is deployed.
+          memory: 2g
+          cpus: "2"
+    healthcheck:
+      # litellm import at factory time makes boot ~10-30s; generous start_period.
+      test:
+        - "CMD"
+        - "/app/.venv/bin/python"
+        - "-c"
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status==200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  ne-worker:
+    # NE-103c: the durable ne-worker — the SAME first-party ne-app image as ne-api,
+    # different command ("one image, diff command"; the NE-103a no-ENTRYPOINT CMD
+    # seam). It launches DBOS-Postgres, executes chat turns enqueued by ne-api as
+    # durable workflows, runs the NE-034 cron scheduler + outbox drain, and shares
+    # the ONE governed stack by storage. NO inbound HTTP surface at all.
+    # DECIDED (SPEC §5 row overrides design §8's 'agents'): the worker rides the CORE
+    # profile — ne-api ships enqueue mode so its executor co-starts, and air-gap
+    # Phase A runs core. Same narrow first-party exception as ne-api (local semver
+    # tag + pull_policy:never + no registry prefix); the pin is the Phase-A --iidfile.
+    image: *ne-app-image
+    pull_policy: never
+    profiles: ["core"]
+    labels:
+      neutron.dev/agent-registry-sha256: ${NE_AGENT_REGISTRY_RAW_SHA256:?set by governed Compose executor}
+      neutron.dev/skill-bundle-sha256: ${NE_SKILL_BUNDLE_RAW_SHA256:?set by governed Compose executor}
+    command: ["/app/.venv/bin/python", "-m", "ne.worker"]
+    # NO ports — the worker has no inbound HTTP surface (Caddy stays the sole
+    # off-box publisher; the worker reaches only Postgres + the gateway).
+    environment:
+      <<: *ne-app-env
+      # WorkerSettings placement knobs (deliberately NOT in the frozen config_hash).
+      # The dedicated ne_dbos database the worker launches DBOS's schema in.
+      NE_WORKER_DBOS_DATABASE_URL: postgresql+psycopg://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/ne_dbos
+      # P2-21 day-one SIEM export: the drain ships audit/cost/approval outbox events as
+      # OTel logs to the in-cluster otel-collector (obs profile; `ne up` default
+      # 'pilot' = core+brain+obs), which the customer configures to forward to their
+      # SIEM. C2: in-cluster sink only (validate_in_vpc_endpoint rejects external hosts
+      # at worker boot). Clearing NE_WORKER_OUTBOX_CONSUMER turns the export off.
+      NE_WORKER_OUTBOX_CONSUMER: siem-otel
+      NE_WORKER_OUTBOX_OTLP_ENDPOINT: http://otel-collector:4318
+    volumes:
+      - ../../agents/registry.toml:/etc/neutron/agents/registry.toml:ro
+      - ../../skills:/etc/neutron/skills:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # BOUNDED, same size and same reasoning as ne-api's (see the derivation
+    # there) — and this is the role the 2026-09-05 kills actually landed on: it
+    # runs the connector cron, so it is the root that builds the docling parser
+    # sidecar and whose uv cache filled the unbounded tmpfs. Its resting anon is
+    # 399 MiB, so 399 + 512 = 911 MiB = 45% of the 2 GiB cap — even more slack
+    # than ne-api has. Kept identical to ne-api rather than sized per role: the
+    # two are one image with different commands, and a per-role tmpfs bound is
+    # how they come to fail differently under the same load.
+    tmpfs:
+      - /tmp:size=512m
+    restart: unless-stopped
+    depends_on:
+      age-admission:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      opa:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2"
+    healthcheck:
+      # The heartbeat-marker liveness (--health): fresh marker (< 60s) ⇒ healthy.
+      # litellm import at composition time makes boot slow → generous start_period.
+      test: ["CMD", "/app/.venv/bin/python", "-m", "ne.worker", "--health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+
+  opa:
+    image: openpolicyagent/opa:1.18.2-debug@sha256:7ee75476b179699061e61e277e1aafa7d13e126034fcdcba4beca8d233c3e865
+    profiles: ["core"]
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--disable-telemetry"
+      - "/policies"
+    volumes:
+      - ./opa/policies:/policies:ro
+    ports:
+      - "127.0.0.1:8181:8181"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8181/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # --- brain profile ---------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:v1.18.2@sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c
+    profiles: ["brain"]
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    # DERIVED, not cargo-culted. With no `ulimits:` here the container inherited
+    # dockerd's rlimits, and dockerd's SOFT NOFILE is 1024 (docker.service ships
+    # no LimitNOFILE, so systemd's DefaultLimitNOFILESoft applies; measured on the
+    # demo host: the live `./qdrant` pid had `Max open files 1024 / 524288`).
+    # Qdrant does not raise its own soft limit, so 1024 was the real ceiling.
+    # Demand: Qdrant holds files open per SEGMENT, not per query. Measured on the
+    # live demo at the time the store went red: 986 collections, each reporting
+    # `segments_count: 2` with `on_disk_payload: true`, plus a per-shard WAL —
+    # order 20k open files, ~20x over the 1024 it was actually given. The optimizer
+    # then failed with `Too many open files (os error 24)` and every write after it
+    # died on `Can't write WAL: "no segments available"`.
+    # 262144 = ~10x that measured worst case, so a segment-count blow-up has room
+    # to be noticed instead of corrupting the store; and it is NOT unbounded, so a
+    # genuine descriptor leak still surfaces as an error here rather than
+    # exhausting the host file table. It is also the value this repo already uses
+    # for the other storage engine it runs (ClickHouse, see
+    # deploy/compose/dev/compose.yaml). soft == hard because Qdrant never raises
+    # its own soft limit; a lower soft would simply re-create this incident.
+    # GRANTABILITY IS A HOST FACT, NOT A PROPERTY OF THIS NUMBER. On THIS demo
+    # host it is grantable: dockerd's hard NOFILE is 524288 (measured:
+    # /proc/<dockerd>/limits reads `524287 524288`) and the kernel's fs.nr_open is
+    # 1048576, so 262144 sits under both. Neither is guaranteed elsewhere. A hard
+    # rlimit the daemon cannot grant is refused at CONTAINER CREATE, so on a host
+    # with a lower fs.nr_open or a lower permitted hard limit this line does not
+    # degrade — Qdrant fails to start rather than running short of descriptors.
+    # WHICH PATH APPLIES IT. `ulimits` is a container-CREATE parameter, so it
+    # binds only where this container is actually (re)created. That is the full
+    # converge — `ne demo up` / `ne pilot up` with the `brain` profile, whose bare
+    # `up --detach --wait` (tools/ne-cli/src/ne/cli/up.py:1118-1123, no --no-deps
+    # and no service list) recreates every service whose config changed.
+    # So, concretely: this ceiling reaches a running store only when an operator
+    # runs a full converge, because restarting the existing container reuses its
+    # creation-time rlimits. The test in
+    # tools/ne-cli/tests/test_pilot_stack.py only parses this YAML; it pins the
+    # value against silent retuning and says nothing about grantability. Before
+    # running this stack on a new host, check `cat /proc/sys/fs/nr_open` and
+    # dockerd's own limits, and lower BOTH numbers together if either is smaller.
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  tei-embed:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3@sha256:ad950d30878eceb72aaf32024d26fa2b1d04a75304fa0b4776b49aa1941fea07
+    profiles: ["brain"]
+    command: ["--model-id", "Qwen/Qwen3-Embedding-0.6B"]
+    environment:
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      # Air-gap: set NE_PILOT_HF_OFFLINE=1 once weights are pre-staged into the
+      # tei-embed-cache volume (see README air-gap notes).
+      HF_HUB_OFFLINE: ${NE_PILOT_HF_OFFLINE:-0}
+    ports:
+      - "127.0.0.1:8085:80"
+    volumes:
+      - tei-embed-cache:/data
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "4"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/80'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # NE-RERANK-CPU (measured 2026-08-27 on the 16-core demo box, live corpus,
+  # 20 candidates = the Ask path's retrieval_top_k=5 x candidate_multiplier=4,
+  # mean 701 chars / 239 tokens per chunk, 3 reps each, median):
+  #
+  #   cpus "4"  RAYON_NUM_THREADS 8  (as shipped) ->  78.1 s per search
+  #   cpus "12" RAYON_NUM_THREADS 8                ->  36.2 s per search
+  #   cpus "12" RAYON_NUM_THREADS 12               ->  31.2 s per search   <- this
+  #   cpus "14" RAYON_NUM_THREADS 14               ->  34.2 s (WORSE: past the knee)
+  #
+  # Top-5 ordering and scores were byte-identical across every row — this buys
+  # 2.5x for free, it does not change what is retrieved. 12 is the knee, not a
+  # ceiling reached by rounding: 14 regressed because the rest of the stack
+  # (postgres, qdrant, tei-embed, caddy) still needs cores. vllm-cpu is idle
+  # whenever chat is served by the external GPU lane, which is where the cores
+  # come from.
+  #
+  # RAYON_NUM_THREADS is set explicitly because the TEI image bakes in "8" and
+  # a raised cpu quota alone cannot be seen by rayon's thread pool.
+  #
+  # DO NOT raise MAX_BATCH_TOKENS here (it is unset ⇒ TEI's 16384 default; the
+  # demo overlay pins 2048). MEASURED, same box, same corpus: 16384 changed the
+  # per-search cost by nothing (80.9 s vs 78.1 s at cpus "4" — noise) because
+  # the Candle CPU backend forces `max_batch_requests=4`, so a forward pass
+  # carries 4 sequences (~956 tokens) whatever the token budget says, and the
+  # budget was never the binding constraint. It DOES raise the warm-up peak from
+  # ~1 GiB to ~12 GiB, which cgroup-OOM-kills against the 4 GiB limit below.
+  tei-rerank:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3@sha256:ad950d30878eceb72aaf32024d26fa2b1d04a75304fa0b4776b49aa1941fea07
+    profiles: ["brain"]
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3"]
+    environment:
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      HF_HUB_OFFLINE: ${NE_PILOT_HF_OFFLINE:-0}
+      RAYON_NUM_THREADS: "12"
+    ports:
+      - "127.0.0.1:8086:80"
+    volumes:
+      - tei-rerank-cache:/data
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "12"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/80'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # --- obs profile -----------------------------------------------------------
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.155.0@sha256:4935caa35e9a4cb387e35732e8fb22b2b5759af8d12e7043357f03837f6e8df5
+    profiles: ["obs"]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1"
+    # No healthcheck: this image is distroless and has no shell/wget/curl to
+    # probe with (mirrors the dev tier). Compose `--wait` treats it healthy once
+    # it is running.
+
+  # --- rebac profile (NE-087 O-4) --------------------------------------------
+  # OpenFGA fine-grained-sharing sidecar, OFF by default. Enabled ONLY with
+  # `ne up --profile rebac`; a one-shot `openfga migrate` runs first. See the
+  # "ReBAC (rebac profile)" section in deploy/compose/pilot/README.md.
+  openfga-migrate:
+    image: openfga/openfga:v1.18.3@sha256:01a6000aa6040a4d0bde6ea1d3359ac3b9f21dc972ac6103a87b38659a836776
+    profiles: ["rebac"]
+    command: ["migrate"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/openfga?sslmode=disable
+    user: "65532:65532"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # One-shot init job: it runs to completion and MUST NOT be restarted (the
+    # set-equation carve-out in test_pilot_stack.py pins this to the single
+    # migrate service). Quoted "no" so YAML never coerces it to boolean false.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1"
+
+  openfga:
+    image: openfga/openfga:v1.18.3@sha256:01a6000aa6040a4d0bde6ea1d3359ac3b9f21dc972ac6103a87b38659a836776
+    profiles: ["rebac"]
+    # C1: playground + metrics telemetry explicitly OFF (no phone-home in-VPC).
+    command: ["run", "--playground-enabled=false", "--metrics-enabled=false"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://ne:${NE_PILOT_POSTGRES_PASSWORD}@postgres:5432/openfga?sslmode=disable
+      OPENFGA_AUTHN_METHOD: preshared
+      OPENFGA_AUTHN_PRESHARED_KEYS: ${NE_PILOT_OPENFGA_API_TOKEN:-}
+    ports:
+      # HTTP API only, loopback — for the on-VM bootstrap CLI. gRPC 8081 stays
+      # unpublished (Caddy remains the sole off-box publisher).
+      - "127.0.0.1:8080:8080"
+    user: "65532:65532"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openfga-migrate:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1"
+    healthcheck:
+      # The upstream image bundles /usr/local/bin/grpc_health_probe; probe the gRPC
+      # health service on 8081 (the HTTP API on 8080 is what the SDK speaks).
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=127.0.0.1:8081"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+volumes:
+  caddy-data:
+  caddy-config:
+  pg-data:
+  age-admission-data:
+  qdrant-data:
+  tei-embed-cache:
+  tei-rerank-cache:

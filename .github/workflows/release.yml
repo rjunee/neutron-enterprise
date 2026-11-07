@@ -1,0 +1,118 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Key-based signing only — NO id-token permission (no keyless / Fulcio / Rekor).
+# contents: write is needed to upload assets to the GitHub release.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+      COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Assert signing key is provisioned (fail-closed)
+        run: |
+          if [ -z "${COSIGN_PRIVATE_KEY}" ]; then
+            echo "signing key not provisioned — see docs/security/signing.md" >&2
+            exit 1
+          fi
+
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+
+      - name: Build wheels + sdists
+        run: uv build --all-packages --out-dir dist
+
+      - name: Aggregate NOTICE
+        run: uv run ne release notice --out dist/NOTICE
+
+      - name: Generate CycloneDX SBOMs (bespoke stdlib, spec 1.6, deterministic serials)
+        # NE-069R: --deterministic makes each standalone SBOM byte-identical to the
+        # copy inside the release bundle, so the digest a consumer computes over an
+        # uploaded *.cdx.json matches the manifest-recorded sha256.
+        run: uv run ne release sbom --all --deterministic --out dist/sbom
+
+      - name: Build versioned release bundle (deterministic)
+        # Checkout is clean in CI, so no --allow-dirty; a workflow_dispatch run
+        # with no tag on HEAD (e.g. a manual re-run from a branch) falls back
+        # to the v0.0.0-dev sentinel rather than failing the whole workflow.
+        run: |
+          TAG="$(git describe --tags --exact-match 2>/dev/null || echo v0.0.0-dev)"
+          uv run ne release bundle --tag "$TAG" --out dist/bundle
+
+      - name: Verify SBOM digests match the bundle manifest (fail-closed)
+        run: |
+          uv run python - <<'EOF'
+          import hashlib, json, pathlib, sys
+
+          manifest_path = next(pathlib.Path("dist/bundle").glob("*.manifest.json"))
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          expected = {pathlib.PurePosixPath(m["sbom"]).name: m["sha256"] for m in manifest["members"]}
+          actual = {
+              p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+              for p in pathlib.Path("dist/sbom").glob("*.cdx.json")
+          }
+          if set(expected) != set(actual):
+              sys.exit(f"SBOM file set mismatch: manifest={sorted(expected)} dist/sbom={sorted(actual)}")
+          bad = [f"{n}: uploaded={actual[n]} manifest={h}" for n, h in sorted(expected.items()) if actual[n] != h]
+          if bad:
+              sys.exit("SBOM digest mismatch (random serial leak?):\n" + "\n".join(bad))
+          print(f"verified {len(expected)} standalone SBOM digest(s) against the bundle manifest")
+          EOF
+
+      - name: Install pinned cosign (checksum-verified)
+        run: sudo ./tools/supply-chain/install-scanners.sh /usr/local/bin
+
+      - name: Provenance + sign each artifact (key-based, offline bundles)
+        run: |
+          mkdir -p dist/provenance
+          shopt -s nullglob
+          artifacts=(dist/*.whl dist/*.tar.gz dist/NOTICE dist/sbom/*.cdx.json dist/bundle/*.tar.gz dist/bundle/*.manifest.json)
+          for art in "${artifacts[@]}"; do
+            base="$(basename "$art")"
+            prov="dist/provenance/${base}.intoto.json"
+            uv run ne release provenance --subject "$art" --out "$prov"
+            cosign sign-blob --yes \
+              --key env://COSIGN_PRIVATE_KEY \
+              --tlog-upload=false \
+              --bundle "${art}.cosign.bundle" \
+              "$art"
+            cosign attest-blob --yes \
+              --key env://COSIGN_PRIVATE_KEY \
+              --predicate "$prov" \
+              --type slsaprovenance1 \
+              --tlog-upload=false \
+              --bundle "${art}.att.bundle" \
+              "$art"
+          done
+
+      - name: Ensure GitHub release exists
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" \
+              --verify-tag \
+              --title "${GITHUB_REF_NAME}" \
+              --generate-notes
+
+      - name: Upload signed artifacts to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" \
+            dist/*.whl dist/*.tar.gz dist/NOTICE \
+            dist/*.cosign.bundle dist/*.att.bundle \
+            dist/provenance/*.intoto.json \
+            dist/sbom/*.cdx.json dist/sbom/*.cosign.bundle dist/sbom/*.att.bundle \
+            dist/bundle/*.tar.gz dist/bundle/*.manifest.json dist/bundle/*.cosign.bundle dist/bundle/*.att.bundle \
+            --clobber

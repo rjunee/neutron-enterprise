@@ -1,0 +1,349 @@
+/* Copyright (c) 2026 Ryan Junee. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* GRAPH composition (CR-B9, screens/graph.html + NOTES.md §Knowledge Graph).
+ * The whole viewport is the workspace; the canvas is the content. One 48px
+ * workbar carries what three stacked header rows used to (place, mode, depth,
+ * the served truth); the floor below is entity rail · canvas · record pane. */
+
+.ne-graphwork {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--topbar-height));
+  min-height: 480px;
+}
+
+/* The workbar is a 48px toolbar, not a second topbar (NOTES.md "Named
+ * divergences"): it matches the audit toolbar's height vocabulary rather than
+ * --topbar-height, returning the difference to the canvas. */
+.ne-workbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-16);
+  height: 48px;
+  padding: 0 var(--space-16);
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.ne-workbar__title {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.ne-workbar__crumb {
+  color: var(--text-dim);
+  font: var(--type-small);
+  white-space: nowrap;
+}
+
+.ne-workbar__h1 {
+  margin: 0;
+  font: 600 15px/22px var(--font-ui);
+  color: var(--text);
+}
+
+.ne-workbar__count {
+  color: var(--text-dim);
+  font: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ne-workbar__spacer {
+  flex: 1 1 auto;
+}
+
+/* Compound with .ne-btn (not just reordered after it): table.css's .ne-btn
+ * and this file are separate CSS modules stitched together by the bundler in
+ * JS-import-graph order, not source order within this file, so which one
+ * lands later in the shipped stylesheet is an assembly detail, not something
+ * this file controls. Tying the hide rule's specificity to .ne-btn itself
+ * (0,2,0 vs .ne-btn's 0,1,0) makes it win regardless of that order (owner
+ * defect, 2026-08-26 — "Find entities"/"Close finder" render but do nothing
+ * above 1024px: .ne-btn's `display: inline-flex` ended up after these rules
+ * in the deployed bundle and re-showed both buttons at every width). The
+ * narrow-mode show rules below are bumped to match so they still win over
+ * this at ≤64rem — that tie is resolved by THIS file's own internal order,
+ * which the bundler does not reshuffle. */
+.ne-btn.ne-workbar__findbtn {
+  display: none;
+}
+
+/* Mode segments: Graph | Record — one control, two faces of the same entity. */
+.ne-segs {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.ne-seg {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-12);
+  color: var(--text-dim);
+  font: 500 12.5px/18px var(--font-ui);
+  background: transparent;
+  text-decoration: none;
+}
+
+.ne-seg + .ne-seg {
+  border-left: 1px solid var(--rule-strong);
+}
+
+.ne-seg:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+
+.ne-seg[aria-current="page"] {
+  color: var(--text);
+  background: var(--selected-tint);
+  box-shadow: inset 0 -2px 0 var(--cherenkov);
+}
+
+.ne-seg:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+/* The three-column floor: entity rail (280px) · canvas · record pane
+ * (--detail-width, 392px). The record column exists only while a node is
+ * selected (Record mode's own view spans the remaining width instead). */
+.ne-graphwork__floor {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ne-graphwork__floor[data-pane-open="true"] {
+  grid-template-columns: 280px minmax(0, 1fr) var(--detail-width);
+}
+
+.ne-graphwork__finder,
+.ne-graphwork__main,
+.ne-graphwork__pane-slot {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The main column renders exactly ONE arm at a time — the canvas, a state
+ * block, or Record mode's reading view — and it has to hand that arm the
+ * floor's height, not just its own width. As a plain block box it did not:
+ * the canvas below is a frame whose only child is out of flow, so its auto
+ * height resolved to 0 and `overflow: hidden` clipped the whole chamber away
+ * (owner defect, 2026-08-26 — "clicking on Graph shows nothing", with the
+ * workbar still correctly reporting the node and edge counts it had loaded).
+ * A column flow is what makes "fill the rest" expressible; the state blocks
+ * and the record view keep their own content height because a column flex
+ * item's automatic minimum size is its content.
+ *
+ * jsdom does no layout, so no vitest assertion can see a box collapse here.
+ * `npm run check:graph-layout` (scripts/graph-canvas-layout-check.mjs) lays
+ * this floor out in a real browser and measures it. */
+.ne-graphwork__main {
+  display: flex;
+  flex-direction: column;
+}
+
+.ne-graphwork__finder > .ne-erail {
+  height: 100%;
+}
+
+/* Same reasoning as .ne-workbar__findbtn above. */
+.ne-btn.ne-graphwork__finder-close {
+  display: none;
+}
+
+/* The canvas slot: a positioned frame around GraphChamber (or the section's
+ * loading/empty/refused/error state) so the legend and the server's cap
+ * notice can sit ON the canvas without GraphChamber.tsx knowing about them —
+ * that markup belongs to CR-B10, but its on-canvas POSITION is this floor's
+ * to own. */
+.ne-graphwork__canvas {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ne-graphwork__canvas > .ne-state {
+  margin: var(--space-16);
+}
+
+/* The one sunken surface on this screen (screens/graph.html §canvas): the
+ * chamber reads as material under glass while every control around it sits
+ * on panel. Scoped to this workspace so the OTHER host of GraphChamber
+ * (the legacy Library › Graph tab, src/knowledge/library.css) is untouched. */
+.ne-graphwork .ne-chamber {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  border: none;
+  border-radius: 0;
+  background: var(--sunken);
+  box-shadow: var(--well-inset);
+}
+
+.ne-legend {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-12);
+  right: var(--space-12);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  color: var(--text-dim);
+  font: 400 11px/16px var(--font-ui);
+}
+
+.ne-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  white-space: nowrap;
+}
+
+.ne-legend__glyph {
+  width: 12px;
+  height: 12px;
+}
+
+.ne-legend__unconfirmed {
+  border-left: 1px solid var(--rule);
+  padding-left: var(--space-12);
+}
+
+.ne-chamber__notice {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-12);
+  left: var(--space-12);
+  padding: var(--space-4) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* The record pane column. */
+.ne-graphwork .ne-record {
+  border-left: 1px solid var(--rule-strong);
+}
+
+/* Narrow (≤64rem/1024px, matching useNarrowLayout's own query): the rail
+ * folds into a workbar "Find entities" toggle (a focus-trapped sheet), and
+ * the record pane overlays the canvas with the pane shadow. The canvas keeps
+ * the full width; the workbar is never clipped (the round-2 defect this
+ * treatment exists for). */
+@media (max-width: 64rem) {
+  /* Matches the hide rule's .ne-btn.ne-workbar__findbtn specificity (0,2,0)
+   * so this can still override it here; the two rules tie, and this file's
+   * own order (this comes after the hide rule, above) settles the tie. */
+  .ne-btn.ne-workbar__findbtn {
+    display: inline-flex;
+  }
+
+  .ne-graphwork__floor,
+  .ne-graphwork__floor[data-pane-open="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ne-graphwork__finder {
+    position: fixed;
+    z-index: 100;
+    inset: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--space-8);
+    padding: var(--space-12);
+    background: var(--ground);
+  }
+
+  .ne-graphwork__finder[hidden] {
+    display: none;
+  }
+
+  /* Same reasoning as .ne-workbar__findbtn's narrow-mode override above. */
+  .ne-btn.ne-graphwork__finder-close {
+    display: inline-flex;
+    justify-self: end;
+  }
+
+  .ne-graphwork__finder > .ne-erail {
+    max-height: none;
+  }
+
+  .ne-graphwork .ne-record {
+    position: absolute;
+    z-index: 60;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--detail-width);
+    max-width: 100%;
+    border-left: none;
+    box-shadow: var(--shadow-pane);
+  }
+}
+
+/* The gallery's forced-narrow frame reuses the same treatment statically. */
+.ne-narrowframe--graph {
+  position: relative;
+  width: 1100px;
+  max-width: 100%;
+  height: 430px;
+  overflow: hidden;
+}
+
+.ne-narrowframe--graph .ne-graphwork {
+  height: 100%;
+  min-height: 0;
+}
+
+.ne-narrowframe--graph .ne-graphwork__floor,
+.ne-narrowframe--graph .ne-graphwork__floor[data-pane-open="true"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ne-narrowframe--graph .ne-graphwork__finder {
+  display: none;
+}
+
+.ne-narrowframe--graph .ne-workbar__findbtn {
+  display: inline-flex;
+}
+
+.ne-narrowframe--graph .ne-record {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  bottom: 0;
+  width: var(--detail-width);
+  max-width: 100%;
+  box-shadow: var(--shadow-pane);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-graphwork *,
+  .ne-graphwork *::before,
+  .ne-graphwork *::after {
+    scroll-behavior: auto !important;
+  }
+}

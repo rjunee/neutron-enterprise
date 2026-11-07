@@ -1,0 +1,33 @@
+template_id = "disputes-directory"
+version = 1
+description = "Every Meridian debit-card (Reg E) dispute visible to the caller, including recorded credit amounts and the optional issue-date field. amount_dollars and credit_amount_dollars are the exact dollar renderings of amount_cents and credit_amount_cents ($X.YY), served so an answer can state the amounts in dollars; credit_amount_dollars is blank exactly when credit_amount_cents is."
+max_rows = 100
+sparql = """
+SELECT ?dispute ?dispute_id ?customer_id ?status ?notice_date ?amount_cents ?credit_amount_recorded ?credit_amount_cents ?credit_issue_date ?amount_dollars ?credit_amount_dollars WHERE {
+  #BINDINGS#
+  ?dispute a <https://neutron.enterprise/schema/meridian/RegEDispute> .
+  ?dispute <https://neutron.enterprise/schema/meridian/dispute_id> ?dispute_id .
+  ?dispute <https://neutron.enterprise/schema/meridian/customer_id> ?customer_id .
+  ?dispute <https://neutron.enterprise/schema/meridian/status> ?status .
+  ?dispute <https://neutron.enterprise/schema/meridian/notice_date> ?notice_date .
+  ?dispute <https://neutron.enterprise/schema/meridian/amount_cents> ?amount_cents .
+  ?dispute <https://neutron.enterprise/schema/meridian/amount_dollars> ?amount_dollars .
+  ?dispute <https://neutron.enterprise/schema/meridian/credit_amount_recorded> ?credit_amount_recorded .
+  OPTIONAL {
+    ?dispute <https://neutron.enterprise/schema/meridian/provisional_credit_amount_cents> ?credit_amount_cents .
+    ?dispute <https://neutron.enterprise/schema/meridian/provisional_credit_amount_dollars> ?credit_amount_dollars .
+  }
+  OPTIONAL { ?dispute <https://neutron.enterprise/schema/meridian/provisional_credit_issue_date> ?credit_issue_date . }
+}
+"""
+
+[scope]
+graph_classes = ["bank.dispute.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["dispute", "dispute_id", "customer_id", "status", "notice_date", "amount_cents", "credit_amount_recorded", "credit_amount_cents", "credit_issue_date", "amount_dollars", "credit_amount_dollars"]
+citation_var = "dispute"
+contributor_vars = ["dispute"]
+source_status = "source_bearing"
+count_total_rows = true

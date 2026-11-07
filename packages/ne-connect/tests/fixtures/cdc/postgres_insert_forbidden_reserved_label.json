@@ -1,0 +1,18 @@
+{
+  "before": null,
+  "after": {
+    "id": 4,
+    "name": "Dee Synthetic",
+    "email": "dee@synthetic.example",
+    "acl_group": "acl:tenant-all"
+  },
+  "source": {
+    "connector": "postgresql",
+    "db": "appdb",
+    "schema": "public",
+    "table": "customers",
+    "lsn": 1006
+  },
+  "op": "c",
+  "ts_ms": 1720000004000
+}

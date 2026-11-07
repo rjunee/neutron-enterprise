@@ -1,0 +1,12 @@
+Neutron Enterprise — ne-events
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  sqlalchemy / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+  pydantic / >=2.13.4,<3 / MIT / https://github.com/pydantic/pydantic
+  greenlet (transitive, platform-conditional) / MIT / https://github.com/python-greenlet/greenlet
+
+Test-only:
+  psycopg[binary] / >=3.3.4,<4 / LGPL-3.0 / https://github.com/psycopg/psycopg

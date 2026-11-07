@@ -1,0 +1,1356 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # NE-CI-DISPATCH (owner-approved 2026-07-28): lets the orchestrator run the
+  # FULL suite on any unit branch without first opening a PR. The point is to
+  # move full sweeps OFF the local machine — a 3005-test sweep is single-core
+  # and took 637-1462s locally while this job takes ~10min on GitHub hardware.
+  workflow_dispatch:
+
+# Least privilege: CI only reads the repo.
+permissions:
+  contents: read
+
+# Seven sibling workflows already declare a concurrency group; `ci` did not, so a
+# push that superseded an in-flight run left the old one running to completion
+# against a commit nobody would merge. On a 2-vCPU runner whose `check` is
+# ~70 minutes that is a whole runner-hour per superseded push, and a lane that
+# pushes several fix rounds in quick succession is exactly the pattern that
+# stacks them.
+#
+# Keyed on `github.ref` like its siblings, so runs cancel only within a branch —
+# `main` and each PR remain independent.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # CHANGE CLASSES (2026-08-26, corrected 2026-09-08). Measured on this repo:
+  # 386 of 1,367 commits since 2026-08-01 touched ONLY `AS-BUILT.md`, and the
+  # `push:` trigger above fires the whole suite on every one. Re-measured on the
+  # CURRENT `ubuntu-latest` runner (main runs 34003241490 / 33989411299 /
+  # 33949330599, 2026-09-05..06): check 69.8/72.4/82.9m, frontend 8.7/8.4/8.3m,
+  # live-postgres 6.7/6.5/6.5m, live-postgres-pooled 5.1/4.9/4.8m, typecheck
+  # 1.8/2.0/1.8m, upgrade 0.3m. The per-job figures in the original draft of this
+  # comment (check 11m18s, frontend 6m42s) were from the retired `ubuntu-16core`
+  # runner and understate the current bill by ~4.7x on `check`.
+  #
+  # WHAT THIS GATES, AND WHY IT IS ONLY THE LIVE-POSTGRES LANES.
+  #
+  # GitHub records a conditionally-skipped job as a check run with conclusion
+  # `skipped`, and a `skipped` conclusion SATISFIES a required status context.
+  # This repo has already hit that mechanism once: a job that did not run
+  # reported as a passing REQUIRED check and a PR merged on evidence that had
+  # never been produced.
+  #
+  # `main`'s ruleset requires five contexts: `check`, `frontend`, `typecheck`,
+  # `vuln-scan` (supply-chain.yml) and `review-gate`. NONE of them is gated here.
+  # `live-postgres` and `live-postgres-pooled` are the only jobs made
+  # conditional, and neither is a required context —
+  # `tools/ne-cli/tests/test_workflow_authority_gate.py` states the same fact
+  # from the other direction ("`live-postgres` is not a required context, so a
+  # gate there blocks nothing"). So a `skipped` conclusion from this mechanism
+  # cannot satisfy anything at the merge button: the property that makes the
+  # mechanism dangerous is structurally absent, not merely argued away.
+  #
+  # An earlier revision ALSO gated the required `typecheck` and `frontend`
+  # contexts. It was withdrawn. Skipping them is semantically lossless only if
+  # the classifier is correct, and the classifier is a shell script — the first
+  # version of it called a `git mv packages/ne-console/src/...tsx docs/x.md`
+  # "docs-only", because `git diff --name-only` prints ONLY the destination of a
+  # detected rename. That would have skipped `frontend` — the job carrying the
+  # PRE-016 console evidence floor — GREEN, on a change that deleted the file the
+  # floor is measured from. Widening the gate to required contexts is the owner's
+  # call to make explicitly; it is not smuggled in with a cost saving.
+  #
+  # `check` is NOT gated and never can be:
+  # `test_the_ci_workflow_actually_runs_on_pull_requests` pins it unconditional —
+  # no job-level `if:`, no `needs:`, no `if:` on its pytest step, no
+  # `--deselect`/`--ignore`/`-k`. The self-record guard lives in that job and a
+  # skipped job reports GREEN. `check` is also the wall-clock pole at ~70-83
+  # minutes, so THIS CHANGE MAKES A DOCS-ONLY RUN CHEAPER, NOT FASTER: it drops
+  # ~11.5 runner-minutes of billed time and zero minutes of wall clock.
+  #
+  # WHY JOB-LEVEL `if:` AND NOT WORKFLOW `paths:` FILTERS. GitHub documents that
+  # a workflow filtered out by `paths:` leaves its required checks *Pending
+  # forever*, which BLOCKS the merge rather than speeding it up; the documented
+  # remedy is "avoid requiring workflows that can be skipped".
+  #
+  # `classify` FAILS OPEN IN EVERY DIRECTION: the guarded jobs run unless
+  # `classify` finished successfully AND positively determined the diff touches
+  # no code. A crashed classifier, a cancelled one, an unknown event type, an
+  # unavailable base ref, a force-push with no computable range, an empty or
+  # unparseable output — every one of those yields the full suite.
+  classify:
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.classify.outputs.code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - id: classify
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -uo pipefail
+
+          # The output is written exactly ONCE, at the end, by `finish`. Writing
+          # `code=true` up front and `code=false` later would depend on
+          # GITHUB_OUTPUT's undocumented duplicate-key precedence; a script that
+          # dies before `finish` writes nothing, and an absent output is `''`,
+          # which the guarded `if:` treats as "run" just like `true`.
+          finish() {
+            echo "code=$1" >> "$GITHUB_OUTPUT"
+            echo "::notice::$2"
+            exit 0
+          }
+
+          case "$EVENT" in
+            pull_request) RANGE_BASE="$BASE_SHA" ;;
+            push)         RANGE_BASE="$BEFORE_SHA" ;;
+            *)            finish true "event '$EVENT' is not classified — running everything" ;;
+          esac
+
+          if [ -z "${RANGE_BASE:-}" ] || [ "$RANGE_BASE" = "0000000000000000000000000000000000000000" ]; then
+            finish true "no computable base ref — running everything"
+          fi
+          if ! git cat-file -e "${RANGE_BASE}^{commit}" 2>/dev/null; then
+            finish true "base ref $RANGE_BASE not present — running everything"
+          fi
+
+          # --no-renames is LOAD-BEARING, not a style choice. With rename
+          # detection on, `git diff --name-only` prints only the DESTINATION of a
+          # rename, so `git mv packages/ne-core/src/foo.py docs/foo.py` reports
+          # `docs/foo.py` alone and a deletion from a code tree reads as
+          # docs-only. Verified against git directly; do not remove this flag.
+          if ! FILES="$(git diff --name-only --no-renames "$RANGE_BASE" "$HEAD_SHA")"; then
+            finish true "git diff failed — running everything"
+          fi
+          if [ -z "$FILES" ]; then
+            finish true "empty diff — running everything"
+          fi
+
+          printf 'changed files:\n%s\n' "$FILES" | sed 's/^  *//;s/^/  /'
+
+          # Narrow allowlist; anything not matched counts as code. Executable
+          # files DO live under `docs/` (docs/whitepaper/assemble.py,
+          # docs/whitepaper/build-pdf.sh), so the second pattern below treats
+          # executable suffixes under a docs path as code: a code rewrite parked
+          # under a docs path pays for a full run.
+          #
+          # grep's exit status is read explicitly: 0 = a non-doc path exists,
+          # 1 = none, >=2 = grep ITSELF failed. A bare `|| true` would collapse
+          # the error case into the "none" case and classify a failed grep as
+          # docs-only — fail-open in the one direction that matters.
+          # `rc=0 || rc=$?` is REQUIRED, not defensive style: this step runs under
+          # `shell: bash -e {0}`, so errexit is on, and a bare
+          # `NONDOC="$(... | grep -v ...)"` assignment TAKES THE EXIT STATUS OF THE
+          # SUBSTITUTION. grep exits 1 on "no lines matched", which for a docs-only
+          # diff is the EXPECTED result -- so errexit killed the script before the
+          # `case "$?"` below could ever read it, and the docs-only fast path could
+          # never be reached. Every docs-only PR reported `classify` FAILURE and
+          # then, because a missing output reads as '', paid for the full live
+          # lanes anyway: the exact opposite of this job's purpose. Splitting the
+          # status off keeps the 0 / 1 / >=2 distinction the comment below relies on.
+          NONDOC="$(printf '%s\n' "$FILES" | grep -vE '^(docs/|notes/|AS-BUILT\.md$|SPEC\.md$|README\.md$|RELEASES\.md$|CONTRIBUTING\.md$)')" && rc=0 || rc=$?
+          case "$rc" in
+            0) printf '%s\n' "$NONDOC" | sed 's/^/  code: /'
+               finish true "non-doc paths present — running everything" ;;
+            1) : ;;
+            *) finish true "path classification failed — running everything" ;;
+          esac
+
+          # Same errexit split as above -- and here "no match" (rc 1) is the
+          # ordinary case for a prose-only diff.
+          EXECUTABLE="$(printf '%s\n' "$FILES" | grep -E '\.(mjs|js|cjs|ts|mts|cts|tsx|jsx|py|sh|bash|yml|yaml|toml|json|lock)$')" && rc=0 || rc=$?
+          case "$rc" in
+            0) printf '%s\n' "$EXECUTABLE" | sed 's/^/  executable-under-docs: /'
+               finish true "executable/config files under a docs path — running everything" ;;
+            1) : ;;
+            *) finish true "suffix classification failed — running everything" ;;
+          esac
+
+          finish false "docs-only change — the live-Postgres lanes are skipped; every required context still runs"
+
+  # RUNNER: the standard GitHub-hosted 2-vCPU runner, PERMANENTLY, pinned to the
+  # `ubuntu-24.04` image rather than the floating `ubuntu-latest` label. The
+  # proofs here exercise host binaries (`/usr/bin/systemd`, GNU `comm`'s
+  # sortedness diagnostics under a non-C locale) that the ubuntu-26.04 image does
+  # not provide in the same form, so the image moves only by an explicit edit. `check` ran on an org-level
+  # `ubuntu-16core` larger runner from 2026-08-17; the last run to reach any
+  # conclusion on it was 2026-09-02T16:04Z. The owner DELETED that runner as
+  # too expensive. The label stopped resolving because the runner no longer
+  # existed — not because of any org-level fault — and the two days in which
+  # every `check` "queued forever" were the ruleset waiting on a label nothing
+  # would ever pick up (an unresolvable `runs-on` does not fail; it queues, and
+  # reads as a hang). The job was repointed here on 2026-09-05. That decision is
+  # FINAL: do not point this job back at a larger runner, do not cost one out
+  # again, and do not read this history as an open incident. An earlier
+  # version of this comment framed the disappearance as an unexplained org
+  # setting and told the reader to "REVERT THIS ONE LINE" once it resolved;
+  # that sent one investigation chasing a bug that did not exist.
+  #
+  # What the runner means for the suite: `-n auto` here is 2 xdist workers, and
+  # the Test step is 55-73 of `check`'s 61-79 minutes (measured 2026-09-05..26).
+  # The only levers left are the two a runner cannot supply: make the tests
+  # intrinsically cheaper, and (if ever decided) split across standard runners.
+  #
+  # WHY NOT FILE-SHARDING ACROSS STANDARD RUNNERS (2026-08-17, re-examined
+  # 2026-09-26). Simulated on real per-file durations: 6 of 755 files carried
+  # 40% of the total and the largest single file 8.4%, so round-robin by file
+  # landed +49.7% over ideal at 4 shards and +124.9% at 8; packing by test count
+  # did no better. Only measured per-test durations balance it (the
+  # pytest-split shape), which means a timings artifact that rots as tests are
+  # added. There is also a harder constraint than balance: `check`
+  # is a REQUIRED context (ruleset 20426251). A `strategy.matrix` mints
+  # `check (1)`, `check (2)`, ... and never a bare `check`; a fan-in job that
+  # restores the name needs `needs:`; and a required context must not carry
+  # `strategy`, `needs:` or a job-level `if:`, because a skipped required job
+  # reports as PASSING. Sharding therefore means N explicit shard
+  # jobs, each named in .github/required-contexts.txt AND in the live ruleset,
+  # changed together — an owner-side ruleset edit, not an in-repo change. Until
+  # that is decided, the lever that works inside this file is making the tests
+  # cheaper (2026-09-26: the lazy `ne.api` package init).
+  #
+  # `check` sets no `timeout-minutes`, so it inherits the 360-minute default; a
+  # 79-minute run cannot trip it. ⚠️ A `check` still running at 60 minutes is
+  # on schedule, not hung — measure recent `main` runs
+  # (`gh run list --branch main --workflow ci`) before calling an overrun.
+  check:
+    runs-on: ubuntu-24.04
+    services:
+      # PRE-009A: the Agent Run storage proofs are a REQUIRED gate, so their
+      # database lives in the REQUIRED job. `live-postgres` and
+      # `live-postgres-pooled` are NOT required contexts and therefore cannot
+      # gate a merge — a green `check` with no Postgres would let the whole
+      # Run-store transaction path through unproven. Same pinned digest as those
+      # jobs (PostgreSQL License, vetted at NE-070); one image repo-wide.
+      #
+      # NE_TEST_POSTGRES_URL is deliberately NOT set job-wide: the broad
+      # `uv run pytest -n auto` step below must keep its existing behaviour, and
+      # only the executing gate further down opts in.
+      postgres:
+        image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      # 015A0-AUTHORITY-CORE: the fenced two-store artifact proofs are a REQUIRED
+      # gate, so their vector store lives in the REQUIRED job too. Same digest as
+      # deploy/compose/pilot/compose.yaml's qdrant service, and asserted to BE that
+      # digest by tools/ne-cli/tests/test_workflow_authority_gate.py, which reads
+      # it out of the pilot compose rather than holding a second copy.
+      #
+      # No `--health-cmd`: the qdrant image ships no shell HTTP client, so a
+      # container-level health probe would be a probe that cannot fail. The gate
+      # step below waits on /readyz from the runner instead, where curl exists.
+      #
+      # NE_TEST_QDRANT_URL is deliberately NOT set job-wide, exactly like
+      # NE_TEST_POSTGRES_URL above: the broad `Test` step must keep its behaviour.
+      qdrant:
+        image: qdrant/qdrant:v1.18.2@sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c
+        env:
+          QDRANT__TELEMETRY_DISABLED: "true"
+        ports:
+          - 6333:6333
+    # NE-CKC6: Checkpoint-C proof is fail-closed in CI — a missing BM25 asset or ragas venv is a FAILURE, never a silent skip.
+    env:
+      NE_REQUIRE_PUBLIC_BASELINE: "1"
+      FASTEMBED_CACHE_PATH: /home/runner/.cache/fastembed
+      # NE-CKC9: BM25 assets are vendored in-repo and staged below — CI makes NO HuggingFace fetch; offline is FORCED so any reintroduced HF dependency fails loudly instead of flaking on 429 (NE-CKC6 stays fail-closed).
+      HF_HUB_OFFLINE: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Setup Node (pinned)
+        # Install node explicitly instead of relying on the runner image's
+        # preinstalled node, so an image change fails legibly.
+        # Same SHA pin as the frontend job — one pin repo-wide.
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Stage vendored BM25 model (Checkpoint-C, offline — NE-CKC9)
+        # The Qdrant/bm25 assets are vendored in-repo (packages/ne-brain/assets/fastembed,
+        # revision e499a1f8…) so Checkpoint-C loads them fully offline — immune to GH
+        # Actions cache eviction AND HuggingFace 429s (replaces the evictable actions/cache
+        # step). Model id Qdrant/bm25 is code-pinned in ne/brain/sparse.py _DEFAULT_MODEL.
+        run: |
+          set -euo pipefail
+          mkdir -p "$FASTEMBED_CACHE_PATH"
+          cp -R packages/ne-brain/assets/fastembed/models--Qdrant--bm25 "$FASTEMBED_CACHE_PATH/"
+      - name: Cache ragas oracle venv (Checkpoint-C)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: packages/ne-eval/.ragas-venv
+          # py312 literal because ensure_ragas_env_at pins --python 3.12; the in-venv
+          # .requirements.sha256 marker makes a stale restore rebuild fail-safe.
+          key: ragas-venv-${{ runner.os }}-py312-${{ hashFiles('packages/ne-eval/ragas_env/requirements.txt') }}
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format check
+        run: uv run ruff format --check .
+      # `pyright` used to run HERE, serially ahead of the Test step, which meant
+      # `pytest` did not start until ~1m58s into the job. It now runs as its own
+      # `typecheck` job below, in parallel — the same gate, off the critical path.
+      #
+      # The `typecheck` context was added to the `main` ruleset's required checks
+      # BY AN ADMIN, out of band — the ruleset is GitHub configuration and cannot
+      # be changed from this diff. Verified against the API after the fact:
+      # `review-gate, check, frontend, vuln-scan, typecheck`. An earlier draft of
+      # this comment claimed the PR made that change itself, which was false and
+      # is the aspirational-docblock shape: a comment describing an intent as
+      # though it were the implementation. Caught by the adversarial review.
+      - name: Import contracts (C3)
+        run: uv run lint-imports --config .importlinter --no-cache
+      - name: Install OPA (pinned, C11)
+        # Version must match the deploy/compose/dev/compose.yaml opa image tag (openpolicyagent/opa:1.18.2-debug).
+        env:
+          OPA_VERSION: "1.18.2"
+          OPA_SHA256: "9903e5125ac281104f2c4b7371d10cc3b74a98933743fcbfc174f9bf0ab20de8"
+        run: |
+          set -euo pipefail
+          install -d "$RUNNER_TEMP/opa-bin"
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/opa-bin/opa" \
+            "https://github.com/open-policy-agent/opa/releases/download/v${OPA_VERSION}/opa_linux_amd64_static"
+          echo "${OPA_SHA256}  $RUNNER_TEMP/opa-bin/opa" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/opa-bin/opa"
+          "$RUNNER_TEMP/opa-bin/opa" version
+          echo "$RUNNER_TEMP/opa-bin" >> "$GITHUB_PATH"
+      - name: Install sops + age (pinned + sha256, C4/C11 — pilot-default secret backend)
+        # The pilot's default secret store is sops-file; its ONLY real-seam test
+        # (packages/ne-secrets/tests/test_file_store_sops_conformance.py) needs the
+        # real sops + age binaries or it skips. We install both here — pinned to
+        # exact versions AND sha256-verified before use (mirrors the OPA step) — so
+        # the seam is exercised by the full `uv run pytest` below AND the executing
+        # gate further down. Provenance: sops v3.13.2 (2026-06-30, MPL-2.0 — matches
+        # the ne-secrets README build-time pin), age v1.3.1 (2025-12-28, BSD-3-Clause,
+        # CI-test-only binary, not distributed). sha256 from the official
+        # sops-v3.13.2.checksums.txt + the GitHub API asset digest, both independently
+        # re-computed at build time.
+        env:
+          SOPS_VERSION: "3.13.2"
+          SOPS_SHA256: "154dfe4cd70554bdd82b98e4cd4acf191d43d01ead6f00a73477aa44c4ac42ef"
+          AGE_VERSION: "1.3.1"
+          AGE_SHA256: "bdc69c09cbdd6cf8b1f333d372a1f58247b3a33146406333e30c0f26e8f51377"
+        run: |
+          set -euo pipefail
+          install -d "$RUNNER_TEMP/sops-bin"
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/sops-bin/sops" \
+            "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64"
+          echo "${SOPS_SHA256}  $RUNNER_TEMP/sops-bin/sops" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/sops-bin/sops"
+          curl -sSfL --retry 3 -o "$RUNNER_TEMP/age.tar.gz" \
+            "https://github.com/FiloSottile/age/releases/download/v${AGE_VERSION}/age-v${AGE_VERSION}-linux-amd64.tar.gz"
+          echo "${AGE_SHA256}  $RUNNER_TEMP/age.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/age.tar.gz" -C "$RUNNER_TEMP"
+          install -m 0755 "$RUNNER_TEMP/age/age" "$RUNNER_TEMP/age/age-keygen" "$RUNNER_TEMP/sops-bin/"
+          "$RUNNER_TEMP/sops-bin/sops" --version
+          "$RUNNER_TEMP/sops-bin/age-keygen" --version
+          echo "$RUNNER_TEMP/sops-bin" >> "$GITHUB_PATH"
+      - name: Wait for the job's Qdrant service (the full suite has no health check to lean on)
+        # The `qdrant` service above deliberately carries NO `--health-cmd`: the
+        # image ships no shell HTTP client, so a container-level probe would be a
+        # probe that cannot fail. The consequence is that GitHub does NOT wait for
+        # Qdrant before starting steps — it waits only for the container to be
+        # scheduled. So on a slow start the `Test` step below collects against a
+        # dead port, every ne-brain server-mode module parks itself at collection
+        # time (`server_reachable()` is False), and the REQUIRED job goes green
+        # having proved nothing about a real Qdrant.
+        #
+        # This is a pre-existing hole, not one this train opened: the modules
+        # probed the same port the same way when the address was defaulted rather
+        # than named. Naming the address made the coverage explicit; this step and
+        # its sibling below make it ENFORCED.
+        #
+        # `curl -sSf` after the loop is the fail-closed half: if the service never
+        # answers, the job stops HERE with a legible reason instead of running a
+        # 70-minute suite whose Qdrant proofs are all skips.
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            if curl -sSf http://localhost:6333/readyz >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -sSf http://localhost:6333/readyz
+      - name: Test
+        # NE_QDRANT_URL is EXPLICIT here and nowhere else. The ne-brain/ne-eval
+        # real-server conformance proofs no longer default their address — a
+        # default is what aimed 985 orphan collections at the deployed demo store
+        # on 2026-09-10 and exhausted its file descriptors (see
+        # packages/ne-brain/src/ne/brain/testing/qdrant_live.py). Naming it HERE
+        # is safe and is the point: localhost:6333 in this job is the job's OWN
+        # `qdrant` service container, created and destroyed with the job. Unset
+        # anywhere else, those modules park themselves instead of finding
+        # whatever happens to answer that port.
+        #
+        # `--junitxml` is what makes the next step possible. This step runs the
+        # WHOLE suite under xdist, so it can neither parse its own summary line
+        # (tools/ne-cli/tests/test_xdist_wiring.py fails any summary-parsing gate
+        # that carries `-n`, because worker-prefixed output corrupts that parsing)
+        # nor apply a blanket no-skip rule (cosign, helm and NE_BACKUP_DRILL
+        # modules skip legitimately). A machine-readable per-module report lets
+        # the floor be aimed at four named modules and nothing else.
+        env:
+          NE_QDRANT_URL: http://localhost:6333
+          NE_FULL_SUITE_JUNIT: ${{ runner.temp }}/full-suite-junit.xml
+        run: uv run pytest -n auto --dist loadgroup --junitxml="$NE_FULL_SUITE_JUNIT"
+      - name: Qdrant real-server proofs must not park in the full suite (REQUIRED — no silent skip)
+        # The floor the `Test` step cannot carry itself. Precise by construction:
+        # it names the four modules whose ONLY live dependency is a Qdrant, so it
+        # says nothing about the modules that skip for reasons this job does not
+        # provide for (test_knowledge_write_live_e2e needs NE_TEST_POSTGRES_URL,
+        # test_retrieval_pipeline_conformance_server and ne-eval's live baseline
+        # need the TEI pair) and nothing about the rest of the suite's legitimate
+        # skips. tools/ne-cli/tests/test_workflow_authority_gate.py DERIVES that
+        # same set from ne-brain/ne-eval source and fails if this list drifts from
+        # it, so a fifth Qdrant-only module is covered the day it is written.
+        #
+        # A collection-skipped module appears in JUnit XML as a testcase with an
+        # empty classname, named for the module, carrying <skipped
+        # message="collection skipped"> — that is exactly the park being caught.
+        env:
+          NE_FULL_SUITE_JUNIT: ${{ runner.temp }}/full-suite-junit.xml
+        run: |
+          set -euo pipefail
+          uv run python - <<'PY'
+          import os
+          import sys
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          REQUIRED_QDRANT_ONLY_MODULES = (
+              "packages/ne-brain/tests/test_chunk_store_conformance_server.py",
+              "packages/ne-brain/tests/test_ingest_spine_server.py",
+              "packages/ne-brain/tests/test_knowledge_read_conformance_server.py",
+              "packages/ne-brain/tests/test_knowledge_write_conformance_server.py",
+          )
+          # Vacuity control, NOT a coverage floor: a truncated or half-written
+          # report would make every per-module check below trivially true. The
+          # suite is ~12800 tests, so this only ever fires on a broken report.
+          MIN_TOTAL_TESTCASES = 1000
+
+          report = Path(os.environ["NE_FULL_SUITE_JUNIT"])
+          if not report.is_file():
+              sys.exit(f"::error::full-suite JUnit report missing at {report}")
+          cases = list(ET.parse(report).iter("testcase"))
+          if len(cases) < MIN_TOTAL_TESTCASES:
+              sys.exit(
+                  f"::error::full-suite JUnit report holds {len(cases)} testcases, "
+                  f"expected >= {MIN_TOTAL_TESTCASES} — the report is not the full suite"
+              )
+
+          problems = []
+          for module in REQUIRED_QDRANT_ONLY_MODULES:
+              if not Path(module).is_file():
+                  problems.append(f"{module}: named by this gate but absent from the tree")
+                  continue
+              dotted = module[: -len(".py")].replace("/", ".")
+              parked = False
+              executed = 0
+              for case in cases:
+                  classname = case.get("classname") or ""
+                  if not classname and case.get("name") == dotted:
+                      parked = True
+                      continue
+                  if classname != dotted and not classname.startswith(dotted + "."):
+                      continue
+                  if case.find("skipped") is None:
+                      executed += 1
+              if parked:
+                  problems.append(
+                      f"{module}: PARKED at collection — the job named a Qdrant and the "
+                      f"module still skipped itself, so this proof went green having run nothing"
+                  )
+              elif executed == 0:
+                  problems.append(
+                      f"{module}: contributed no executed test to the full suite"
+                  )
+              else:
+                  print(f"ok  {module}: {executed} executed")
+
+          if problems:
+              for problem in problems:
+                  print(f"::error::Qdrant real-server proof did not run — {problem}")
+              sys.exit(1)
+          PY
+      - name: Agent Run storage PostgreSQL proofs (REQUIRED gate — exact floor, must run)
+        # PRE-009A. This is the gate that actually blocks a merge. The floor is
+        # asserted against pytest's OWN collection by
+        # `test_required_check_gate_runs_the_run_store_postgres_proofs` in
+        # packages/ne-runtime/tests/test_run_store.py, so deleting a proof fails
+        # PR CI here rather than quietly fitting under a slack floor.
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-runtime/tests/test_run_store_postgres.py -q -rs \
+            | tee "$RUNNER_TEMP/required-run-store-pg-gate.txt"
+          RUN_STORE_MIN_PASSED=22
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/required-run-store-pg-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ] || [ "$passed" -lt "$RUN_STORE_MIN_PASSED" ]; then
+            echo "::error::Agent Run storage PostgreSQL proofs passed ${passed:-0}, expected >= $RUN_STORE_MIN_PASSED"
+            exit 1
+          fi
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/required-run-store-pg-gate.txt"; then
+            echo "::error::Agent Run storage PostgreSQL proofs skipped in the REQUIRED gate"
+            exit 1
+          fi
+      - name: Fixed Pilot protected-transport PostgreSQL proof (REQUIRED)
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest tools/ne-cli/tests/test_agent_transport_postgres.py -q -rs \
+            | tee "$RUNNER_TEMP/required-agent-transport-pg-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/required-agent-transport-pg-gate.txt"; then
+            echo "::error::Fixed Pilot protected-transport PostgreSQL proof did not execute"
+            exit 1
+          fi
+      - name: Protected transport migration + DBOS proof (REQUIRED gate — exact floor, must run)
+        # PRE-009C. Keep this in the required `check` context: the sibling
+        # live-postgres jobs are additional direct/pooled coverage, not required
+        # merge contexts. The worker file is the stable final integration path;
+        # its protected-input setup lands with the parked worker candidate.
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+          NE_RUNTIME_DURABILITY: dbos
+          NE_RUNTIME_DBOS_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ne_runtime_dbos
+        run: |
+          set -euo pipefail
+          uv run python - <<'PY'
+          import os
+          import sqlalchemy as sa
+
+          engine = sa.create_engine(
+              os.environ["NE_TEST_POSTGRES_URL"], isolation_level="AUTOCOMMIT"
+          )
+          with engine.connect() as conn:
+              for database in ("ne_runtime_dbos", "ne_worker_dbos"):
+                  exists = conn.execute(
+                      sa.text("SELECT 1 FROM pg_database WHERE datname = :database"),
+                      {"database": database},
+                  ).first()
+                  if not exists:
+                      conn.execute(sa.text(f'CREATE DATABASE "{database}"'))
+          engine.dispose()
+          PY
+          uv run pytest packages/ne-runtime/tests/test_run_store_postgres.py::test_legacy_protection_guards_reject_half_migrated_shapes_on_postgres \
+            packages/ne-runtime/tests/test_legacy_transport_migration_postgres.py \
+            packages/ne-worker/tests/test_worker_dbos_live.py \
+            -q -rs | tee "$RUNNER_TEMP/required-protected-transport-gate.txt"
+          PROTECTED_TRANSPORT_MIN_PASSED=7
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/required-protected-transport-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ] || [ "$passed" -lt "$PROTECTED_TRANSPORT_MIN_PASSED" ]; then
+            echo "::error::protected-transport proofs passed ${passed:-0}, expected >= $PROTECTED_TRANSPORT_MIN_PASSED"
+            exit 1
+          fi
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/required-protected-transport-gate.txt"; then
+            echo "::error::protected-transport migration/DBOS proof skipped in the REQUIRED gate"
+            exit 1
+          fi
+      - name: Source-authority store and immutable-artifact proofs (REQUIRED gate — exact floor, must run)
+        # 015A0-AUTHORITY-CORE. Serial by requirement, not by preference:
+        # tools/ne-cli/tests/test_xdist_wiring.py DERIVES the set of gates that
+        # parse pytest's summary line and fails any that carries `-n`, because
+        # xdist's worker-prefixed output would corrupt exactly the parsing below.
+        #
+        # The floor is asserted against pytest's OWN collection by
+        # tools/ne-cli/tests/test_workflow_authority_gate.py, so deleting a proof
+        # fails PR CI here rather than quietly fitting under a slack floor.
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+          NE_TEST_QDRANT_URL: http://localhost:6333
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            if curl -sSf http://localhost:6333/readyz >/dev/null 2>&1; then break; fi
+            sleep 2
+          done
+          curl -sSf http://localhost:6333/readyz
+          uv run pytest packages/ne-brain/tests/test_current_source_authority_postgres.py \
+            packages/ne-brain/tests/test_immutable_artifact_store_postgres_qdrant.py \
+            -q -rs | tee "$RUNNER_TEMP/required-source-authority-gate.txt"
+          SOURCE_AUTHORITY_MIN_PASSED=12
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/required-source-authority-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ] || [ "$passed" -lt "$SOURCE_AUTHORITY_MIN_PASSED" ]; then
+            echo "::error::source-authority proofs passed ${passed:-0}, expected >= $SOURCE_AUTHORITY_MIN_PASSED"
+            exit 1
+          fi
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/required-source-authority-gate.txt"; then
+            echo "::error::source-authority proofs skipped in the REQUIRED gate"
+            exit 1
+          fi
+      - name: Cache Apache AGE 1.7.0 source (keyed on its pinned SHA-512)
+        # Only archive.apache.org still serves AGE 1.7.0 and it is slow from
+        # hosted runners, so the release files are cached and handed to the
+        # image build as the `age-src` build context. The Dockerfile verifies
+        # every digest and the release signature regardless of where they came from.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apache-age-src
+          key: apache-age-1.7.0-src-sha512-129e64d70ec82e0fb47202145af45915b335048472c9a869129c31e4cb59f15a271a929a36a7abb2822272591e6476786c36908cb35a10cd73f2ecd0a617d3bb
+      - name: Fetch and verify Apache AGE 1.7.0 source (mirrors, retries, backoff)
+        run: sh deploy/docker/ne-postgres-age/fetch-age-src.sh "$RUNNER_TEMP/apache-age-src"
+      - name: PRE-016 production-composed Agent vertical PostgreSQL proofs (REQUIRED gate — exact floor, must run)
+        # PRE-DEMO-REHEARSAL-016A–E. This is deliberately serial: the gate parses
+        # pytest's summary and owns one isolated database/DBOS runtime per test.
+        # Keep these variables step-scoped so the broad suite is unchanged.
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+          NE_RUNTIME_DURABILITY: dbos
+        run: |
+          set -euo pipefail
+          NE_POSTGRES_AGE_SOURCE_REV="$GITHUB_SHA" \
+            NE_POSTGRES_AGE_SRC_DIR="$RUNNER_TEMP/apache-age-src" \
+            bash deploy/airgap/scripts/build-ne-postgres-age.sh
+          docker run --detach --name pre016-postgres-age \
+            --env POSTGRES_PASSWORD=postgres \
+            --publish 127.0.0.1:55432:5432 \
+            ne-postgres-age:18.6-1.7.0
+          trap 'docker rm --force pre016-postgres-age >/dev/null 2>&1 || true' EXIT
+          for _ in $(seq 1 60); do
+            if docker exec pre016-postgres-age pg_isready --host 127.0.0.1 --username postgres >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          docker exec pre016-postgres-age pg_isready --host 127.0.0.1 --username postgres
+          export NE_TEST_POSTGRES_URL=postgresql+psycopg://postgres:postgres@localhost:55432/postgres
+          uv run pytest packages/ne-worker/tests/test_pre016_integrated_agent_vertical_postgres.py \
+            -q -rs | tee "$RUNNER_TEMP/required-pre016-agent-vertical-gate.txt"
+          PRE016_BACKEND_MIN_PASSED=4
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/required-pre016-agent-vertical-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ] || [ "$passed" -lt "$PRE016_BACKEND_MIN_PASSED" ]; then
+            echo "::error::PRE-016 Agent vertical proofs passed ${passed:-0}, expected >= $PRE016_BACKEND_MIN_PASSED"
+            exit 1
+          fi
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/required-pre016-agent-vertical-gate.txt"; then
+            echo "::error::PRE-016 Agent vertical proofs skipped in the REQUIRED gate"
+            exit 1
+          fi
+      - name: Checkpoint-C executing gate (must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-eval/tests/test_retrieval_baseline_public.py packages/ne-eval/tests/test_ragas_oracle.py -q -rs | tee "$RUNNER_TEMP/checkpoint-c-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/checkpoint-c-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/checkpoint-c-gate.txt"; then
+            echo "::error::Checkpoint-C threshold proof did not run — baseline/oracle tests skipped"
+            exit 1
+          fi
+      - name: Rego executing gate (C6 — must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-govern/tests/test_rego_policies.py -q -rs | tee "$RUNNER_TEMP/rego-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/rego-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/rego-gate.txt"; then
+            echo "::error::C6 Rego executing-verification gate did not run — opa tests skipped"
+            exit 1
+          fi
+      - name: Tier-parity guardian (HITL — rego↔python mirror must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-runtime/tests/test_tier_parity_guardian.py -q -rs | tee "$RUNNER_TEMP/tier-parity-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/tier-parity-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/tier-parity-gate.txt"; then
+            echo "::error::Tier-parity guardian did not run — tiers.rego↔actions.py mirror unverified"
+            exit 1
+          fi
+      - name: SOPS conformance executing gate (pilot secret backend — must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-secrets/tests/test_file_store_sops_conformance.py -q -rs | tee "$RUNNER_TEMP/sops-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/sops-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/sops-gate.txt"; then
+            echo "::error::sops-file conformance did not run — pilot at-rest-encryption seam unverified (sops/age missing or tests skipped)"
+            exit 1
+          fi
+      - name: Served OPA bundle executing gate (approval window — must run, not skip)
+        run: |
+          set -euo pipefail
+          # The ONLY proof that the staged data tree actually reaches the SERVED
+          # bundle, i.e. that write.external.email.send resolves this
+          # deployment's 180 s window instead of tiers.rego's unhonourable
+          # 14400 s floor. Nothing downstream refuses on that:
+          # _require_honourable_approval_window refuses only DECLARED windows
+          # and warns-and-parks on a floor, so this link failing is SILENT —
+          # 100% of tier-2 Run parks would promise four hours on a 900 s
+          # session with a green bundle. Its module-level skip is a real docker
+          # check, so a silent cessation shows up here as "no tests ran" rather
+          # than as a green run.
+          uv run pytest tools/ne-cli/tests/test_opa_bundle_live.py -q -rs | tee "$RUNNER_TEMP/opa-bundle-live-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/opa-bundle-live-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/opa-bundle-live-gate.txt"; then
+            echo "::error::served-OPA-bundle proofs did not run — the approval-window resolution against a real OPA sidecar is unverified"
+            exit 1
+          fi
+      - name: Header policy
+        run: uv run ne check headers
+
+  # NE-069: proves an N-1-shaped release can upgrade to N (forward migrations
+  # reach N schema, data intact) and that reversible migrations roll back
+  # cleanly — the platform's release/upgrade machinery. Must-run-not-skip,
+  # same executing-gate pattern as the Checkpoint-C/Rego/tier-parity gates
+  # above: a skip or zero-collected run is a CI FAILURE, not silence.
+  # `pyright` lifted OUT of `check`, where it sat serially ahead of the Test step
+  # and delayed `pytest` by ~1m24s for no reason — nothing in the test run depends
+  # on it. Same gate, run concurrently instead of in front.
+  #
+  # It MUST be added to the branch ruleset's required checks alongside this change.
+  # A gate moved to its own job and not required is a gate that stops blocking
+  # anything while still reporting green, which is strictly worse than leaving it
+  # in the critical path.
+  #
+  # Plain 2-vCPU `ubuntu-24.04` on purpose: pyright is a single-process typecheck, so it
+  # gets nothing from extra cores and a larger runner would only bill more per
+  # minute for the same 84 seconds.
+  typecheck:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Setup Node (pinned)
+        # pyright's PyPI wrapper runs on Node — `CONTRIBUTING.md` records that it
+        # downloads a Node runtime on first use. In `check` it inherited the
+        # pinned `setup-node` step; here it would have fallen through to whatever
+        # Node the runner image happens to ship. That works today and would fail
+        # SILENTLY AND SLOWLY on an image change, which is precisely what the
+        # pin's comment in `check` exists to prevent ("so an image change fails
+        # legibly"). Carrying the step carries that property with it. Same SHA
+        # pin as `check` and `frontend` — one pin repo-wide.
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Type check
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+        run: uv run pyright
+
+  upgrade:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: N->N-1 upgrade executing gate (must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest tools/ne-cli/tests/test_upgrade_n_minus_1.py tools/ne-cli/tests/test_migrate.py -q -rs | tee "$RUNNER_TEMP/upgrade-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/upgrade-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/upgrade-gate.txt"; then
+            echo "::error::N→N-1 upgrade proof did not run"
+            exit 1
+          fi
+
+  # NE-061: the FIRST frontend gate. Bootstraps the ne-console (React/TS/Vite)
+  # toolchain in CI: strict typecheck, ESLint (incl. the thin-client guardian
+  # rules), Prettier, Vitest, and a production build — all against the committed,
+  # pinned package-lock.json (npm ci must reproduce it exactly).
+  frontend:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: packages/ne-console
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: packages/ne-console/package-lock.json
+      - name: Install (pinned, reproducible)
+        run: npm ci
+      - name: Typecheck (tsc -b, strict, noEmit)
+        run: npm run typecheck
+      - name: Lint (eslint flat config incl. thin-client guardian)
+        run: npm run lint
+      - name: Format check
+        run: npm run format:check
+      - name: Test (vitest, MSW fixtures)
+        run: npm run test
+      - name: PRE-016 Agent vertical console composition proofs (REQUIRED gate — exact floor, must run)
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/required-pre016-agent-console.json"
+          npm run test -- src/agents/AgentVerticalIntegration.test.tsx \
+            --reporter=json --outputFile="$report"
+          PRE016_CONSOLE_MIN_PASSED=3
+          REPORT="$report" FLOOR="$PRE016_CONSOLE_MIN_PASSED" node <<'JS'
+          const fs = require("node:fs");
+          const report = JSON.parse(fs.readFileSync(process.env.REPORT, "utf8"));
+          const floor = Number(process.env.FLOOR);
+          const passed = Number(report.numPassedTests ?? 0);
+          const total = Number(report.numTotalTests ?? 0);
+          const pending = Number(report.numPendingTests ?? 0);
+          const todo = Number(report.numTodoTests ?? 0);
+          if (report.success !== true || total < floor || passed < floor || pending !== 0 || todo !== 0) {
+            throw new Error(
+              `PRE-016 console gate failed closed: success=${report.success} total=${total} passed=${passed} pending=${pending} todo=${todo} floor=${floor}`,
+            );
+          }
+          JS
+      - name: Build (tsc -b && vite build)
+        run: npm run build
+
+  # NE-103c: the FIRST live-Postgres CI lane. The design's "lane NE-070 established"
+  # is doc-drift — NE-070's live proofs ran LOCALLY; nothing in .github/workflows
+  # runs Postgres today. This job CREATES the lane (ADD-ONLY; existing jobs are
+  # untouched). It runs the existing NE_TEST_POSTGRES_URL suites AND the promoted
+  # DBOS-live proofs (test_dbos_live + test_approvals_dbos_live) AND the NE-103c
+  # worker durability/HITL proofs — all under must-run-not-skip executing gates.
+  #
+  # URL SCHEME (risk #4, VERIFIED): every SQLAlchemy engine in the tree uses the
+  # psycopg-v3 driver (`postgresql+psycopg://`) — psycopg2 is NOT in the lock — and
+  # DBOS's own system-db engine forces `drivername="postgresql+psycopg"` internally
+  # (dbos/_sys_db_postgres.py:24), so it accepts the same `+psycopg` DSN. One scheme
+  # for both engines and DBOS (deliberate correction of the design's plain-scheme URL).
+  live-postgres:
+    # CHANGE CLASSES: run unless `classify` positively proved this diff is
+    # docs-only. Fails open — a failed, cancelled or skipped classifier, or an
+    # unset/empty `code` output, still runs this job. Safe to gate because this
+    # is NOT a required context, so its `skipped` conclusion satisfies nothing.
+    needs: classify
+    if: ${{ always() && (needs.classify.result != 'success' || needs.classify.outputs.code != 'false') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    services:
+      postgres:
+        # The pilot's pinned digest (PostgreSQL License, vetted at NE-070).
+        image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Create the DBOS databases (ne_runtime_dbos, ne_worker_dbos)
+        env:
+          NE_PG_ADMIN_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          uv run python - <<'PY'
+          import os
+          import sqlalchemy as sa
+
+          engine = sa.create_engine(os.environ["NE_PG_ADMIN_URL"], isolation_level="AUTOCOMMIT")
+          with engine.connect() as conn:
+              for db in ("ne_runtime_dbos", "ne_worker_dbos"):
+                  exists = conn.execute(
+                      sa.text("SELECT 1 FROM pg_database WHERE datname = :d"), {"d": db}
+                  ).first()
+                  if not exists:
+                      conn.execute(sa.text(f'CREATE DATABASE "{db}"'))
+          engine.dispose()
+          print("created ne_runtime_dbos + ne_worker_dbos")
+          PY
+      - name: Live NE_TEST_POSTGRES_URL suites (must run, not skip)
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest \
+            packages/ne-events/tests/test_outbox_postgres.py \
+            packages/ne-events/tests/test_outbox_postgres_concurrency.py \
+            packages/ne-govern/tests/test_guardrail_concurrency_postgres.py \
+            packages/ne-runtime/tests/test_approvals_concurrency_postgres.py \
+            packages/ne-runtime/tests/test_store_concurrency_postgres.py \
+            packages/ne-runtime/tests/test_run_store_postgres.py \
+            packages/ne-audit/tests/test_postgres_audit.py \
+            packages/ne-audit/tests/test_engine_timeouts_postgres_live.py \
+            packages/ne-flywheel/tests/test_capture_postgres.py \
+            packages/ne-flywheel/tests/test_review_postgres.py \
+            packages/ne-permissions/tests/test_postgres_permissions.py \
+            packages/ne-api/tests/test_agent_catalog_postgres.py \
+            -q -rs | tee "$RUNNER_TEMP/live-pg-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/live-pg-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/live-pg-gate.txt"; then
+            echo "::error::live-Postgres suites did not run — a promoted proof skipped"
+            exit 1
+          fi
+      - name: Agent catalog PostgreSQL proofs (exact floor, must run)
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-api/tests/test_agent_catalog_postgres.py -q -rs \
+            | tee "$RUNNER_TEMP/agent-catalog-pg-gate.txt"
+          AGENT_CATALOG_MIN_PASSED=3
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/agent-catalog-pg-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ] || [ "$passed" -lt "$AGENT_CATALOG_MIN_PASSED" ]; then
+            echo "::error::Agent catalog PostgreSQL proofs passed ${passed:-0}, expected >= $AGENT_CATALOG_MIN_PASSED"
+            exit 1
+          fi
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/agent-catalog-pg-gate.txt"; then
+            echo "::error::Agent catalog PostgreSQL proofs skipped"
+            exit 1
+          fi
+      - name: Agent Run storage PostgreSQL proofs (exact floor, must run)
+        # PRE-009A: the concurrency, replay-discrimination and receipt/event-binding
+        # proofs are only meaningful against a REAL Postgres — SQLite's global
+        # writer lock serializes the interleavings they exist to catch. The floor
+        # is asserted against pytest's own collection by
+        # `test_promoted_run_store_postgres_node_is_gated_in_ci` in
+        # packages/ne-runtime/tests/test_run_store.py, so deleting a proof here
+        # fails PR CI rather than quietly fitting under a slack floor.
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-runtime/tests/test_run_store_postgres.py -q -rs \
+            | tee "$RUNNER_TEMP/run-store-pg-gate.txt"
+          RUN_STORE_MIN_PASSED=22
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/run-store-pg-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ] || [ "$passed" -lt "$RUN_STORE_MIN_PASSED" ]; then
+            echo "::error::Agent Run storage PostgreSQL proofs passed ${passed:-0}, expected >= $RUN_STORE_MIN_PASSED"
+            exit 1
+          fi
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/run-store-pg-gate.txt"; then
+            echo "::error::Agent Run storage PostgreSQL proofs skipped"
+            exit 1
+          fi
+      # pgAudit needs shared_preload_libraries at SERVER START, so the pinned
+      # postgres:18.6-alpine service above can never prove it — this starts a
+      # SECOND, digest-pinned instance from the CNCF CloudNativePG "standard"
+      # operand image (pgaudit 18.0 precompiled; recipes Apache-2.0, contents
+      # PostgreSQL-licensed; CI test infra ONLY, never shipped — see
+      # packages/ne-audit/NOTICE). GH Actions job `services:` cannot pass a
+      # custom command to a container (same limitation the MinIO step above
+      # documents), and the CNPG image ships with no entrypoint/bootstrap
+      # (upstream docs it as "not intended for standalone use"), so this runs
+      # `docker run` with an explicit initdb + postgres command instead.
+      # --encoding=UTF8 is REQUIRED: the image's initdb defaults to SQL_ASCII
+      # (no LANG env set), which makes psycopg return bytes instead of str and
+      # breaks SQLAlchemy's version parsing. logging_collector=on is required
+      # because the statement-capture proof reads the server log via
+      # pg_read_file(pg_current_logfile()).
+      - name: Start pgAudit-capable Postgres (CNPG standard — CI test infra only)
+        run: |
+          set -euo pipefail
+          docker run -d --name ne-pgaudit-pg -p 5433:5432 \
+            ghcr.io/cloudnative-pg/postgresql:18.4-standard-trixie@sha256:4e4ac3fb2c914cfb44f80f0b8be8aa550e83b80bf5220df49c3a8780c1f79bc8 \
+            bash -ec 'export PGDATA=/var/lib/postgresql/pgdata; initdb -D "$PGDATA" --username=postgres --encoding=UTF8 --locale=C.UTF-8 --auth=scram-sha-256 --pwfile=<(echo postgres); echo "host all all all scram-sha-256" >> "$PGDATA/pg_hba.conf"; exec postgres -D "$PGDATA" -c listen_addresses="*" -c shared_preload_libraries=pgaudit -c logging_collector=on -c log_directory=log'
+          for i in $(seq 1 60); do
+            docker exec ne-pgaudit-pg pg_isready -U postgres >/dev/null 2>&1 && break
+            sleep 2
+          done
+          docker exec ne-pgaudit-pg pg_isready -U postgres
+      - name: pgAudit live proofs (must run, not skip)
+        env:
+          NE_TEST_PGAUDIT_URL: postgresql+psycopg://postgres:postgres@localhost:5433/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest packages/ne-audit/tests/test_pgaudit_live.py -q -rs | tee "$RUNNER_TEMP/pgaudit-gate.txt"
+          # Minimum-count FLOOR (not a bare `[0-9]+ passed` match): raise this
+          # when tests are added; a DROP means coverage was lost and must be
+          # explained, not papered over.
+          PGAUDIT_MIN_PASSED=4
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/pgaudit-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ]; then
+            echo "::error::pgAudit live proofs produced no 'N passed' summary"
+            exit 1
+          fi
+          if [ "$passed" -lt "$PGAUDIT_MIN_PASSED" ]; then
+            echo "::error::pgAudit live proofs passed only $passed tests, expected >= $PGAUDIT_MIN_PASSED — the suite was gutted, renamed or silently deselected"
+            exit 1
+          fi
+          echo "pgAudit live proofs: $passed passed (floor $PGAUDIT_MIN_PASSED)"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/pgaudit-gate.txt"; then
+            echo "::error::the promoted pgAudit proof skipped"
+            exit 1
+          fi
+      - name: DBOS-live + worker durability/HITL proofs (must run, not skip)
+        # Separate invocation so durability=dbos never leaks into unrelated suites.
+        #
+        # NE-LP-DBOS-REALPG: test_worker_cron_dbos_live.py was previously wired into
+        # NO CI job at all (grep-verified: only the other 4 files below were listed
+        # here) — a real coverage gap. This unit closes it and adds the pod-kill-
+        # during-cron recovery proof alongside it. Expect ~+8 min job time from the
+        # two minute-cron-boundary tests (each waits out at least one, usually two,
+        # real minute boundaries).
+        #
+        # DIRECT shape. NE-POOLER-TIMEOUTS additionally runs this SAME suite list
+        # (plus test_dbos_pooler_finding_live.py) POOLED, through a transaction-
+        # mode PgBouncer, in the live-postgres-pooled job's "Pooled DBOS-live
+        # proofs" step below — the two lanes together are the direct+pooled
+        # parity proof.
+        env:
+          NE_RUNTIME_DURABILITY: dbos
+          NE_RUNTIME_DBOS_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ne_runtime_dbos
+        run: |
+          set -euo pipefail
+          uv run pytest \
+            packages/ne-runtime/tests/test_dbos_live.py \
+            packages/ne-runtime/tests/test_approvals_dbos_live.py \
+            packages/ne-worker/tests/test_worker_cron_dbos_live.py \
+            packages/ne-worker/tests/test_worker_cron_podkill_dbos_live.py \
+            packages/ne-worker/tests/test_worker_dbos_live.py \
+            packages/ne-worker/tests/test_worker_hitl_live.py \
+            -q -rs | tee "$RUNNER_TEMP/dbos-live-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/dbos-live-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/dbos-live-gate.txt"; then
+            echo "::error::DBOS-live proofs did not run — the SIGKILL/HITL/cron/pod-kill proofs skipped"
+            exit 1
+          fi
+      - name: Start MinIO (WORM test server — CI test infra only, AGPL-3.0, never shipped)
+        # NE-S3-OBJECTSTORE: MinIO is the WORM-capable S3 test server for the
+        # s3 ObjectStore adapter's conformance/live proofs. It is dev/CI
+        # infrastructure ONLY — never embedded, never distributed with the
+        # product (see packages/ne-storage/NOTICE). SeaweedFS (the existing
+        # Langfuse-profile S3 gateway) is DISQUALIFIED for this lane:
+        # seaweedfs/seaweedfs#8350 / #7194 confirm its COMPLIANCE-mode Object
+        # Lock accepts a retention write but does not actually block deletes,
+        # which would make the WORM proof vacuous. GH Actions job `services:`
+        # cannot pass a custom command to a container, so MinIO starts via a
+        # plain `docker run` step instead. MINIO_UPDATE=off (C1: no phone-home).
+        #
+        # The digest is READ OUT of deploy/compose/dev/compose.yaml's `worm`
+        # profile rather than restated here. A second literal would be a second
+        # thing to update: the two could drift apart silently and CI would then
+        # be proving WORM against a different MinIO than dev runs. compose.yaml
+        # is the single source of truth; tools/ne-cli/tests/test_dev_stack.py
+        # (EXPECTED_IMAGES) asserts the pin itself.
+        run: |
+          set -euo pipefail
+          MINIO_IMAGE="$(uv run python -c "
+          import yaml
+          with open('deploy/compose/dev/compose.yaml', encoding='utf-8') as fh:
+              print(yaml.safe_load(fh)['services']['minio']['image'])
+          ")"
+          test -n "$MINIO_IMAGE"
+          echo "MinIO image from compose.yaml: $MINIO_IMAGE"
+          docker run -d --name ne-worm-s3 -p 9000:9000 \
+            -e MINIO_ROOT_USER=ne-test -e MINIO_ROOT_PASSWORD=ne-test-secret -e MINIO_UPDATE=off \
+            -v ne-worm-data1:/data1 -v ne-worm-data2:/data2 -v ne-worm-data3:/data3 -v ne-worm-data4:/data4 \
+            "$MINIO_IMAGE" \
+            server /data1 /data2 /data3 /data4
+          for i in $(seq 1 60); do
+            curl -fsS http://localhost:9000/minio/health/live >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -fsS http://localhost:9000/minio/health/live
+      - name: S3 ObjectStore WORM conformance (C10 — must run, not skip)
+        # The single deselect is the kit's injectable-clock expiry test
+        # (test_worm_expires): S3ObjectStore.create_store_at() raises
+        # NotImplementedError by design (no injectable clock exists against a
+        # real server), so the kit self-skips it — deselecting here keeps the
+        # must-run-not-skip guard at full strength for every OTHER promoted
+        # test in the two files. Real-time expiry is proven honestly instead
+        # by test_worm_expiry_realtime (an actual 3-second wait); this is the
+        # single deliberate deselect in this job.
+        env:
+          NE_TEST_S3_ENDPOINT: http://localhost:9000
+          NE_TEST_S3_ACCESS_KEY: ne-test
+          NE_TEST_S3_SECRET_KEY: ne-test-secret
+        run: |
+          set -euo pipefail
+          uv run pytest \
+            packages/ne-storage/tests/test_s3_conformance.py \
+            packages/ne-storage/tests/test_s3_worm_live.py \
+            --deselect "packages/ne-storage/tests/test_s3_conformance.py::TestS3ObjectStoreConformance::test_worm_expires" \
+            -q -rs | tee "$RUNNER_TEMP/s3-worm-gate.txt"
+          # Minimum-count FLOOR, not a bare `[0-9]+ passed` match: "1 passed"
+          # satisfies that pattern, so a renamed, gutted or accidentally
+          # unregistered conformance class would sail through green while
+          # proving nothing. 34 is the actual current count (19 before the
+          # additive kit case test_archived_key_stays_readable_and_listed; 20
+          # before the six GOVERNANCE-mode tests proving a bypass-able lock is
+          # not laundered into a WORM claim; 26 before the round-3 additions —
+          # the GOVERNANCE-upgrade default refusal, the four legal-hold tests,
+          # the version-scan cap, and the two restricted-credential tests that
+          # drive the adapter with exactly the documented IAM action list); 34
+          # before the round-4 additions — the two GOVERNANCE+legal-hold tests
+          # (the combination bypassed the opt-in gate entirely) and the
+          # poisoned-key listing test that pins the version cap's fail-closed
+          # abort AND its attribution of the offending key; 37 before the
+          # NE-S3-HOLD-ORDER additions — the four strongest-protection-first
+          # cases (two parametrizations each of hold-only-vs-dated and
+          # held-and-dated-vs-date-only), which pin that a legal hold outranks
+          # a finite retention and that the pick is INDEPENDENT of the listing
+          # order, both parametrizations writing the versions in the opposite
+          # order to each other.
+          # Raise this when tests are added; a DROP means coverage was lost and
+          # must be explained, not papered over.
+          WORM_MIN_PASSED=41
+          passed="$(grep -Eo '[0-9]+ passed' "$RUNNER_TEMP/s3-worm-gate.txt" | tail -1 | grep -Eo '[0-9]+' || true)"
+          if [ -z "$passed" ]; then
+            echo "::error::S3 ObjectStore WORM conformance produced no 'N passed' summary"
+            exit 1
+          fi
+          if [ "$passed" -lt "$WORM_MIN_PASSED" ]; then
+            echo "::error::S3 ObjectStore WORM conformance passed only $passed tests, expected >= $WORM_MIN_PASSED — the suite was gutted, renamed or silently deselected"
+            exit 1
+          fi
+          echo "S3 ObjectStore WORM conformance: $passed passed (floor $WORM_MIN_PASSED)"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/s3-worm-gate.txt"; then
+            echo "::error::S3 ObjectStore WORM conformance did not run — the WORM proof skipped"
+            exit 1
+          fi
+
+  # NE-LP-DBOS-REALPG: the managed-Postgres-shaped POOLED counterpart to
+  # live-postgres. Most real managed-Postgres deployments front the database with
+  # a connection pooler; PgBouncer in TRANSACTION pooling mode is the standard
+  # posture (session pooling defeats the point of pooling; statement pooling is
+  # rarely offered by managed providers). This job proves that shape for the
+  # NE_TEST_POSTGRES_URL suites AND the DBOS-live proofs, running on EVERY CI pass
+  # (not owner-gated, unlike the real-cloud rebac/pgaudit lanes) because it is
+  # entirely local Docker containers — no owner cloud account is needed.
+  #
+  # WHY TRANSACTION MODE specifically: session pooling ties one server connection
+  # to one client for its whole session (no real multiplexing win); statement
+  # pooling is stricter than most drivers tolerate. Transaction mode is what real
+  # managed-Postgres poolers (RDS Proxy, PgBouncer sidecars, Supabase's pooler,
+  # etc.) actually run in production — and its session semantics genuinely differ
+  # from a direct connection: no LISTEN/NOTIFY delivery to a specific backend (a
+  # session-bound feature), session-level advisory locks are unsafe (the lock and
+  # its unlock can land on two DIFFERENT pooled backend connections), and
+  # protocol-level prepared statements (psycopg3 auto-prepares after
+  # `prepare_threshold` repeats of the same statement) require PgBouncer >=1.21's
+  # own prepared-statement support (`max_prepared_statements`, default 200 since
+  # 1.24.0) — 1.25.2 is pinned here for both that support AND its
+  # CVE-2026-6664/6665/6666/6667 fixes (packet-parse overflow, SCRAM stack
+  # overflow, NULL deref, KILL_CLIENT authz bypass).
+  #
+  # dbos 2.26 (LOCKED — see packages/ne-runtime/pyproject.toml) internals,
+  # verified by reading .venv/lib/python3.13/site-packages/dbos/ directly:
+  # * DBOSClient (the enqueue path the live-proof test clients use) hardcodes
+  #   `use_listen_notify=False` (dbos/_client.py:193) — it POLLS by design, so it
+  #   is pooler-safe regardless of LISTEN delivery.
+  # * The in-process/worker DBOS launch defaults `use_listen_notify=True`
+  #   (dbos/_dbos_config.py) — LISTEN through a transaction pooler will not
+  #   reliably deliver notifications to the right backend, but every wait path in
+  #   these suites polls a DB row, and the listener itself falls back to
+  #   `_notification_listener_polling` (dbos/_sys_db.py) on any listener error —
+  #   this degrades to polling rather than hanging.
+  # * The system-schema migration takes a SESSION-level `pg_try_advisory_lock` on
+  #   an AUTOCOMMIT connection (dbos/_sys_db_postgres.py:62-99) — under a
+  #   transaction pooler the lock and its matching `pg_advisory_unlock` could land
+  #   on different backend connections. Bounded here because `should_migrate`
+  #   short-circuits (no lock attempt at all) once the schema is already current.
+  #
+  # HEADLINE FINDING, FIXED by NE-POOLER-TIMEOUTS (2026-07-24) — originally
+  # discovered here and NOT one of the candidate DBOS mechanisms above:
+  # `ne.audit.engine.create_engine_with_timeouts` (P2-16 — the chokepoint
+  # `ne.api.platform.build_platform` routes runtime/audit/skills engines through,
+  # i.e. the WHOLE ne-worker/ne-api composition root, not just DBOS) used to set
+  # Postgres server-side `statement_timeout`/`lock_timeout` via the libpq
+  # `options` startup parameter. PgBouncer >=1.20 REJECTS any `-c` GUC in
+  # `options` it does not itself track, with a FATAL `unsupported startup
+  # parameter in options: statement_timeout` — at connection time, before any
+  # DBOS machinery runs. That FATAL used to block `test_approvals_dbos_live.py`
+  # (its `create_approval_request_step` routes through this helper) and all
+  # four worker-boot suites (`build_platform` does, too) from running pooled at
+  # all — confirmed by hand: a worker subprocess pointed at a pooled
+  # session/audit URL crashed on this exact FATAL during boot and never wrote
+  # its heartbeat marker. `test_dbos_live.py` was always UNAFFECTED (DBOS's own
+  # engine construction sets no `options` connect_arg).
+  #
+  # THE FIX: `ne.audit.engine._pg_timeout_listener` installs a single engine
+  # `"begin"` listener (`SET LOCAL` re-issued at the start of every
+  # transaction, direct or pooled alike) — the pooler-correct mechanism, since
+  # transaction-mode PgBouncer may hand each transaction a different backend
+  # and `SET LOCAL` evaporates at commit/rollback so it can never leak onto
+  # another pooler client's transaction. (An earlier revision ALSO installed a
+  # pool `"connect"` listener issuing a session-wide `SET`; that was reverted
+  # after being shown to leak the timeout onto OTHER pooler clients' unrelated
+  # backends — transaction-mode PgBouncer does not run `DISCARD ALL` between
+  # clients by default. The begin-only mechanism has no such leak.) All 6
+  # DBOS-live suites + `test_approvals_dbos_live.py` now run POOLED below
+  # alongside `test_dbos_live.py`. See
+  # `packages/ne-runtime/tests/test_dbos_pooler_finding_live.py` (now an
+  # applied-and-fires regression test plus an untracked-GUC reject canary) and
+  # `docs/live-proof-coverage.md` for the full writeup — including why "fixing"
+  # this via PgBouncer's `ignore_startup_parameters` would have been a SILENT
+  # downgrade (the timeouts get accepted then silently dropped, never applied)
+  # rather than a real fix, and remains deliberately NOT configured below.
+  live-postgres-pooled:
+    # CHANGE CLASSES: run unless `classify` positively proved this diff is
+    # docs-only. Fails open — a failed, cancelled or skipped classifier, or an
+    # unset/empty `code` output, still runs this job. Safe to gate because this
+    # is NOT a required context, so its `skipped` conclusion satisfies nothing.
+    needs: classify
+    if: ${{ always() && (needs.classify.result != 'success' || needs.classify.outputs.code != 'false') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    # 45 (was 30): the two cron-boundary suites (test_worker_cron_dbos_live,
+    # test_worker_cron_podkill_dbos_live) each wait out real minute boundaries
+    # (~+8-10 min combined) and worker subprocess boots add their own time, now
+    # that all 6 DBOS-live suites run pooled here (NE-POOLER-TIMEOUTS) rather
+    # than just test_dbos_live.py.
+    timeout-minutes: 45
+    services:
+      postgres:
+        # Same pinned digest as live-postgres (PostgreSQL License, vetted at NE-070).
+        image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Create the DBOS databases (ne_runtime_dbos, ne_worker_dbos)
+        env:
+          NE_PG_ADMIN_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+        run: |
+          uv run python - <<'PY'
+          import os
+          import sqlalchemy as sa
+
+          engine = sa.create_engine(os.environ["NE_PG_ADMIN_URL"], isolation_level="AUTOCOMMIT")
+          with engine.connect() as conn:
+              for db in ("ne_runtime_dbos", "ne_worker_dbos"):
+                  exists = conn.execute(
+                      sa.text("SELECT 1 FROM pg_database WHERE datname = :d"), {"d": db}
+                  ).first()
+                  if not exists:
+                      conn.execute(sa.text(f'CREATE DATABASE "{db}"'))
+          engine.dispose()
+          print("created ne_runtime_dbos + ne_worker_dbos")
+          PY
+      - name: Start PgBouncer (transaction pooling — CI test infra only, ISC/MIT, never shipped)
+        # edoburu/pgbouncer wraps upstream PgBouncer (ISC) in an MIT-licensed
+        # entrypoint (github.com/edoburu/docker-pgbouncer) — CI test infrastructure
+        # ONLY, exactly the MinIO precedent above: never embedded, never shipped
+        # with the product (no NOTICE change; no uv.lock change — this is a
+        # container, not a Python dependency). `--network host` +
+        # `DB_HOST=127.0.0.1` (not `host.docker.internal`, which needs extra DNS
+        # wiring `--network host` sidesteps) reaches the `postgres` service
+        # container's published port directly. The wildcard `[databases] * = ...`
+        # (no DB_NAME) is required: the suites below touch
+        # `postgres`/`ne_runtime_dbos`/`ne_worker_dbos`, and DBOS auto-creates
+        # `ne_runtime_dbos_dbos_sys` through this SAME pooler.
+        # `IGNORE_STARTUP_PARAMETERS` is deliberately left at its default
+        # (`extra_float_digits` only) — see the headline finding above: adding
+        # `statement_timeout`/`lock_timeout` there would silently accept-then-drop
+        # a future regression back to the `options`-startup-parameter mechanism
+        # rather than honour it. `test_pooler_still_rejects_untracked_startup_options_guc`
+        # in `test_dbos_pooler_finding_live.py` is the canary that keeps this
+        # lane honest — if it ever goes green, this default changed.
+        run: |
+          set -euo pipefail
+          docker run -d --name ne-pgbouncer --network host \
+            -e DB_HOST=127.0.0.1 -e DB_PORT=5432 -e DB_USER=postgres -e DB_PASSWORD=postgres \
+            -e AUTH_TYPE=scram-sha-256 -e POOL_MODE=transaction -e LISTEN_PORT=6432 \
+            -e MAX_CLIENT_CONN=500 -e DEFAULT_POOL_SIZE=50 -e MAX_PREPARED_STATEMENTS=500 \
+            edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+          uv run python - <<'PY'
+          import time
+
+          import sqlalchemy as sa
+
+          deadline = time.monotonic() + 60.0
+          last_err: Exception | None = None
+          while time.monotonic() < deadline:
+              try:
+                  engine = sa.create_engine(
+                      "postgresql+psycopg://postgres:postgres@localhost:6432/postgres"
+                  )
+                  with engine.connect() as conn:
+                      conn.execute(sa.text("SELECT 1"))
+                  engine.dispose()
+                  print("PgBouncer ready on :6432")
+                  break
+              except Exception as exc:  # noqa: BLE001 - readiness probe, retry within budget
+                  last_err = exc
+                  time.sleep(1.0)
+          else:
+              raise SystemExit(f"PgBouncer never became ready on :6432: {last_err!r}")
+          PY
+      - name: Pooled NE_TEST_POSTGRES_URL suites (must run, not skip)
+        env:
+          NE_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:6432/postgres
+        run: |
+          set -euo pipefail
+          uv run pytest \
+            packages/ne-events/tests/test_outbox_postgres.py \
+            packages/ne-events/tests/test_outbox_postgres_concurrency.py \
+            packages/ne-audit/tests/test_engine_timeouts_postgres_live.py \
+            packages/ne-flywheel/tests/test_capture_postgres.py \
+            packages/ne-flywheel/tests/test_review_postgres.py \
+            packages/ne-runtime/tests/test_run_store_postgres.py \
+            -q -rs | tee "$RUNNER_TEMP/pooled-pg-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/pooled-pg-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/pooled-pg-gate.txt"; then
+            echo "::error::pooled live-Postgres suites did not run — a promoted proof skipped"
+            exit 1
+          fi
+      - name: Pooled DBOS-live proofs (must run, not skip)
+        # NE-POOLER-TIMEOUTS: ALL 6 promoted DBOS-live suites + test_approvals_dbos_live.py
+        # now run POOLED here too (previously only test_dbos_live.py could, plus
+        # the pinned incompatibility reproducer — see the job-level HEADLINE
+        # FINDING comment above and docs/live-proof-coverage.md for the fix that
+        # unblocked the rest). The worker suites derive their session/audit/
+        # worker-DBOS URLs from NE_RUNTIME_DBOS_DATABASE_URL by db-name swap
+        # (`_swap_db`), so ALL of their traffic rides the SAME :6432 pooler.
+        env:
+          NE_RUNTIME_DURABILITY: dbos
+          NE_RUNTIME_DBOS_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:6432/ne_runtime_dbos
+        run: |
+          set -euo pipefail
+          uv run pytest \
+            packages/ne-runtime/tests/test_dbos_live.py \
+            packages/ne-runtime/tests/test_dbos_pooler_finding_live.py \
+            packages/ne-runtime/tests/test_approvals_dbos_live.py \
+            packages/ne-worker/tests/test_worker_cron_dbos_live.py \
+            packages/ne-worker/tests/test_worker_cron_podkill_dbos_live.py \
+            packages/ne-worker/tests/test_worker_dbos_live.py \
+            packages/ne-worker/tests/test_worker_hitl_live.py \
+            -q -rs | tee "$RUNNER_TEMP/pooled-dbos-gate.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/pooled-dbos-gate.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/pooled-dbos-gate.txt"; then
+            echo "::error::pooled DBOS-live proofs did not run — a promoted proof skipped"
+            exit 1
+          fi

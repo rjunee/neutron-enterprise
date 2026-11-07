@@ -1,0 +1,24 @@
+{
+  "lane": "frontier",
+  "note": "ILLUSTRATIVE recorded output for deterministic CI scoring; NOT a live measurement. Live frontier/air_gap rows are LIVE-PARKABLE.",
+  "entities": [
+    "ACME Corp",
+    "BetaSupply",
+    "Dana Lee",
+    "Sam Ortiz",
+    "Gamma LLC",
+    "INV-8891"
+  ],
+  "facts": [
+    "ACME Corp approved a Q3 invoice",
+    "steward rejected BetaSupply for missing W-9",
+    "BetaSupply was later approved as a vendor",
+    "ACME Corp AP contact is Sam Ortiz",
+    "auto-approval threshold is $2,000 for trusted vendors"
+  ],
+  "cost": {
+    "prompt_tokens": 4820,
+    "completion_tokens": 611,
+    "cost_usd": 0.0137
+  }
+}

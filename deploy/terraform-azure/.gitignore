@@ -1,0 +1,17 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+# NE-LP-INFRA-AZURE: azure-live-apply.yml writes ci-live.auto.tfvars.json on
+# the runner (C12) — never committed. The `*.tfvars` glob above does not
+# match this filename.
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

@@ -1,0 +1,36 @@
+[project]
+name = "ne-audit"
+version = "0.1.0"
+description = "Immutable, hash-chained audit log with signed WORM checkpoints and replay."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    # P2-2: repair_unarchived logs per-object archive failures and routes the
+    # driver's message through ne.net.ssrf.redact_url_for_logs so an endpoint URL
+    # in the error text cannot leak userinfo. ne-net is the stdlib-only leaf
+    # (deps: []) — deliberately NOT ne-gateway, which drags litellm in.
+    "ne-net",
+    "sqlalchemy>=2.0.51,<2.1",
+]
+
+[project.entry-points."ne.plugins.audit_sink"]
+postgres = "ne.audit.sink:PostgresAuditSink"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.audit"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-net = { workspace = true }
+ne-events = { workspace = true }
+
+[dependency-groups]
+dev = ["ne-events"]

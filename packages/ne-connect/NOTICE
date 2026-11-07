@@ -1,0 +1,100 @@
+Neutron Enterprise — ne-connect
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+dlt / 1.28.1 / Apache-2.0 / https://github.com/dlt-hub/dlt
+jsonschema / 4.26.0 / MIT / https://github.com/python-jsonschema/jsonschema
+httpx / 0.28.1 / BSD-3-Clause / https://github.com/encode/httpx
+PyJWT / 2.15.0 / MIT / https://github.com/jpadilla/pyjwt
+cryptography / 49.0.0 / Apache-2.0 OR BSD-3-Clause / https://github.com/pyca/cryptography
+sqlalchemy / 2.0.51 / MIT / https://github.com/sqlalchemy/sqlalchemy
+psycopg / 3.3.4 / LGPL-3.0-only / https://github.com/psycopg/psycopg
+pyodbc / 5.3.0 / MIT / https://github.com/mkleehammer/pyodbc
+
+NOTE: httpx / PyJWT / cryptography are used by the M365 (ne/connect/m365), Slack
+(ne/connect/slack) and Salesforce (ne/connect/salesforce) thin HTTP clients —
+app-only/connected-app OAuth token flows (cert-signed or JWT-bearer assertions,
+client-credentials) over a small, SSRF-guarded httpx surface. They are already
+pinned+hash-verified in the workspace uv.lock via sibling packages (ne-identity /
+ne-permissions), so none of NE-044/045/047 add a new lock entry. The Entra/
+Salesforce client-credential + assertion-signing patterns follow the in-repo
+ne-permissions entra.py precedent — no external code was lifted.
+
+NOTE: dlt's win32-gated transitive win-precise-time (MIT) and its runtime
+transitive orjson (MPL-2.0) are recorded in tools/supply-chain/license-policy.toml
+[known] (orchestrator-owned). dlt's anonymous telemetry is disabled at import
+time (RUNTIME__DLTHUB_TELEMETRY=false, forced before `import dlt` in
+ne/connect/_dlt.py — C1 no-phone-home).
+
+NOTE (NE-046 SQL connector, ne/connect/sql): sqlalchemy and psycopg are already
+pinned+hash-verified in the workspace uv.lock via sibling packages (7 packages
+already depend on sqlalchemy; psycopg rides the DBOS Transact dependency), so
+NE-046 adds no new lock entry for either. dlt's core `sql_database` source
+(reached only via the ne/connect/_dlt chokepoint) is dlt-core — no new dlt extra.
+psycopg (LGPL-3.0-only) is already owner-approved with an explicit case-by-case
+override in tools/supply-chain/license-policy.toml (used unmodified, dynamically
+imported as a SQLAlchemy dialect — the LGPL dynamic-linking exception applies).
+
+pyodbc (MIT, zero Python dependencies) is the ONE new lock entry this unit adds —
+C4-verified 2026-07-06 (no CISA-KEV entries, actively maintained, no telemetry).
+It is used exclusively as the MSSQL SQLAlchemy dialect driver
+(`mssql+pyodbc://...`, ne/connect/sql/engine.py). Live MSSQL connections
+additionally require the SYSTEM Microsoft ODBC Driver 18 for SQL Server
+(`msodbcsql18`, Microsoft EULA) AND a system ODBC driver manager (`unixODBC` on
+Linux/macOS, `iODBC` also supported) — pyodbc's compiled extension dynamically
+links against the driver manager's shared library even to be IMPORTED, so both
+are deployment/dev-environment prerequisites, never Python dependencies, and
+never enter uv.lock or the C4 license gate. pymssql (LGPL-2.1) was evaluated
+during planning and NOT adopted — pyodbc's MIT license strictly dominates under
+C4 with no case-by-case approval needed.
+
+This package also consumes in-workspace packages (ne-contracts, ne-schema,
+ne-events, ne-brain at runtime; ne-audit test-only) whose own third-party
+components are recorded in their respective NOTICE files.
+
+NOTE (NE-047 Salesforce connector, ne/connect/salesforce): adds ZERO new
+third-party components — no new lock entry, no new line above. It reuses the
+existing httpx/PyJWT/cryptography pins for its thin REST/Bulk API 2.0 client
+and connected-app OAuth (JWT-bearer/client-credentials) flows. simple-salesforce
+(1.12.9, Apache-2.0 — corrected from the orchestrator brief's "MIT"; verified
+2026-07-06) was evaluated during planning and NOT adopted: it is a synchronous,
+requests-based transport, which would bypass the C2 egress guardian's import
+allowlist (`requests` is a forbidden top-level import under ne/connect), the
+per-request SSRF/instance-pinning re-validation, the AIR_GAP construction
+guard, and the mandated httpx.MockTransport fixture-first CI (NE-000) — the
+same build-vs-adopt call NE-045 made for `slack_sdk` (see that unit's commit
+message). No dlt Salesforce source is used either: dlt has no importable
+in-package Salesforce source (only a vendored `dlt init` scaffold built on
+simple-salesforce), so it inherits the same disqualifying issues; the
+connector plugs into the dlt-based NE-040 framework (bridge/state/contracts)
+without adding a fourth dlt import site.
+
+NOTE (NE-093 Jira + Zendesk connectors, ne/connect/jira + ne/connect/zendesk):
+add ZERO new third-party components — no new lock entry, no new line above. Both
+reuse the already-recorded httpx surface for their thin Basic-auth REST clients
+(no atlassian/zendesk SDKs, no dlt import). atlassian-python-api and zenpy were
+evaluated during planning and NOT adopted: both are synchronous, requests-based
+transports (and zenpy is GPL-family, which would additionally require
+out-of-process isolation under C4) that would bypass the C2 egress guardian's
+import allowlist (`requests` is a forbidden top-level import under ne/connect),
+the per-request SSRF/path-guard re-validation, the AIR_GAP construction guard,
+and the mandated httpx.MockTransport fixture-first CI (NE-000) — the same
+build-vs-adopt call NE-045 made for slack_sdk and NE-047 for simple-salesforce.
+The dlt-hub verified-sources jira/zendesk templates (Apache-2.0) are consulted
+as endpoint/resource-semantics REFERENCE ONLY (they are requests-based +
+dlt-pipeline-coupled), never vendored, so this unit adds no fourth dlt import
+site either.
+
+NOTE (NE-080 Microsoft Teams connector, ne/connect/teams): adds ZERO new
+third-party components — no new lock entry, no new line above. It reuses the
+already-recorded httpx/PyJWT/cryptography surface for its thin app-only Graph
+client (channel-messages delta crawl + certificate/secret client-credentials
+auth, sharing ne/connect/m365's build_client_assertion). No msgraph-sdk /
+botbuilder / Microsoft 365 Agents SDK is adopted: the Bot Framework SDK was
+archived Dec 2025, and a heavy Graph SDK would bypass the C2 egress guardian's
+import allowlist, the per-request SSRF/host-pinning re-validation of every
+followed nextLink/deltaLink and persisted delta cursor, the AIR_GAP construction
+guard, and the mandated httpx.MockTransport fixture-first CI (NE-000) — the same
+build-vs-adopt call NE-044 made for msgraph-sdk. teams/graph.py is the sole new
+httpx import site under ne/connect and is a conscious extension of the C2 egress
+guardian's ALLOWED_HTTP_MODULES.

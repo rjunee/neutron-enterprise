@@ -1,0 +1,224 @@
+/* Copyright (c) 2026 Ryan Junee. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+.ne-answer-ledger__pin,
+.ne-answer-ledger__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+.ne-answer-ledger {
+  width: min(100%, 1080px);
+  margin-inline: auto;
+}
+.ne-answer-ledger,
+.ne-answer-ledger__detail,
+.ne-answer-ledger__question > div,
+.ne-answer-ledger__workspace,
+.ne-answer-ledger__workspace > *,
+.ne-answer-ledger__provenance > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.ne-answer-ledger__pin {
+  max-width: 760px;
+}
+.ne-answer-ledger__pin textarea {
+  min-height: 112px;
+}
+.ne-answer-ledger__question {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-24);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--rule);
+}
+.ne-answer-ledger__question h2 {
+  margin: var(--space-4) 0;
+  overflow-wrap: anywhere;
+}
+.ne-answer-ledger__owner,
+.ne-answer-ledger__baseline,
+.ne-answer-ledger__empty {
+  color: var(--text-dim);
+}
+.ne-answer-ledger__owner {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.ne-answer-ledger__workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  align-items: stretch;
+}
+.ne-answer-ledger__detail {
+  width: min(100%, 78ch);
+}
+.ne-answer-ledger__timeline,
+.ne-answer-ledger__chunks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.ne-answer-ledger__timeline {
+  display: flex;
+  gap: var(--space-8);
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
+}
+.ne-answer-ledger__timeline li {
+  flex: 0 0 min(220px, 72vw);
+}
+.ne-answer-ledger__timeline button {
+  width: 100%;
+  display: grid;
+  gap: var(--space-4);
+  text-align: left;
+  padding: var(--space-12);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-bottom: 2px solid var(--rule);
+}
+.ne-answer-ledger__timeline button[aria-pressed="true"] {
+  border-bottom-color: var(--cherenkov);
+  background: var(--panel-raised);
+}
+.ne-answer-ledger__timeline time,
+.ne-answer-ledger__timeline span {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-answer-ledger__causes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--rule);
+}
+.ne-answer-ledger__causes article {
+  padding: var(--space-16);
+  min-width: 0;
+}
+.ne-answer-ledger__causes article + article {
+  border-left: 1px solid var(--rule);
+}
+.ne-answer-ledger__causes strong {
+  display: block;
+  margin: var(--space-8) 0;
+}
+.ne-answer-ledger__causes p {
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-answer-ledger__answer {
+  padding: var(--space-16);
+  background: var(--panel-raised);
+  min-width: 0;
+}
+.ne-answer-ledger__readable-answer,
+.ne-answer-ledger__verbatim pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.ne-answer-ledger__readable-answer {
+  margin-top: var(--space-8);
+}
+.ne-answer-ledger__verbatim {
+  margin-top: var(--space-12);
+}
+.ne-answer-ledger__verbatim pre {
+  margin: var(--space-8) 0 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-answer-ledger__provenance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-16);
+}
+.ne-answer-ledger__provenance dt {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-answer-ledger__provenance dd {
+  margin: var(--space-4) 0 0;
+  overflow-wrap: anywhere;
+}
+.ne-answer-ledger__trace {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+.ne-answer-ledger__identifier summary,
+.ne-answer-ledger__verbatim summary,
+.ne-answer-ledger__chunk-identifiers summary {
+  color: var(--text-dim);
+  cursor: pointer;
+  font: var(--type-small);
+}
+.ne-answer-ledger__identifier code,
+.ne-answer-ledger__chunk-identifiers code {
+  display: block;
+  margin-top: var(--space-4);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.ne-answer-ledger__chunks li {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-8);
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--rule);
+}
+.ne-answer-ledger__chunk-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+  min-width: 0;
+}
+.ne-answer-ledger__chunk-identifiers dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-12);
+  margin: var(--space-8) 0 0;
+}
+.ne-answer-ledger__chunk-identifiers dt {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-answer-ledger__chunk-identifiers dd {
+  min-width: 0;
+  margin: 0;
+}
+.ne-answer-ledger__error {
+  color: var(--red);
+}
+@media (max-width: 900px) {
+  .ne-answer-ledger__question {
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+  .ne-answer-ledger__causes,
+  .ne-answer-ledger__provenance,
+  .ne-answer-ledger__chunk-identifiers dl {
+    grid-template-columns: 1fr;
+  }
+  .ne-answer-ledger__causes article + article {
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+}
+
+/* 015A0-ENFORCEMENT — the withheld event's one sentence, where the answer was. */
+.ne-answer-ledger__withheld {
+  color: var(--text-secondary);
+  font: var(--type-body);
+}

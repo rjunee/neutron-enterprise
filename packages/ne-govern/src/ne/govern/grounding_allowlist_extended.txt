@@ -1,0 +1,100 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# grounding_allowlist_extended.txt — the ng-2 EXTENDED lexicon (GateProfile
+# PROFILE_NG2, ne.govern.grounding). Relational/quantified/modal phrasing that
+# is exempt ONLY at the STANDARD strictness tier (advisory there, withheld at
+# STRICT as vocab-extended). These bytes are folded into PROFILE_NG2.version —
+# any edit moves the gate version (steward review to grow). Every token MUST
+# already be normalized (normalize(token) == (token,)) — fail loud at import.
+# Disjoint from the core allowlist and the number-words (hygiene screens).
+#
+# Format: one token per line, lowercase, no punctuation. Blanks and '#' ignored.
+
+above
+all
+almost
+always
+approximately
+below
+best
+better
+beyond
+bigger
+biggest
+both
+bottom
+could
+different
+earlier
+equal
+equally
+every
+everyone
+everything
+far
+few
+fewer
+fewest
+frequently
+further
+greater
+greatest
+higher
+highest
+just
+larger
+largest
+later
+latest
+least
+less
+lower
+lowest
+majority
+many
+may
+might
+more
+most
+much
+must
+near
+nearly
+numerous
+occasionally
+often
+only
+other
+others
+over
+rarely
+recent
+recently
+remaining
+rest
+roughly
+same
+several
+shall
+should
+similar
+similarly
+smaller
+smallest
+some
+somebody
+someone
+something
+sometimes
+than
+top
+typically
+under
+usually
+various
+whole
+will
+worse
+worst
+would

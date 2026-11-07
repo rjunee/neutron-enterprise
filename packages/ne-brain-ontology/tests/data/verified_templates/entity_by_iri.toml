@@ -1,0 +1,20 @@
+template_id = "entity-by-iri"
+version = 1
+description = "Fetch one entity's name by its exact IRI (the fetch-by-id parity probe)."
+sparql = """
+SELECT ?account ?name WHERE {
+  #BINDINGS#
+  ?account <https://neutron.enterprise/schema/operational/name> ?name .
+}
+"""
+
+[args.account]
+type = "iri"
+
+[scope]
+graph_classes = ["alpha", "beta"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["account", "name"]
+citation_var = "account"

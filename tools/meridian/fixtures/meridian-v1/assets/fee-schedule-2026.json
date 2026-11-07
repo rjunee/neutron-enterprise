@@ -1,0 +1,26 @@
+[
+  {
+    "amount_cents": 3500,
+    "effective_date": "2026-01-01",
+    "fee_code": "OD-PAID",
+    "fee_name": "Paid overdraft item"
+  },
+  {
+    "amount_cents": 0,
+    "effective_date": "2026-01-01",
+    "fee_code": "NSF-RETURN",
+    "fee_name": "Returned item"
+  },
+  {
+    "amount_cents": 2500,
+    "effective_date": "2026-01-01",
+    "fee_code": "WIRE-DOM",
+    "fee_name": "Domestic outgoing wire"
+  },
+  {
+    "amount_cents": 3000,
+    "effective_date": "2026-01-01",
+    "fee_code": "STOP-PAY",
+    "fee_name": "Stop payment"
+  }
+]

@@ -1,0 +1,333 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# The first-party ne-api Deployment. Reproduces deploy/compose/pilot/compose.yaml's
+# ne-api service 1:1: same hardening (uid 10001, RO rootfs + /tmp emptyDir, cap_drop
+# ALL, no-new-privileges), same env keys, same resource limits, same /healthz probes.
+# Byte-parity is guardian-enforced (tools/ne-cli/tests/test_helm_chart.py).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ne-api
+  labels:
+    app: ne-api
+    app.kubernetes.io/name: ne-api
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: ne-api
+  template:
+    metadata:
+      labels:
+        app: ne-api
+        app.kubernetes.io/name: ne-api
+        app.kubernetes.io/part-of: neutron-enterprise
+      annotations:
+        neutron.dev/config-hash: {{ .Values.global.configHash | quote }}
+        neutron.dev/agent-registry-sha256: {{ .Files.Get "files/agents/registry.toml" | sha256sum | quote }}
+        neutron.dev/skill-bundle-sha256: {{ .Files.Get "files/skills/meridian-hardship-draft/SKILL.md" | sha256sum | quote }}
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 10001 "gid" 10001 "openshift" .Values.global.openshift) | nindent 8 }}
+      # NE-089 HA production-profile pass-throughs — gated OFF by default
+      # (empty dict / empty list render nothing via `with`), so the default
+      # render stays byte-identical to the NE-071a guardian's expectations.
+      # See deploy/helm/examples/values-production-ha.yaml for a populated
+      # overlay.
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-skill-delivery
+          image: {{ include "neutron.firstPartyImageRef" . }}
+          command: ["python", "-m", "ne.api.skills_delivery"]
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 12 }}
+          env:
+            - name: NE_PILOT_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_PILOT_POSTGRES_PASSWORD
+            - name: NE_AGENT_TRANSPORT_GENERATION
+              value: {{ .Values.global.agentTransport.generation | quote }}
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_RUNTIME_SESSION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_API_DBOS_SYSTEM_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_API_DBOS_SYSTEM_DATABASE_URL
+            {{- end }}
+            - name: NE_API_AGENT_MANIFEST_PATH
+              value: {{ .Values.global.agentRegistry.mountPath | quote }}
+            - name: NE_SKILLS_BUNDLE_DIR
+              value: {{ .Values.global.skillBundle.mountPath | quote }}
+            - name: NE_SKILL_BUNDLE_RAW_SHA256
+              value: {{ .Files.Get "files/skills/meridian-hardship-draft/SKILL.md" | sha256sum | quote }}
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_FLYWHEEL_SIGNAL_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            {{- else }}
+            - name: NE_FLYWHEEL_SIGNAL_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            {{- end }}
+          volumeMounts:
+            - name: agent-registry
+              mountPath: {{ .Values.global.agentRegistry.mountPath | quote }}
+              subPath: registry.toml
+              readOnly: true
+            - name: skill-bundle
+              mountPath: {{ .Values.global.skillBundle.mountPath | quote }}
+              readOnly: true
+      containers:
+        - name: ne-api
+          image: {{ include "neutron.firstPartyImageRef" . }}
+          # NO command/args — the image CMD ["python","-m","ne.api"] is the
+          # contract (Dockerfile has no ENTRYPOINT so this stays overridable
+          # for the post-103c ne-worker Deployment sharing the same image).
+          ports:
+            - name: http
+              containerPort: 8000
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 12 }}
+          env:
+            # FIRST: K8s $(VAR) interpolation only sees earlier-declared vars,
+            # so the password must precede every DSN that references it.
+            - name: NE_PILOT_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_PILOT_POSTGRES_PASSWORD
+            - name: NE_AGENT_TRANSPORT_GENERATION
+              value: {{ .Values.global.agentTransport.generation | quote }}
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_RUNTIME_SESSION_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_API_DBOS_SYSTEM_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_API_DBOS_SYSTEM_DATABASE_URL
+            {{- end }}
+            # PRE-009A (A3) Agent Run private payloads — the SAME two keys of the
+            # SAME installer Secret that ne-worker references, byte for byte. The
+            # two roots must never hold different keys, so this block is asserted
+            # identical across both deployments by the focused Helm test.
+            #
+            # optional: true so a Secret provisioned before A2 does not crash-loop
+            # the pod. That is NOT a weakening: the composition root itself refuses
+            # to become ready if any retained private row exists without a matching
+            # current key, so absence is enforced where it can be enforced honestly
+            # (in-process) rather than by a kubelet that cannot see the database.
+            - name: NE_AGENT_PRIVATE_PAYLOAD_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_AGENT_PRIVATE_PAYLOAD_KEY_ID
+                  optional: true
+            - name: NE_AGENT_PRIVATE_PAYLOAD_KEK_B64
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_AGENT_PRIVATE_PAYLOAD_KEK_B64
+                  optional: true
+            # 015A0-AUTHORITY-CORE: the source-authority continuation HMAC key.
+            # SAME installer Secret and SAME block in both deployments, asserted
+            # byte-identical across them by the focused Helm test.
+            #
+            # optional: true — an absent Secret entry leaves continuation not
+            # ready on this replica, which is a serving deployment with one
+            # surface unavailable, not a crash-loop.
+            - name: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_ID
+                  optional: true
+            - name: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_B64
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_SOURCE_AUTHORITY_CONTINUATION_HMAC_KEY_B64
+                  optional: true
+            # 015A0-AUTHORITY-M365: the sub-SLA permission sweep plan. NON-SECRET
+            # plain values, and byte-identical in both deployments — the API
+            # projects the same contract descriptor the worker admits under, so a
+            # per-root value here is how the two come to disagree about an epoch.
+            - name: NE_M365_AUTHORITY_ENABLED
+              value: "false"
+            - name: NE_M365_AUTHORITY_SWEEP_CADENCE_SECONDS
+              value: "120"
+            - name: NE_M365_AUTHORITY_SWEEP_BATCH_SIZE
+              value: "50"
+            - name: NE_M365_AUTHORITY_SWEEP_MAX_BATCH_DURATION_SECONDS
+              value: "60"
+            - name: NE_M365_AUTHORITY_SWEEP_MAX_POINTS_PER_SCOPE
+              value: "500"
+            # Glibc allocator tunable, NOT a setting: it has no NE_ prefix, so
+            # pydantic-settings (NeSettings env_prefix="NE_", extra="forbid")
+            # cannot bind it to any field and it stays outside the frozen
+            # config_hash preimage. Kept byte-identical with the pilot compose
+            # x-ne-app-env anchor and between both app roots — see the
+            # derivation in deploy/compose/pilot/compose.yaml.
+            - name: MALLOC_ARENA_MAX
+              value: "2"
+            - name: NE_API_BIND_HOST
+              value: "0.0.0.0"
+            - name: NE_API_QDRANT_URL
+              value: http://qdrant:6333
+            - name: NE_API_QDRANT_COLLECTION
+              value: ne_chunks
+            - name: NE_API_TEI_URL
+              value: http://tei-embed:80
+            - name: NE_API_AGENT_MANIFEST_PATH
+              value: {{ .Values.global.agentRegistry.mountPath | quote }}
+            - name: NE_SKILLS_BUNDLE_DIR
+              value: {{ .Values.global.skillBundle.mountPath | quote }}
+            - name: NE_SKILL_BUNDLE_RAW_SHA256
+              value: {{ .Files.Get "files/skills/meridian-hardship-draft/SKILL.md" | sha256sum | quote }}
+            - name: NE_GATEWAY_MODELS
+              value: {{ .Values.gatewayModels | toJson | quote }}
+            - name: NE_GOVERN_OPA_URL
+              value: http://opa:8181
+            - name: NE_IDENTITY_OIDC__ISSUER
+              value: https://{{ include "neutron.keycloakHost" . }}/realms/ne-pilot
+            - name: NE_IDENTITY_OIDC__AUDIENCE
+              value: ne-console
+            # NE-103b: console served same-origin + in-network JWKS (mirror compose
+            # pilot ne-api service so K8s is loginable + console-serving at parity).
+            - name: NE_API_SERVE_CONSOLE_DIST
+              value: /app/console-dist
+            - name: NE_IDENTITY_OIDC__JWKS_URI
+              value: http://keycloak:8080/realms/ne-pilot/protocol/openid-connect/certs
+            - name: NE_IDENTITY_OIDC__ALLOW_INSECURE_HTTP
+              value: "true"
+            # NE-103c: durable-worker mode — ne-api enqueues turns to the ne-worker
+            # DBOS runtime (mirror compose pilot ne-api service; env-parity guardian).
+            - name: NE_RUNTIME_DURABILITY
+              value: "dbos"
+            - name: NE_API_TURN_EXECUTION
+              value: "enqueue"
+            - name: NE_API_TURN_TIMEOUT_S
+              value: "300"
+            # The DBOS system database URL (ne-api's DBOSClient enqueue + stream read)
+            # — the dedicated ne_dbos database the bundled initdb SQL creates. The
+            # chart has NO ne-worker Deployment yet (tracked NE-071 follow-up), so
+            # enqueued turns park until a worker exists; DBOSClient's boot
+            # check_connection() only needs the DATABASE to exist (dbos 2.26.0).
+            {{- if not .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_API_DBOS_SYSTEM_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/ne_dbos
+            {{- end }}
+            - name: NE_API_APPROVER_ROLES
+              value: '["approver"]'
+            - name: NE_API_OPS_ROLES
+              value: '["ops"]'
+            - name: NE_API_STEWARD_ROLES
+              value: '["steward"]'
+            {{- if not .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_RUNTIME_SESSION_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            {{- end }}
+            {{- if .Values.global.agentTransport.emptyBootstrap }}
+            - name: NE_AUDIT_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_PERMISSIONS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_FLYWHEEL_SIGNAL_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            - name: NE_API_EVAL_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.secrets.secretName }}
+                  key: NE_RUNTIME_SESSION_DATABASE_URL
+            {{- else }}
+            - name: NE_AUDIT_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            # ne-permissions: PermissionsSettings overrides env_prefix (NE-CLEAN4,
+            # resolving NE-PERMISSIONS-FOLLOWUP), so it reads
+            # NE_PERMISSIONS_DATABASE_URL consistently with every sibling.
+            - name: NE_PERMISSIONS_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            - name: NE_FLYWHEEL_SIGNAL_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            - name: NE_API_EVAL_DATABASE_URL
+              value: postgresql+psycopg://ne:$(NE_PILOT_POSTGRES_PASSWORD)@postgres:5432/neutron
+            {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: platform-config
+              mountPath: /etc/neutron/config
+              readOnly: true
+            - name: agent-registry
+              mountPath: {{ .Values.global.agentRegistry.mountPath | quote }}
+              subPath: registry.toml
+              readOnly: true
+            - name: skill-bundle
+              mountPath: {{ .Values.global.skillBundle.mountPath | quote }}
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: platform-config
+          configMap:
+            name: ne-platform-config
+        - name: agent-registry
+          configMap:
+            name: ne-agent-registry
+        - name: skill-bundle
+          configMap:
+            name: ne-skill-bundle
+            items:
+              - key: meridian-hardship-draft.SKILL.md
+                path: meridian-hardship-draft/SKILL.md

@@ -1,0 +1,64 @@
+[project]
+name = "ne-connect"
+version = "0.1.0"
+description = "Connector framework plus source connectors."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-events",
+    "ne-brain",
+    "ne-net",
+    "dlt==1.28.1",
+    "jsonschema>=4.26,<5",
+    # NE-044 M365 connector (thin-httpx Graph client, cert-signed client
+    # assertion). All three are ALREADY pinned+hash-verified in uv.lock via
+    # sibling packages (ne-identity/ne-permissions) — no new lock entry.
+    "httpx>=0.28.1,<1",
+    "pyjwt>=2.15.0,<3",
+    "cryptography>=50,<51",
+    # NE-046 SQL connector — sqlalchemy+psycopg already lock-pinned via siblings;
+    # pyodbc is the one new dep, MIT, C4-verified 2026-07-06.
+    "sqlalchemy>=2.0.51,<2.1",
+    "psycopg[binary]>=3.3.4,<4",
+    "pyodbc>=5.3.0,<6",
+]
+
+[dependency-groups]
+# Test-only: ne-audit (in-workspace) provides the real PostgresAuditSink round
+# trip proving the connector-sync→AuditEvent seam. NOT a runtime dep — the
+# SyncRunner emits into whatever AuditSink the hosting process configures
+# (frozen Protocol). Mirrors packages/ne-brain/pyproject.toml.
+# ne-permissions is likewise test-only: the NE-044 C7 trimming cross-check runs
+# the REAL PrincipalExpander over the synced corpus and locks the reserved-label
+# constants against ne.permissions.models (mirrors ne-brain's C7 suite).
+dev = ["ne-audit", "ne-permissions"]
+
+[project.entry-points."ne.plugins.connector"]
+fixture = "ne.connect.testing.fixture_connector:FixtureConnector"
+m365 = "ne.connect.m365.connector:M365GraphConnector"
+salesforce = "ne.connect.salesforce.connector:SalesforceConnector"
+sql = "ne.connect.sql.connector:SqlConnector"
+slack = "ne.connect.slack.connector:SlackConnector"
+jira = "ne.connect.jira.connector:JiraConnector"
+zendesk = "ne.connect.zendesk.connector:ZendeskConnector"
+teams = "ne.connect.teams.connector:TeamsConnector"
+csv = "ne.connect.csvfile.connector:CsvConnector"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-events = { workspace = true }
+ne-brain = { workspace = true }
+ne-net = { workspace = true }
+ne-audit = { workspace = true }
+ne-permissions = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.connect"
+namespace = true

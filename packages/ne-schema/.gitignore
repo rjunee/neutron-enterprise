@@ -1,0 +1,9 @@
+.codegen-venv/
+.codegen-venv.lock
+# uv-managed Python interpreters (installed beside the venv by
+# ne.envbuild.ensure_sidecar_venv when no suitable system Python exists).
+.uv-python/
+# uv's download cache for those sidecar builds (kept beside the venv so the
+# multi-gigabyte closure lands on the venv's own persistent, disk-backed
+# volume rather than uv's $HOME-derived default).
+.uv-cache/

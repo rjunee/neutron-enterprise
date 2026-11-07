@@ -1,0 +1,47 @@
+[project]
+name = "ne-memory-graph"
+version = "0.1.0"
+description = "Temporal-graph agent memory: MemoryProvider-preserving facade + Graphiti sidecar (NE-083b)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-runtime",
+    "ne-envbuild",
+    "ne-audit",
+    "ne-events",
+    "ne-schema",
+    "ne-net",
+    "ne-gateway",
+    "ne-govern",
+    "httpx>=0.28.1,<1",
+    "pydantic>=2.11,<3",
+    "sqlalchemy>=2.0.51,<2.1",
+    "fastapi>=0.139.0,<1",
+    "uvicorn>=0.51,<1",
+]
+
+[project.scripts]
+ne-memory-graph = "ne.memory_graph.cli:main"
+
+[project.entry-points."ne.plugins.memory_provider"]
+temporal-graph = "ne.memory_graph.facade:create_temporal_agent_memory"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-runtime = { workspace = true }
+ne-envbuild = { workspace = true }
+ne-audit = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+ne-net = { workspace = true }
+ne-gateway = { workspace = true }
+ne-govern = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.memory_graph"
+namespace = true

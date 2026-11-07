@@ -1,0 +1,147 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §16 — SETTINGS. Two sections on one page, visibly apart. Everything resolves
+ * through styles/tokens.css, so light and dark are one declaration set and
+ * nothing here themes a colour of its own. */
+
+.ne-settings {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The two kinds of setting are SEPARATE PANELS, not two headings in one flow:
+ * "what I prefer" and "what this deployment does" have different consequences
+ * and must not read as one list. */
+.ne-settings__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-width: 640px;
+  padding: var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-settings__title {
+  margin: 0;
+  font: var(--type-cell);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---------------------------- your preferences -------------------------- */
+
+.ne-settings__prefs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.ne-settings__radios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.ne-settings__legend {
+  padding: 0 0 var(--space-4);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-settings__radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-cell);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ne-settings__tour {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+/* ------------------------------- deployment ----------------------------- */
+
+.ne-settings__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.ne-settings__row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: var(--space-12);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.ne-settings__label {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-settings__value {
+  margin: 0;
+  min-width: 0;
+  font: var(--type-cell);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* The short factual reason beside an em dash. Dim, never smaller: an 11px
+ * footnote in a settings list is a footnote nobody reads. */
+.ne-settings__note {
+  color: var(--text-dim);
+}
+
+.ne-settings__caption {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-settings__input {
+  width: 100%;
+  max-width: 320px;
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-settings__input--num {
+  max-width: 96px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-settings__input:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+.ne-settings__unit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  color: var(--text-dim);
+}
+
+.ne-settings__submit {
+  display: flex;
+  justify-content: flex-start;
+}

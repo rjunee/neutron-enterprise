@@ -1,0 +1,143 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §15 — ACCESS. Two tabs in the title row, then the standard toolbar + table.
+ * Everything resolves through styles/tokens.css, so light and dark are one
+ * declaration set and nothing here themes a colour of its own. */
+
+.ne-access,
+.ne-access__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+/* ------------------------------- the tabs ------------------------------- */
+
+/* In-page tabs sit in the title row's own tab slot (§1.4), so they cost no
+ * vertical band of their own and the h1 stays the first thing on the page. */
+.ne-access__tabs {
+  display: flex;
+  gap: var(--space-16);
+}
+
+.ne-access__tab {
+  padding: 0 0 var(--space-4);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  font: var(--type-cell);
+  cursor: pointer;
+}
+
+.ne-access__tab:hover {
+  color: var(--text);
+}
+
+/* The selected tab carries the underline AND the full-strength text colour:
+ * two signals, so the state is never colour alone. */
+.ne-access__tab--on {
+  color: var(--text);
+  border-bottom-color: var(--cherenkov);
+}
+
+.ne-access__tab:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* ----------------------------- the sections ----------------------------- */
+
+/* The Roles tab carries two tables — the pinned Tier-3 list and the roles
+ * themselves — so each one is named. A second table under an unlabelled
+ * heading is a table nobody can cite. */
+.ne-access__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.ne-access__sectiontitle {
+  margin: 0;
+  font: var(--type-cell);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ------------------------------- the cells ------------------------------ */
+
+.ne-access__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.ne-access__chip {
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  font: var(--type-cell);
+  color: var(--text);
+}
+
+/* The `+n` overflow. Dim, and it carries the names it stands for in its own
+ * title — an overflow that hides its contents is a number nobody can act on. */
+.ne-access__more {
+  padding: 0 var(--space-4);
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+.ne-access__idcell {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* §2.5: the pending marker is a SUB-LINE on the object, never a toast. */
+.ne-access__sub {
+  font: var(--type-small);
+}
+
+.ne-access__members {
+  white-space: pre-line;
+}
+
+/* ------------------------------ the editor ------------------------------ */
+
+.ne-access__editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--rule);
+}
+
+.ne-access__checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.ne-access__legend {
+  padding: 0 0 var(--space-4);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-access__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-cell);
+  color: var(--text);
+  cursor: pointer;
+}

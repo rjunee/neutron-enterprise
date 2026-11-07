@@ -1,0 +1,802 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §1 — THE SHELL: navigation rail (240px, collapsing to 56px), top bar (48px),
+ * command palette, page anatomy. Everything here styles THROUGH tokens.css —
+ * no raw colour, no px font-size (see test/token-hardcode-guardian.test.ts).
+ */
+
+/* ======================== the frame's own waiting state ====================
+ *
+ * THE LOADING STATE THAT SAID NOTHING. `.ne-spinner` had NO RULE, so the two
+ * places that render BEFORE the shell exists — AppBootstrap while it reads the
+ * platform configuration, RequireAuth while the identity provider answers —
+ * put a bare unstyled line of text in the top-left corner of an empty page.
+ * Not literally blank, but as close to it as makes no difference: no position,
+ * no weight, and nothing moving to say the wait is progressing rather than
+ * hung. These are the longest waits in the product and they were the least
+ * furnished.
+ *
+ * IT REUSES `.ne-skeleton` FOR THE MOTION AND MINTS NONE OF ITS OWN. Law 4
+ * cl. 1 allows exactly one looping selector and `.ne-skeleton` is it
+ * (test/motion-guardian.test.ts LOOP_ALLOWLIST). A second breathing thing here
+ * would be a second answer to a question the system has already answered, so
+ * the markup wears the skeleton and this rule only gives it somewhere to be.
+ * Under `prefers-reduced-motion` the skeleton's own reduce block (table.css)
+ * stops the breathe and the bar stays — the state is still furnished, still
+ * says which wait it is, and loses nothing but the movement. */
+.ne-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-16);
+  min-height: 60vh;
+  padding: var(--space-32);
+  color: var(--text-dim);
+  font: var(--type-body);
+  text-align: center;
+}
+
+/* The skeleton is `display: block` with no width of its own, which centres to
+ * nothing inside a column flex. This gives it a measure and no other property:
+ * every visual decision about it stays in one place. */
+.ne-spinner__bar {
+  width: 160px;
+  max-width: 100%;
+}
+
+/* THE SAME WAIT'S OTHER OUTCOME. `.ne-config-error` had no rule either, so the
+ * screen a reader gets when /config.json cannot be read — the fail-closed path
+ * in AppBootstrap, the one that decides whether sign-in is possible at all —
+ * was two full-width left-aligned paragraphs and a control jammed into the
+ * top-left corner of an empty viewport. It inherited the ground and the font
+ * from the globals, so it was not naked; it read as a crash rather than as a
+ * state the product has a name for.
+ *
+ * It is built as the FAILURE TWIN of .ne-spinner above: the same centred column
+ * in the same empty viewport, so the two outcomes of one wait sit in the same
+ * place and only the content changes. A card, because this one is terminal and
+ * has something to say — the sentence, the machine detail, and the one action.
+ * The edge is --red-line rather than --rule (the halved-alpha governance edge,
+ * borders only) so the card reads as a fault without the fault hue competing
+ * with the words; nothing here colours text red, so no contrast pair moves. */
+.ne-config-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+  width: min(100%, 58ch);
+  margin-inline: auto;
+  margin-block: 15vh var(--space-32);
+  padding: var(--space-24);
+  border: 1px solid var(--red-line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-card);
+}
+/* The first paragraph is the sentence a person reads; the second is the
+   underlying failure, which is machine text and is set as machine text. */
+.ne-config-error p {
+  margin: 0;
+  font: var(--type-lead);
+  color: var(--text);
+}
+.ne-config-error p + p {
+  font: var(--type-mono);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* ============================== shell frame ============================== */
+.ne-shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--ground);
+}
+.ne-shell--collapsed {
+  grid-template-columns: var(--rail-width-collapsed) minmax(0, 1fr);
+}
+.ne-shell__col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ne-shell__stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-16) var(--space-24) var(--space-24);
+}
+.ne-shell__stage:focus {
+  outline: none;
+}
+.ne-shell__stage:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+.ne-route-presentation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  margin-bottom: var(--space-8);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-route-presentation [aria-current="page"] {
+  color: var(--text);
+}
+
+/* THE SKIP LINK — the first focusable element on every page. */
+.ne-skip {
+  position: fixed;
+  top: var(--space-8);
+  left: var(--space-8);
+  z-index: 200;
+  transform: translateY(-200%);
+  padding: var(--space-8) var(--space-12);
+  background: var(--panel-overlay);
+  border: 1px solid var(--cherenkov);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  text-decoration: none;
+}
+.ne-skip:focus,
+.ne-skip:focus-visible {
+  transform: none;
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* ================================= rail ================================= */
+.ne-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-8);
+  border-right: 1px solid var(--rule);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  align-self: start;
+}
+.ne-rail__wordmark {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) var(--space-8);
+  color: var(--text);
+  text-decoration: none;
+  font: var(--type-cell);
+  font-weight: 700;
+}
+.ne-rail__wordmark:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+.ne-rail__deployment {
+  padding: 0 var(--space-8) var(--space-4);
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+.ne-rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  flex: 1 1 auto;
+}
+.ne-rail__group {
+  display: flex;
+  flex-direction: column;
+}
+.ne-rail__grouplabel {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  padding: var(--space-8) var(--space-8) var(--space-4);
+}
+.ne-rail__foot {
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-8);
+}
+.ne-rail__node {
+  /* Positioning context for the transit dot, which is absolute so its mount
+     and unmount move nothing (law 4 cl. 3's spirit: no layout ever animates,
+     and no layout jumps around an animation either). */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--nav-row-height);
+  padding: 0 var(--space-8);
+  color: var(--text-dim);
+  text-decoration: none;
+  font: var(--type-nav);
+  border-radius: var(--radius);
+  border-left: 2px solid transparent;
+}
+.ne-rail__node:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+.ne-rail__node.active {
+  color: var(--text);
+  background: var(--selected-tint);
+  border-left-color: var(--cherenkov);
+}
+.ne-rail__node:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+.ne-rail__nodelabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A destination whose entitlement answer is still IN FLIGHT (§1.2 / §2.4):
+   the slot holds the destination's row geometry and says "unknown", never
+   "permitted" — no link is ever rendered and then snatched away. The shimmer
+   is `.ne-skeleton`'s own (the ONE selector the motion law allows to loop);
+   this class only shapes it to the rail row. */
+.ne-rail__slotpending {
+  display: flex;
+  align-items: center;
+  height: var(--nav-row-height);
+  padding: 0 var(--space-8);
+  border-left: 2px solid transparent;
+}
+.ne-rail__slotpending > .ne-skeleton {
+  width: 60%;
+}
+.ne-shell--collapsed .ne-rail__slotpending {
+  justify-content: center;
+  padding: 0;
+}
+/* The collapsed slot holds the width of what ARRIVES in it — the destination's
+   icon. It was 24px because that was the two-letter monogram's box; the
+   monogram is gone, and a placeholder wider than the thing it stands for is a
+   slot holding the wrong geometry. RailIcon.test.tsx pins the two together. */
+.ne-shell--collapsed .ne-rail__slotpending > .ne-skeleton {
+  width: 15px;
+}
+
+/* THE DESTINATION'S ICON (§1.2, design/round3/screens/home.html). 15px, never
+   scaled by the row, and dimmed one step below its label so the word leads and
+   the mark follows. MONOCHROME: it takes `currentColor`, so it darkens with the
+   row on hover and carries no hue of its own — nothing here says anything by
+   colour that the row does not already say in words.
+
+   In the COLLAPSED rail this same element is the whole visible destination: it
+   replaced a two-letter monogram that was only ever a stand-in for it. Nothing
+   about the name moved with it — the label span still names the link through
+   `aria-labelledby`, hidden or not. */
+.ne-rail__icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  opacity: 0.7;
+}
+/* The active row's mark takes the accent the active row already carries in its
+   left border — the SECOND channel on a state the border, the tint and the
+   weight all state first. */
+.ne-rail__node.active .ne-rail__icon {
+  opacity: 1;
+  color: var(--cherenkov);
+}
+
+/* THE COLLAPSED ICON RAIL (§1.1, below 1100px or by the top-bar toggle). Every
+   node keeps its `title`, so the full destination name is one hover away and
+   the accessible name never changes. */
+.ne-shell--collapsed .ne-rail__nodelabel,
+.ne-shell--collapsed .ne-rail__grouplabel,
+.ne-shell--collapsed .ne-rail__deployment {
+  display: none;
+}
+.ne-shell--collapsed .ne-rail__node {
+  justify-content: center;
+  padding: 0;
+}
+.ne-rail__tooltip-hit {
+  position: fixed;
+  pointer-events: auto;
+  z-index: 201;
+  transform: translateY(-50%);
+  padding-left: var(--space-8);
+}
+.ne-rail__tooltip {
+  display: block;
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-overlay);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text);
+  font: var(--type-small);
+  white-space: nowrap;
+  max-width: calc(100vw - var(--rail-width-collapsed) - var(--space-16));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ne-shell--collapsed .ne-rail {
+  align-items: stretch;
+}
+
+/* THE APPROVALS BADGE. §1.2: the text is the count alone. The overdue state is
+   NOT colour-only — it changes the tint AND adds a `!` glyph — and the
+   accessible name names both quantities so nothing depends on seeing the tint.
+   A refused or unread queue renders no badge at all: never a zero for a queue
+   this key was not shown. */
+.ne-rail__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-4);
+  min-width: 20px;
+  justify-content: center;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-overlay);
+  color: var(--text);
+  font: var(--type-label);
+  letter-spacing: normal;
+  font-variant-numeric: tabular-nums;
+}
+.ne-rail__badge--overdue {
+  border-color: var(--amber);
+  background: var(--amber-tint);
+  color: var(--amber);
+}
+.ne-rail__badgeglyph {
+  font-family: var(--font-mono);
+}
+
+/* ===== rail motion — the two ambient effects (motion design §4.3 / §4.4) =====
+ * Law 4 (styles/primitives.css) holds both: each is a ONE-SHOT caused by a
+ * served event — NavRail renders the dot only from the shared audit poll's
+ * current fresh batch, and the badge remounts into its tick class only when
+ * the pending count rises between polls (cl. 1–2); each animates a compositor
+ * property alone — the dot opacity, the tick transform (cl. 3;
+ * rail/railMotion.test.tsx pins the exact property sets); durations resolve
+ * through the --motion-* scale with the one curve (cl. 5); and both are
+ * redundant channels — the facts live in the audit ledger and in the badge's
+ * own numeral, so the global reduced-motion collapse loses nothing (cl. 6).
+ * Nothing loops, and nothing waits on either animation (cl. 7). */
+
+/* §4.3 — the transit pulse: a nav item's dot, opacity 0→1→0 over
+ * --motion-pulse, one per mapped live route per fresh poll batch
+ * (TRANSIT_ROUTES, hooks/useAuditPoll.tsx). Base opacity is 0
+ * and there is no fill mode: outside its one-shot the dot is invisible and no
+ * animation is live, and the element itself leaves the DOM on the next quiet
+ * poll. Absolute: zero layout participation. */
+.ne-rail__transit {
+  position: absolute;
+  right: var(--space-4);
+  top: calc(50% - 3px);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cherenkov);
+  opacity: 0;
+  animation: ne-rail-transit var(--motion-pulse) var(--ease-damped);
+}
+@keyframes ne-rail-transit {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* §4.4 — the badge tick: one scale one-shot when the pending count RISES.
+ * The numeral is the fact; the tick only marks the moment it changed. It
+ * never fires on a decrease, an unchanged poll, or first load, and it never
+ * loops — a queue that blinks all day trains the approver to ignore it. */
+.ne-rail__badge--tick {
+  animation: ne-rail-badge-tick var(--motion-snap) var(--ease-damped);
+}
+@keyframes ne-rail-badge-tick {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ================================ top bar ================================ */
+.ne-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: var(--topbar-height);
+  flex: none;
+  padding: 0 var(--space-16) 0 var(--space-8);
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.ne-topbar__spacer {
+  flex: 1 1 auto;
+}
+.ne-topbar__collapse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font: var(--type-cell);
+}
+.ne-topbar__collapse:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+.ne-topbar__collapse:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+/* A BUTTON STYLED AS AN INPUT — GitHub/Linear placement, ≤480px, left-leaning. */
+.ne-topbar__search {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  width: 100%;
+  max-width: 480px;
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  box-shadow: var(--well-inset);
+  color: var(--text-dim);
+  font: var(--type-cell);
+  cursor: text;
+  text-align: left;
+}
+.ne-topbar__search:hover {
+  border-color: var(--rule-strong);
+}
+.ne-topbar__search:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+.ne-topbar__kbd {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+/* ========================= system status control ========================= */
+.ne-status {
+  position: relative;
+}
+.ne-status__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-dim);
+  font: var(--type-cell);
+  cursor: pointer;
+}
+.ne-status__chip:hover {
+  background: var(--hover-tint);
+}
+.ne-status__chip:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+.ne-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+}
+/* QUIET WHEN HEALTHY. The fault state is the only one that takes a colour, and
+   it also carries the fact in words — the chip never signals by colour alone. */
+.ne-status__chip--fault {
+  color: var(--red);
+  border-color: var(--red);
+  background: var(--red-tint);
+}
+.ne-status__chip--fault .ne-status__dot {
+  background: var(--red);
+}
+.ne-status__popover {
+  position: absolute;
+  top: calc(100% + var(--space-4));
+  right: 0;
+  z-index: 100;
+  min-width: 320px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel-overlay);
+  box-shadow: var(--shadow-overlay);
+  padding: var(--space-4);
+}
+.ne-status__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-8);
+  color: var(--text);
+  text-decoration: none;
+  font: var(--type-cell);
+  border-radius: var(--radius);
+}
+.ne-status__row:hover {
+  background: var(--hover-tint);
+}
+.ne-status__row:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+.ne-status__rowlabel {
+  color: var(--text-dim);
+}
+.ne-status__rowvalue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ne-status__config {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+/* ============================== account menu ============================== */
+.ne-account {
+  position: relative;
+}
+.ne-account__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  color: var(--text);
+  font: var(--type-label);
+  letter-spacing: normal;
+  cursor: pointer;
+}
+.ne-account__button:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+.ne-account__menu {
+  position: absolute;
+  top: calc(100% + var(--space-4));
+  right: 0;
+  z-index: 100;
+  min-width: 240px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel-overlay);
+  box-shadow: var(--shadow-overlay);
+  padding: var(--space-4);
+}
+.ne-account__identity {
+  padding: var(--space-8);
+  border-bottom: 1px solid var(--rule);
+}
+.ne-account__id {
+  font: var(--type-cell);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.ne-account__identity-details {
+  margin-top: var(--space-4);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-account__identity-details > summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.ne-account__identity-details > summary:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-account__identity-row {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+.ne-account__groups {
+  display: grid;
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.ne-account__group {
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  margin: 0;
+  padding: var(--space-8);
+}
+.ne-account__legend {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  padding: 0;
+}
+.ne-account__radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+  font: var(--type-cell);
+  color: var(--text);
+  cursor: pointer;
+}
+.ne-account__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-8);
+  border: none;
+  background: none;
+  color: var(--text);
+  font: var(--type-cell);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.ne-account__item:hover {
+  background: var(--hover-tint);
+}
+.ne-account__item:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+
+/* ============================ command palette ============================ */
+.ne-palette__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: var(--scrim);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20vh;
+}
+.ne-palette {
+  width: var(--palette-width);
+  max-width: calc(100vw - var(--space-32));
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel-overlay);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+}
+.ne-palette__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--space-16);
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  box-shadow: var(--well-inset);
+  color: var(--text);
+  font: var(--type-body);
+}
+.ne-palette__input:focus {
+  outline: none;
+}
+.ne-palette__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-4);
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.ne-palette__option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-8) var(--space-12);
+  font: var(--type-cell);
+  color: var(--text);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+.ne-palette__option:hover {
+  background: var(--hover-tint);
+}
+.ne-palette__option--active {
+  background: var(--selected-tint);
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+.ne-palette__kind {
+  color: var(--text-dim);
+  font: var(--type-small);
+  white-space: nowrap;
+}
+.ne-palette__empty {
+  margin: 0;
+  padding: var(--space-16);
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+/* ============================= page anatomy ============================= */
+.ne-screen {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ne-screen__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+.ne-titlerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  min-height: var(--titlerow-height);
+  padding: var(--space-16) 0 var(--space-8);
+}
+.ne-titlerow__main {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-24);
+  min-width: 0;
+}
+.ne-titlerow__h1 {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+/* The facts margin: a count beside the title, at the title's baseline. Never a
+   sentence — the header standard has nowhere to put one. */
+.ne-titlerow__meta {
+  min-width: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+.ne-titlerow__tabs {
+  display: flex;
+  gap: var(--space-12);
+}

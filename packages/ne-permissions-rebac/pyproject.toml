@@ -1,0 +1,32 @@
+[project]
+name = "ne-permissions-rebac"
+version = "0.1.0"
+description = "Optional OpenFGA ReBAC module: governed fine-grained document sharing (NE-087)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-events",
+    "ne-permissions",
+    "ne-net",
+    "openfga-sdk>=0.10.4,<0.11",
+]
+
+[project.entry-points."ne.plugins.shared_document_resolver"]
+openfga = "ne.permissions_rebac.resolver:OpenFgaSharedDocumentResolver"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-events = { workspace = true }
+ne-permissions = { workspace = true }
+ne-net = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.permissions_rebac"
+namespace = true

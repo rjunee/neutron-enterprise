@@ -1,0 +1,10 @@
+Neutron Enterprise — ne-envbuild
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  filelock / 4.2.9 / MIT / https://github.com/tox-dev/filelock
+
+Everything else is Python standard library (hashlib / os / pathlib / shutil /
+subprocess / tempfile / contextlib).

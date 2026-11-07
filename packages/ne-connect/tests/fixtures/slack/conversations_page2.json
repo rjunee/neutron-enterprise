@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "channels": [
+    {"id": "C0000QMEM", "name": "priv-broken", "is_channel": true, "is_private": true},
+    {"id": "C0000FORGED", "name": "priv-forged", "is_channel": true, "is_private": true},
+    {"id": "C0000EXT", "name": "ext-shared", "is_channel": true, "is_private": false, "is_ext_shared": true}
+  ],
+  "response_metadata": {"next_cursor": ""}
+}

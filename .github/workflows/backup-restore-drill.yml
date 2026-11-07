@@ -1,0 +1,87 @@
+name: backup-restore-drill
+
+# NE-100 pilot-tier DATA SAFETY: the executable backup -> wipe -> restore -> verify
+# drill. It is docker-gated locally (skips with a naming reason unless
+# NE_BACKUP_DRILL=1) but MANDATORY-RUN here: the executing-gate grep below fails
+# the job if the drill test skipped or collected nothing (anti-vacuous-skip).
+on:
+  pull_request:
+    paths:
+      - "tools/ne-backup/**"
+      - "deploy/backup/**"
+      - ".github/workflows/backup-restore-drill.yml"
+      - "deploy/compose/pilot/**"
+  push:
+    branches: [main]
+    paths:
+      - "tools/ne-backup/**"
+      - "deploy/backup/**"
+      - ".github/workflows/backup-restore-drill.yml"
+      - "deploy/compose/pilot/**"
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+# Least privilege: this job only reads the repo.
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    env:
+      NE_BACKUP_DRILL: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+      - name: Cache Apache AGE 1.7.0 source (keyed on its pinned SHA-512)
+        # Same prefetch as supply-chain.yml: the build verifies every digest and
+        # the release signature whichever host the files came from.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apache-age-src
+          key: apache-age-1.7.0-src-sha512-129e64d70ec82e0fb47202145af45915b335048472c9a869129c31e4cb59f15a271a929a36a7abb2822272591e6476786c36908cb35a10cd73f2ecd0a617d3bb
+      - name: Fetch and verify Apache AGE 1.7.0 source (mirrors, retries, backoff)
+        run: sh deploy/docker/ne-postgres-age/fetch-age-src.sh "$RUNNER_TEMP/apache-age-src"
+      - name: Build exact admitted PostgreSQL 18.6 + AGE 1.7.0 artifact
+        run: |
+          set -euo pipefail
+          mapfile -t admission < <(
+            uv run python - <<'PY'
+          import pathlib
+          import yaml
+
+          document = yaml.safe_load(
+              pathlib.Path("deploy/compose/pilot/compose.yaml").read_text(encoding="utf-8")
+          )
+          print(document["x-ne-postgres-age-source-revision"])
+          print(document["x-ne-postgres-age-image"])
+          PY
+          )
+          source_revision="${admission[0]}"
+          pilot_image="${admission[1]}"
+          [[ "$pilot_image" =~ ^sha256:[0-9a-f]{64}$ ]]
+          NE_POSTGRES_AGE_SOURCE_REV="$source_revision" \
+            NE_POSTGRES_AGE_SRC_DIR="$RUNNER_TEMP/apache-age-src" \
+            bash deploy/airgap/scripts/build-ne-postgres-age.sh \
+              --iidfile "$RUNNER_TEMP/ne-postgres-age-drill.iid"
+          ci_image="$(cat "$RUNNER_TEMP/ne-postgres-age-drill.iid")"
+          [[ "$ci_image" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test "$ci_image" = "$(docker image inspect --format='{{.Id}}' ne-postgres-age:18.6-1.7.0)"
+          test "$(docker image inspect --format='{{ index .Config.Labels "org.neutron.ne-postgres-age.source-rev" }}' "$ci_image")" = "$source_revision"
+          docker run --rm --entrypoint sh "$ci_image" -c \
+            'test -s /usr/share/ne-postgres-age/runtime-apk-inventory.tsv && test -f /usr/share/postgresql18/extension/age--1.7.0.sql'
+          printf 'NE_BACKUP_DRILL_POSTGRES_IMAGE=%s\n' "$ci_image" >> "$GITHUB_ENV"
+      - name: Restore drill (executing gate — must run, not skip)
+        run: |
+          set -euo pipefail
+          uv run pytest tools/ne-backup/tests/test_restore_drill.py -q -rs | tee "$RUNNER_TEMP/drill.txt"
+          grep -Eq '[0-9]+ passed' "$RUNNER_TEMP/drill.txt"
+          if grep -Eiq 'skipped|no tests ran' "$RUNNER_TEMP/drill.txt"; then
+            echo "::error::Restore drill did not run — backup/restore/verify was skipped"
+            exit 1
+          fi

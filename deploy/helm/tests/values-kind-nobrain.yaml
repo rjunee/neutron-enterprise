@@ -1,0 +1,29 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-071c-FU kind-smoke nobrain overlay — a ONE-KNOB file that turns the brain
+# profile (qdrant + tei-embed + tei-rerank) OFF for the live helm-smoke kind job
+# ONLY. It is passed as the LAST `-f` to `ne k8s up` in
+# .github/workflows/helm-smoke.yml (user values are last-wins, so brain-off wins).
+#
+# WHY: the two TEI model servers OOM a single GitHub-hosted kind node —
+# tei-rerank (BAAI/bge-reranker-v2-m3) is OOMKilled (exit code 137) at its 4Gi
+# memory limit while tei-embed (Qwen3-Embedding-0.6B) is ALSO loaded, so the two
+# model servers together exceed one runner's RAM and `ne k8s up --wait` flaked
+# (2026-07-10 kind-smoke failures). The umbrella Chart.yaml gates BOTH qdrant AND
+# tei on the ONE `profiles.brain` condition, so the brain profile goes off
+# wholesale (a tei-only disable would require touching the out-of-scope umbrella
+# Chart.yaml). ne-api tolerates this: its retriever/reranker are lazy per-query
+# HTTP clients built from URLs (packages/ne-api/.../platform.py), with no
+# boot-time connect — /healthz + the login smoke stay green with brain off.
+#
+# COVERAGE SPLIT: the brain DATA-PLANE (real qdrant + tei bring-up) is
+# live-validated in the no-egress COMPOSE lane (.github/workflows/no-egress.yml
+# Phases B1/B2: single-node, sequential, pre-staged weights, NE_PILOT_HF_OFFLINE=1),
+# while kind-smoke validates the app tier + chart install.
+#
+# ZARF-SAFETY: this must NEVER be folded into values-kind.yaml — zarf-package.yml
+# copies values-kind.yaml verbatim as its tuning overlay and the sealed zarf
+# deploy keeps brain ON; the brain-disable knob lives ONLY here.
+profiles:
+  brain: false

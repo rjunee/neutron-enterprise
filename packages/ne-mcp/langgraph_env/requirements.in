@@ -1,0 +1,35 @@
+# NE-LG-DROPIN — the CUSTOMER-SIDE LangGraph agent's isolated, hash-pinned venv.
+#
+# SOVEREIGNTY (the headline): NOTHING in this closure ever enters the platform
+# uv.lock / SBOM / C4 license gate. langgraph depends on langchain-core, and the
+# platform's sovereignty guards (packages/ne-eval/tests/test_ragas_isolation.py and
+# packages/ne-mcp/tests/test_langgraph_isolation.py) BAR every langchain*/langgraph*
+# name from the platform lock. This payload lives ONLY in the git-ignored sidecar
+# venv (packages/ne-mcp/.langgraph-venv), built the same way as
+# packages/ne-eval/ragas_env/ via ne.envbuild.ensure_sidecar_venv. All top pins MIT.
+#
+# The customer's LangGraph agent (agent.py) consumes the platform's governed tools
+# over MCP stdio via langchain-mcp-adapters — every tool call is C6-governed by
+# construction because those are the ONLY tools it has.
+#
+# Why the langchain-core >=1.2.22 security floor (MANDATORY — carried verbatim from
+# packages/ne-eval/ragas_env/requirements.in, same advisories, same closure):
+#   langchain-core 0.3.x is affected by TWO HIGH advisories per OSV/GHSA:
+#     - CVE-2026-34070 (GHSA-qh6h-p6c9-ff54): path traversal in load_prompt,
+#       fixed in langchain-core >=1.2.22.
+#     - CVE-2026-26013 (GHSA-2g6r-c272-w58r): fixed in langchain-core >=1.2.11.
+#   Both remediations land only on the langchain 1.x line, so the whole closure is
+#   floored at 1.x here (full version bump — no suppression).
+#
+# langchain-openai is used ONLY by the demo's --model mode against a LOCAL
+# OpenAI-compatible serving endpoint (orchestrator decision: NO frontier keys); the
+# deterministic demo/live path performs ZERO model egress and never imports it.
+#
+# Compile with (NEVER hand-edit requirements.txt):
+#   uv pip compile packages/ne-mcp/langgraph_env/requirements.in --universal \
+#       --python-version 3.12 --generate-hashes \
+#       -o packages/ne-mcp/langgraph_env/requirements.txt
+langgraph>=1.2.9,<2
+langchain-mcp-adapters>=0.3.0,<0.4
+langchain-core>=1.2.22,<2
+langchain-openai>=1,<2

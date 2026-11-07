@@ -1,0 +1,44 @@
+template_id = "open-disputes-by-status"
+version = 1
+description = "Meridian debit-card (Reg E) disputes in one validated status, each row joined to the currently marked dispute SOP: the dispute's notice_date and amount are served beside that SOP's provisional-credit deadline tiers in business days, its expedited threshold and its as_of_date — the served fields a provisional-credit deadline or overdue determination reads. amount_dollars and expedited_threshold_dollars are the exact dollar renderings of amount_cents and expedited_threshold_cents ($X.YY), served so an answer can state the amounts in dollars."
+max_rows = 50
+sparql = """
+SELECT ?dispute ?dispute_id ?customer_id ?status ?notice_date ?amount_cents ?credit_amount_recorded ?current_policy ?policy_artifact_id ?policy_version ?expedited_threshold_cents ?expedited_deadline_business_days ?standard_deadline_business_days ?as_of_date ?amount_dollars ?expedited_threshold_dollars WHERE {
+  #BINDINGS#
+  ?dispute a <https://neutron.enterprise/schema/meridian/RegEDispute> .
+  ?dispute <https://neutron.enterprise/schema/meridian/dispute_id> ?dispute_id .
+  ?dispute <https://neutron.enterprise/schema/meridian/customer_id> ?customer_id .
+  ?dispute <https://neutron.enterprise/schema/meridian/status> ?status .
+  ?dispute <https://neutron.enterprise/schema/meridian/notice_date> ?notice_date .
+  ?dispute <https://neutron.enterprise/schema/meridian/amount_cents> ?amount_cents .
+  ?dispute <https://neutron.enterprise/schema/meridian/amount_dollars> ?amount_dollars .
+  ?dispute <https://neutron.enterprise/schema/meridian/credit_amount_recorded> ?credit_amount_recorded .
+  ?current_policy a <https://neutron.enterprise/schema/meridian/DisputePolicy> .
+  ?current_policy <https://neutron.enterprise/schema/meridian/current> true .
+  ?current_policy <https://neutron.enterprise/schema/meridian/policy_artifact_id> ?policy_artifact_id .
+  ?current_policy <https://neutron.enterprise/schema/meridian/policy_version> ?policy_version .
+  ?current_policy <https://neutron.enterprise/schema/meridian/expedited_threshold_cents> ?expedited_threshold_cents .
+  ?current_policy <https://neutron.enterprise/schema/meridian/expedited_threshold_dollars> ?expedited_threshold_dollars .
+  ?current_policy <https://neutron.enterprise/schema/meridian/expedited_deadline_business_days> ?expedited_deadline_business_days .
+  ?current_policy <https://neutron.enterprise/schema/meridian/standard_deadline_business_days> ?standard_deadline_business_days .
+  ?current_policy <https://neutron.enterprise/schema/meridian/as_of_date> ?as_of_date .
+  FILTER(?status = ?q_status)
+}
+"""
+
+[args.q_status]
+description = "Dispute status to filter on; exactly one of the declared values. Note 'open' returns currently open Reg E disputes."
+type = "str"
+enum = ["closed", "open", "withdrawn"]
+max_length = 9
+
+[scope]
+graph_classes = ["bank.dispute.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["dispute", "dispute_id", "customer_id", "status", "notice_date", "amount_cents", "credit_amount_recorded", "current_policy", "policy_artifact_id", "policy_version", "expedited_threshold_cents", "expedited_deadline_business_days", "standard_deadline_business_days", "as_of_date", "amount_dollars", "expedited_threshold_dollars"]
+citation_var = "dispute"
+contributor_vars = ["dispute", "current_policy"]
+source_status = "source_bearing"
+count_total_rows = true

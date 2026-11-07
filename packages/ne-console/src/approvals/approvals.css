@@ -1,0 +1,318 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §8 — APPROVALS, screen-local only.
+ *
+ * The table, the toolbar, the pills, the state blocks and the detail pane are
+ * all the shared standard (src/styles/table.css); nothing here restyles them.
+ * What is left is the handful of things only this screen has: the pane's payload
+ * and action blocks, the overdue tint on a Due cell, and the Decided disclosure.
+ *
+ * Every value resolves through a token. No raw colour, no px font-size. */
+
+.ne-approvals {
+  display: contents;
+}
+
+/* ------------------------------- the table ------------------------------- */
+
+/* §8: "past-due cells take the caution tint". The tint is REDUNDANT — the cell
+ * already reads −mm:ss and the row's Status pill already reads OVERDUE, because
+ * a state carried by a colour alone is a state a third of readers cannot see. */
+.ne-approvals__due--overdue {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+/* ---------------------------- the decision pane --------------------------- */
+
+.ne-approvals__paneaction {
+  font: var(--type-mono-plate);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ne-approvals__panepills {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-approvals__tier {
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0 var(--space-4);
+}
+
+.ne-approvals__block {
+  padding: var(--space-12) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-approvals__blocktitle {
+  margin: 0 0 var(--space-8);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* The payload has not been asked for. The line states that and the one
+ * consequence of asking, then stops; it explains no policy, names no route, and
+ * previews no value. The Reveal control sits under it. */
+.ne-approvals__undisclosed {
+  margin: 0 0 var(--space-8);
+  font: var(--type-body);
+  color: var(--text-dim);
+}
+
+/* The gate's refusal, in the gate's words. §2.4's refusal block is centred for a
+ * whole-screen refusal; inside a 420px pane it reads as one left-aligned
+ * paragraph under the heading, in the neutral tone a correctly-drawn role
+ * boundary deserves. */
+.ne-approvals__refusal {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* §12-item-8 shape: a deep link that cannot land must say so, loudly, where the
+ * pane would have been — a silent miss is visually identical to success. */
+.ne-approvals__missedlink {
+  margin: var(--space-8) 0 0;
+  font: var(--type-body);
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.ne-approvals__warn {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--amber);
+  display: flex;
+  gap: var(--space-8);
+}
+
+.ne-approvals__refs {
+  margin: var(--space-8) 0 0;
+  padding-left: var(--space-16);
+  font: var(--type-small);
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.ne-approvals__copyvalue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.ne-approvals__expired,
+.ne-approvals__second,
+.ne-approvals__conflict {
+  margin: var(--space-8) 0 0;
+  font: var(--type-body);
+  color: var(--text-dim);
+}
+
+/* ------------------------------- the actions ------------------------------ */
+
+/* APPROVE AND DENY ARE ALWAYS ON SCREEN. TWO CLICKS WERE LOST TO THIS.
+ *
+ * The decision block is the LAST thing in the pane body, after "What happens if
+ * approved". Before Reveal that body is short; after Reveal it carries the
+ * target, one row per material parameter and the reversibility note, and on a
+ * laptop viewport that pushed Approve/Deny past the bottom of the scrolling
+ * body. A control that is off-screen is not disabled and says nothing — the
+ * click lands on the payload rows and NOTHING HAPPENS, which is precisely the
+ * failure mode the whole decision surface is built to make impossible. It cost
+ * two clicks in rehearsal, and the reader's own reading is what caused it: the
+ * more of the payload the pane discloses, the further the decision moves away.
+ *
+ * So the block sticks to the foot of the scroll port. It is full-bleed (the
+ * negative margins cancel `.ne-detail__body`'s 16px padding) and it carries the
+ * panel's own background and a rule, so the payload scrolls UNDER it rather
+ * than showing through it.
+ *
+ * NOT a fixed overlay and NOT the pane's `footer` slot: the deny-reason field
+ * and the approve confirm open INSIDE this block, and both must be able to grow
+ * and to scroll the pane with them. Sticky keeps the block in the document flow
+ * — when the payload is short it simply sits where it always sat. */
+.ne-approvals__actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: var(--space-16) calc(-1 * var(--space-16)) calc(-1 * var(--space-16));
+  padding: var(--space-12) var(--space-16);
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-approvals__buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.ne-approvals__withheld,
+.ne-approvals__tier3,
+.ne-approvals__confirmline {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--text);
+}
+
+.ne-approvals__withheld,
+.ne-approvals__tier3 {
+  color: var(--text-dim);
+}
+
+.ne-approvals__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: var(--space-12);
+  background: var(--panel-raised);
+}
+
+.ne-approvals__reason {
+  width: 100%;
+  font: var(--type-body);
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: var(--space-8);
+  resize: vertical;
+}
+
+.ne-approvals__submitting {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* ------------------------------- the receipt ------------------------------ */
+
+.ne-approvals__receipt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding-top: var(--space-12);
+}
+
+.ne-approvals__verdict {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-approvals__verdictby {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-approvals__writing,
+.ne-approvals__auditlink,
+.ne-approvals__copied {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* ---------------------------- the verdict grammar ------------------------- */
+
+/* Design §4.5 / §4.6. The contract is law 4 cl. 4 (styles/primitives.css):
+ * A DENIAL NEVER EASES. Which surface takes which class is decided once, in
+ * verdictMotion.ts, over the closed verdict vocabulary.
+ *
+ * cl. 1  one-shot; it plays because a decision the operator submitted came back
+ *        from the gate, and a screen at rest runs none of it.
+ * cl. 2  the arrival gate (useVerdictArrival) means a pane opened onto a
+ *        decision it already held animates nothing — no replayed verdicts.
+ * cl. 3  transform + opacity only. Nothing here reflows: the receipt's layout is
+ *        final in the frame it renders.
+ * cl. 5  --motion-settle + one --motion-chain step = 260 ms, inside the 800 ms
+ *        choreography ceiling, and at most 2 elements move per decision.
+ * cl. 6  motion carries nothing: the verdict word, its glyph, the approver, the
+ *        time and the chain entry are all text in the same DOM. */
+@keyframes ne-approvals-settle {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* An affirmation seats into place. */
+.ne-approvals__settle {
+  animation: ne-approvals-settle var(--motion-settle) var(--ease-damped) both;
+}
+
+/* §4.6 — the record lands one --motion-chain step behind the decision, so the
+ * order of appearance mirrors the order of fact. `both` holds the start frame
+ * through the delay; without it the line would paint final, then jump back. */
+.ne-approvals__settle--chained {
+  animation-delay: var(--motion-chain);
+}
+
+/* A refusal, a break and a fault arrest: full strength, instantly, no curve.
+ * Declared rather than merely omitted — an arrest that is only the ABSENCE of a
+ * rule is an arrest the next stylesheet can undo by accident, and cl. 4 is the
+ * one clause this screen exists to demonstrate. */
+.ne-approvals__arrest {
+  animation: none;
+  transition: none;
+}
+
+/* cl. 6 — the global collapse (primitives.css) zeroes DURATIONS; it does not
+ * zero a delay, so the chained line would still hold its start frame for
+ * --motion-chain before appearing. Under reduced motion the settle is removed
+ * outright: no movement, no hold, and every fact still on screen as text. */
+@media (prefers-reduced-motion: reduce) {
+  .ne-approvals__settle {
+    animation: none;
+  }
+}
+
+/* ---------------------------- the Decided section ------------------------- */
+
+.ne-approvals__decided {
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-12);
+}
+
+.ne-approvals__decidedhead {
+  cursor: pointer;
+  font: var(--type-section);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.ne-approvals__decidedcount {
+  font: var(--type-small);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}

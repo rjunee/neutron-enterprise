@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# ClusterIP `qdrant` — ne-api's NE_API_QDRANT_URL=http://qdrant:6333 resolves
+# here (byte-parity with compose). 6334 is the gRPC port.
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  labels:
+    app: qdrant
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  type: ClusterIP
+  selector:
+    app: qdrant
+  ports:
+    - name: http
+      port: 6333
+      targetPort: 6333
+    - name: grpc
+      port: 6334
+      targetPort: 6334

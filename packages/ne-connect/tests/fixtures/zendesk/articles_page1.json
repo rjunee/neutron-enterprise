@@ -1,0 +1,37 @@
+{
+  "articles": [
+    {
+      "id": 2001,
+      "title": "Getting started",
+      "body": "<p>Welcome to <b>Acme</b> support.</p>",
+      "locale": "en-us",
+      "section_id": 900,
+      "updated_at": "2026-01-02T00:00:00Z",
+      "draft": false,
+      "user_segment_id": null
+    },
+    {
+      "id": 2002,
+      "title": "Agent-only runbook",
+      "body": "<p>Internal &amp; segmented runbook.</p>",
+      "locale": "en-us",
+      "section_id": 901,
+      "updated_at": "2026-01-03T00:00:00Z",
+      "draft": false,
+      "user_segment_id": 3001
+    },
+    {
+      "id": 2003,
+      "title": "Unpublished draft",
+      "body": "<p>Not ready.</p>",
+      "locale": "en-us",
+      "section_id": 902,
+      "updated_at": "2026-01-04T00:00:00Z",
+      "draft": true,
+      "user_segment_id": null
+    }
+  ],
+  "end_time": 1704067200,
+  "next_page": null,
+  "count": 3
+}

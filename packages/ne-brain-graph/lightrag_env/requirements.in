@@ -1,0 +1,26 @@
+# LightRAG library-only graph-retrieval sidecar (isolated, hash-pinned venv — C4/C2).
+#
+# LightRAG (lightrag-hku) is used LIBRARY-ONLY. The bundled API SERVER is BANNED
+# (CVE-2026-30762 auth bypass / CVE-2026-39413 JWT confusion / CVE-2025-6773 path
+# traversal), so only the library is installed and it runs OUT-OF-PROCESS in this
+# sidecar venv, invoked as a SUBPROCESS over JSON files. The whole closure lives
+# ONLY here and NEVER enters the platform uv.lock (proven by
+# packages/ne-brain-graph/tests/test_no_gpl_sidecar_leak.py + the
+# `t2-sidecars-out-of-process` import-linter contract).
+#
+# `pipmaster` (a runtime pip-installer LightRAG imports) is NEUTRALIZED by a fully
+# pre-installed pinned closure: with every dependency already present, pipmaster's
+# install path is never taken. Combined with AIR_GAP (ensure_sidecar_venv's
+# pre_lock_check fails closed), the sidecar performs ZERO runtime egress/installs.
+#
+# LLM calls are BANNED in-sidecar: the sidecar's llm_model_func RAISES and queries
+# run only_need_context=True (+ pre-supplied keywords) so it is never invoked; the
+# embedding_func is a DETERMINISTIC local hash-embedding (zero network). Verified
+# 2026-07-09 (tier2-spec §8).
+#
+# Pin: lightrag-hku==1.5.4 (MIT; released 2026-06-24). Compile with (NEVER
+# hand-edit requirements.txt):
+#   uv pip compile packages/ne-brain-graph/lightrag_env/requirements.in --universal \
+#       --python-version 3.12 --generate-hashes \
+#       -o packages/ne-brain-graph/lightrag_env/requirements.txt
+lightrag-hku==1.5.4

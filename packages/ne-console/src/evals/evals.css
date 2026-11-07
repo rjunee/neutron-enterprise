@@ -1,0 +1,80 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §12 — EVALUATIONS, screen-local only.
+ *
+ * The title row, the toolbar, the table, the pills, the state blocks and the
+ * detail pane are all the shared standard (src/styles/table.css); nothing here
+ * restyles them. What is left is the handful of things only this screen has: the
+ * pane's verdict line, the rubric pairs, and the failing-metric row tint.
+ *
+ * A NEW class namespace (ne-evaluations__*) that cannot collide with the legacy
+ * .ne-evals rules still carried in styles.css. Every value resolves through a
+ * tokens.css custom property — no raw colour, no px font-size.
+ */
+
+/* The screen is the list shell plus a sibling detail pane, so this wrapper adds
+ * no box of its own. */
+.ne-evaluations {
+  display: contents;
+}
+
+/* ------------------------------ the run pane ------------------------------ */
+
+.ne-evaluations__panehead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-evaluations__rubrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-evaluations__rubric {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.ne-evaluations__rubrickey {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-evaluations__metrics {
+  padding-top: var(--space-16);
+}
+
+.ne-evaluations__blocktitle {
+  margin: 0 0 var(--space-8);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* --------------------------- the metrics table ---------------------------- */
+
+/* The server's own status word, rendered as sent. A failing metric is carried by
+ * that WORD first; the tint below is redundant reinforcement, never the only
+ * signal (§2.3). */
+.ne-evaluations__status {
+  font: var(--type-cell);
+  color: var(--text-dim);
+}
+
+.ne-evaluations__status--fail {
+  color: var(--red);
+  font-weight: 700;
+}
+
+/* §12: "row tinted on a failing status". The tint keys off the marker the STATUS
+ * CELL carries, so it is decided by the server's word and by nothing else — no
+ * value-versus-threshold comparison exists in this screen to decide it with. */
+.ne-evaluations__metrics .ne-tr:has(.ne-evaluations__status--fail) {
+  background: var(--red-tint);
+}

@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: vllm
+description: vllm subchart (serve profile, default-OFF, GPU-gated, byte-parity with deploy/compose/serve).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

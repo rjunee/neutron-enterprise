@@ -1,0 +1,29 @@
+{
+  "totalSize": 4,
+  "done": false,
+  "nextRecordsUrl": "/services/data/v65.0/query/01g0FAKE-2000",
+  "records": [
+    {
+      "attributes": {"type": "ObjectPermissions"},
+      "SobjectType": "Account",
+      "PermissionsRead": true,
+      "Parent": {
+        "attributes": {"type": "PermissionSet"},
+        "Id": "0PS000000000IMPAAA",
+        "IsOwnedByProfile": true,
+        "ProfileId": "00e000000000001AAA"
+      }
+    },
+    {
+      "attributes": {"type": "ObjectPermissions"},
+      "SobjectType": "Account",
+      "PermissionsRead": false,
+      "Parent": {
+        "attributes": {"type": "PermissionSet"},
+        "Id": "0PS000000000NOAAA",
+        "IsOwnedByProfile": false,
+        "ProfileId": null
+      }
+    }
+  ]
+}

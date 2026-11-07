@@ -1,0 +1,35 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Pilot ingress — the ONLY off-box listener. Self-signed default: `tls internal`
+# uses Caddy's LOCAL CA (no ACME, no egress — C2 air-gap safe). For real certs,
+# select ./caddy/Caddyfile.customcerts via NE_PILOT_CADDYFILE (see README).
+#
+# Contains NO secret material (C12): only a hostname placeholder and proxy
+# routes. The Caddy admin API is disabled.
+
+{
+	admin off
+}
+
+# Loopback-only plaintext health endpoint for the container healthcheck (never
+# published off-box; avoids probing the self-signed TLS listeners).
+http://:2020 {
+	respond /healthz "ok" 200
+	respond 404
+}
+
+# 443 — the console + /api, same-origin through ne-api (owner dec iii, NE-103b).
+# ne-api is the SOLE app upstream: it serves the console SPA at / and the
+# OIDC-guarded API at /api. TLS terminates here (local CA); no key material below.
+https://{$NE_PILOT_HOSTNAME}:443 {
+	tls internal
+	reverse_proxy ne-api:8000
+}
+
+# 8443 — Keycloak, TLS-terminated here and reverse-proxied to the in-network
+# HTTP port. Keycloak trusts X-Forwarded-* from this ingress only.
+https://{$NE_PILOT_HOSTNAME}:8443 {
+	tls internal
+	reverse_proxy keycloak:8080
+}

@@ -1,0 +1,132 @@
+{
+ "source": "@fontsource/*@5.3.0 via cdn.jsdelivr.net (pinned, immutable) \u2014 same pattern as packages/ne-console/scripts/vendor-fonts.mjs",
+ "license": "OFL-1.1 verified: every package LICENSE contains the SIL OPEN FONT LICENSE text",
+ "budget_bytes_today": 162540,
+ "budget_note": "today's committed set: archivo-latin-wdth 90104 + b612 400/700 + b612-mono 400/700 = 162540 bytes",
+ "ui_weights": [
+  400,
+  500,
+  600,
+  700
+ ],
+ "mono_weights": [
+  400,
+  500,
+  700
+ ],
+ "files": {
+  "commit-mono-latin-400-normal.woff2": {
+   "bytes": 48128,
+   "sha256": "86132abb57fc615f2ab900cde4cd9d5796e9791daf1f85d79fc933aa50b3b15c"
+  },
+  "commit-mono-latin-500-normal.woff2": {
+   "bytes": 47920,
+   "sha256": "ff7e7c2446edb30d854a636c0e5edefbf90c5739476779636d83448797e2e2de"
+  },
+  "commit-mono-latin-700-normal.woff2": {
+   "bytes": 47304,
+   "sha256": "1b00600b728444492b0c4906cb85e0055b889ea32ea4fb29bf25cd90cd0365b4"
+  },
+  "fira-mono-latin-400-normal.woff2": {
+   "bytes": 16640,
+   "sha256": "8d1e753569ea7964a3beacda126450f8469b70c14c161ae8062cf4c12835e947"
+  },
+  "fira-mono-latin-500-normal.woff2": {
+   "bytes": 16480,
+   "sha256": "291f90e3f0baf1f357ece7b82634b8bcd6c080def7648694894548af3d28af26"
+  },
+  "fira-mono-latin-700-normal.woff2": {
+   "bytes": 17996,
+   "sha256": "f08b65965da9f065bea1bb354a374fe6b19e100904861840c0bd5d6b2dc79c93"
+  },
+  "geist-mono-latin-400-normal.woff2": {
+   "bytes": 9864,
+   "sha256": "3f98383b122fe015a48536cd4a1cda855a201718923ffe74931a01597107b9b5"
+  },
+  "geist-mono-latin-500-normal.woff2": {
+   "bytes": 10116,
+   "sha256": "72971bd4908d3984fa1b1426bb363730e4957e16a0f58bfbca76993095715488"
+  },
+  "geist-mono-latin-700-normal.woff2": {
+   "bytes": 10180,
+   "sha256": "e26f16d6bda234828e574c948d9a5aca1327f83df2b3529a4ebea406ca026d0c"
+  },
+  "hanken-grotesk-latin-400-normal.woff2": {
+   "bytes": 13460,
+   "sha256": "787b3fdd0b7e6d59ae7ce14ce7a41d1a44616584b4c919b527da951972d5d87d"
+  },
+  "hanken-grotesk-latin-500-normal.woff2": {
+   "bytes": 13796,
+   "sha256": "31f666af7bff625900c46aa34a05d8620482ba2db37db7b63749b693ab0c72ec"
+  },
+  "hanken-grotesk-latin-600-normal.woff2": {
+   "bytes": 13780,
+   "sha256": "58f23b7ae3e13b21a4dca4c05360be87b3531d60fc1cbff89732cac8fb3019ae"
+  },
+  "hanken-grotesk-latin-700-normal.woff2": {
+   "bytes": 13844,
+   "sha256": "d85de6e272296d06f8205ad11e27140274e0ef97050232777d146eabb71c312d"
+  },
+  "inter-latin-400-normal.woff2": {
+   "bytes": 23664,
+   "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc"
+  },
+  "inter-latin-500-normal.woff2": {
+   "bytes": 24272,
+   "sha256": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+  },
+  "inter-latin-600-normal.woff2": {
+   "bytes": 24452,
+   "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+  },
+  "inter-latin-700-normal.woff2": {
+   "bytes": 24356,
+   "sha256": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491"
+  },
+  "plus-jakarta-sans-latin-400-normal.woff2": {
+   "bytes": 11816,
+   "sha256": "221a4135d06a4b33abbd535e9a0da4e565d19545ddd9267c4e678a916d54d9b6"
+  },
+  "plus-jakarta-sans-latin-500-normal.woff2": {
+   "bytes": 12312,
+   "sha256": "bad081c8dbc15aed6c5e4cde5461914f7b3bdc295b7a7aed177e4beddb79bffa"
+  },
+  "plus-jakarta-sans-latin-600-normal.woff2": {
+   "bytes": 12188,
+   "sha256": "8872bb5c9111df9bd3162c2394aee6354d782b13408a4dd5bbf65c48207206e6"
+  },
+  "plus-jakarta-sans-latin-700-normal.woff2": {
+   "bytes": 12244,
+   "sha256": "2050755bf475817c96ac7d914c7f07cc3c2d11ff4b3fb4747b8d41de584aad17"
+  },
+  "source-sans-3-latin-400-normal.woff2": {
+   "bytes": 15696,
+   "sha256": "0f73f35e08cde0a2f10c109c6e01d71459d97e4099ecd9a50f1b6c0209e4de2b"
+  },
+  "source-sans-3-latin-500-normal.woff2": {
+   "bytes": 15652,
+   "sha256": "3b3a8b8e4a422ff71c9ffb0836a4d48ff337a4419b878214f65d6ebe0f59fa51"
+  },
+  "source-sans-3-latin-600-normal.woff2": {
+   "bytes": 15668,
+   "sha256": "14527d193b0e30bc32ef931549a246cdfd286573bb12869b7e052b8101a39d38"
+  },
+  "source-sans-3-latin-700-normal.woff2": {
+   "bytes": 15596,
+   "sha256": "ae35266f2ab0d5314ff9a04127931eb26c793e4f1269bb240046d4d2db4b7bb1"
+  }
+ },
+ "totals": {
+  "ui": {
+   "source-sans-3": 62612,
+   "hanken-grotesk": 54880,
+   "plus-jakarta-sans": 48560,
+   "inter": 96744
+  },
+  "mono": {
+   "fira-mono": 51116,
+   "commit-mono": 143352,
+   "geist-mono": 30160
+  }
+ }
+}

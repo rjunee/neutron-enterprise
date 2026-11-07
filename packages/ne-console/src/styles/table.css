@@ -1,0 +1,687 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §2.1–§2.4 — the table standard, the toolbar standard, the status pill restyle,
+ * the state blocks and the detail pane. One stylesheet, because every list in
+ * the product is the same list.
+ */
+
+/* ================================ toolbar ================================ */
+.ne-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-height: var(--toolbar-height);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.ne-toolbar__spacer {
+  flex: 1 1 auto;
+}
+.ne-toolbar__filters,
+.ne-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+/* THE COUNT IS ALWAYS LIVE and always describes the rows on screen. */
+.ne-toolbar__count {
+  color: var(--text-dim);
+  font: var(--type-cell);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ne-searchwithin__input {
+  width: 220px;
+  height: 28px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  box-shadow: var(--well-inset);
+  color: var(--text);
+  font: var(--type-cell);
+}
+.ne-searchwithin__input:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+.ne-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.ne-filter__label {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+.ne-filter__select {
+  height: 28px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  box-shadow: var(--well-inset);
+  color: var(--text);
+  font: var(--type-cell);
+}
+.ne-filter__select:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+.ne-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 24px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  color: var(--text-dim);
+  font: var(--type-cell);
+  cursor: pointer;
+}
+.ne-chip:hover {
+  background: var(--hover-tint);
+  color: var(--text);
+}
+/* The pressed state is carried by aria-pressed AND by border weight — never by
+   colour alone. The selected tint is the same wash a selected row takes. */
+.ne-chip--on,
+.ne-chip--active {
+  border-color: var(--cherenkov);
+  border-width: 2px;
+  background: var(--selected-tint);
+  color: var(--text);
+}
+.ne-chip:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+.ne-chip__dismiss {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font: var(--type-cell);
+}
+
+/* ================================ buttons ================================ */
+.ne-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* A LABEL NEVER WRAPS INSIDE A FIXED-HEIGHT BOX. The height below is fixed,
+     so a two-line label does not make the button taller — it spills out of it,
+     which is what "Open workspace" did on the narrowed catalog card. */
+  white-space: nowrap;
+  flex: none;
+  height: 28px;
+  padding: 0 var(--space-12);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  color: var(--text);
+  font: var(--type-cell);
+  /* HALF THE BUTTONS IN THIS PRODUCT ARE <Link>s — "Open workspace" on every
+     catalog card, "Review in Approvals" on a Run's gate — and an anchor
+     underlines itself, so those rendered as underlined text inside a bordered
+     button. Same defect as `.tr-receipt__quiet`'s: a rule written for <button>
+     that never accounted for the element half its callers actually use. */
+  text-decoration: none;
+  cursor: pointer;
+}
+.ne-btn:hover:not(:disabled) {
+  border-color: var(--cherenkov);
+  background: var(--panel-overlay);
+}
+.ne-btn:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+.ne-btn:disabled {
+  color: var(--text-dim);
+  border-color: var(--rule);
+  cursor: not-allowed;
+}
+/* A DESTRUCTIVE ACTION MUST READ AS ONE. "Cancel Run" (agents/AgentRunPage.tsx)
+ * wore this modifier and it had NO RULE, so ending a governed Run mid-flight
+ * looked exactly like "Open trace" beside it. That is not a styling miss — a
+ * danger affordance that does not read as dangerous is a governance-adjacent
+ * defect, because the one thing the reader needs before clicking is that this
+ * is the irreversible control.
+ *
+ * IT IS A TINT, NOT A FILL. --primary-fill is the single-primary treatment and
+ * this is not the primary action on any screen it appears on; a second filled
+ * button would compete with the one that IS primary. The border and the word
+ * carry the meaning, so it never depends on hue alone, and --red on the panel
+ * surfaces is already measured by test/contrast-guardian.test.ts. */
+.ne-btn--danger {
+  border-color: var(--red-line);
+  background: var(--red-tint);
+  color: var(--red);
+}
+.ne-btn--danger:hover:not(:disabled) {
+  /* NOT --cherenkov, which the base rule uses. Selection blue on the hover of a
+     destructive control says "chosen" at the exact moment it means "about to
+     happen irreversibly". */
+  border-color: var(--red);
+  background: var(--red-tint);
+}
+.ne-btn--danger:disabled {
+  border-color: var(--rule);
+  background: none;
+  color: var(--text-dim);
+}
+
+/* The compact size, for a control that rides inside a dense row rather than a
+ * footer — "Review in Approvals" on a Run's gate card. Height and padding only:
+ * a smaller button is the same button, so it inherits every state above. */
+.ne-btn--sm {
+  height: 22px;
+  padding: 0 var(--space-8);
+  font: var(--type-small);
+}
+
+.ne-btn--quiet {
+  background: none;
+  box-shadow: none;
+  border-color: var(--rule);
+  color: var(--text-dim);
+}
+.ne-btn--quiet:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+/* A PRIMARY IS A FILL. --glow is a 14%-alpha wash: it read as a slightly bluer
+ * secondary, which is not a primary action having presence. --primary-label on
+ * --primary-fill measures 8.84:1 dark / 6.09:1 light (tokens.css), and the fill
+ * takes no catchlight — an edge highlight on a saturated fill reads as an
+ * artefact rather than as lift. */
+.ne-btn--primary {
+  border-color: transparent;
+  background: var(--primary-fill);
+  box-shadow: none;
+  color: var(--primary-label);
+}
+.ne-btn--primary:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--cherenkov);
+}
+/* A DISABLED PRIMARY IS AN OUTLINE, NOT A FADED FILL. `.ne-btn:disabled` sets
+ * the label to --text-dim but leaves the fill alone, and styles.css fades the
+ * whole control to 0.5 opacity — so a filled primary went to grey-blue on
+ * washed teal, and APPROVE on the approvals pane was the control it made
+ * unreadable. This is the same defect .ne-action--primary:disabled already
+ * carries a note for. Dropping the fill keeps the word legible while the
+ * outline still reads as unavailable; declared AFTER --primary so the fill can
+ * never survive into the disabled state. */
+.ne-btn--primary:disabled {
+  background: none;
+  border-color: var(--rule);
+  color: var(--text-dim);
+}
+
+/* ================================= table ================================= */
+.ne-table__wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+.ne-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--type-cell);
+  color: var(--text);
+}
+/* ONE header style for the whole product: sentence case, 12px, --text-dim (§2.1
+ * — and §0's sentence-case rule, under which the only uppercase in the console
+ * is a status pill and the rail's group labels). No second path: a header is
+ * this whether or not it sorts and whether or not its column is numeric.
+ *
+ * STICKY IS MEASURED FROM THE WRAP, NOT THE VIEWPORT. `.ne-table__wrap` sets
+ * `overflow-x: auto`, which computes `overflow-y` to `auto` as well, so the wrap
+ * — not the page — is this header's nearest scrollport. Offsetting by
+ * --topbar-height therefore parked the header 48px BELOW the top of a box that
+ * never scrolls vertically: a dead band under the toolbar, with the header
+ * sitting on top of the first data row instead of above it. `top: 0` pins the
+ * header to the top of its own scrollport, which is the row directly under the
+ * toolbar, and the band closes. */
+.ne-th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  text-align: left;
+  font: var(--type-small);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-dim);
+  background: var(--ground);
+  border-bottom: 1px solid var(--rule-strong);
+  padding: var(--space-4) var(--space-8);
+  white-space: nowrap;
+}
+.ne-th.ne-num {
+  text-align: right;
+}
+/* A SORTABLE HEADER IS A BUTTON INSIDE ITS <th>, so the row of headers is still
+   a row of headers and the control's accessible name is the column name. It must
+   therefore be typographically INVISIBLE: the button takes the header's type,
+   not the user-agent's. `font: inherit` alone is not enough — the UA form-control
+   style also resets `letter-spacing` and `text-transform`, which the font
+   shorthand does not carry, so a sortable header silently diverged from a plain
+   one. Inheriting both explicitly makes .ne-th the only place header type is
+   decided. */
+.ne-th__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+.ne-th.ne-num .ne-th__sort {
+  flex-direction: row-reverse;
+}
+.ne-th__sort:hover {
+  color: var(--text);
+}
+.ne-th__sort:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-th__glyph {
+  font-family: var(--font-mono);
+  min-width: 8px;
+}
+.ne-tr {
+  height: var(--row-height);
+  border-bottom: 1px solid var(--rule);
+}
+.ne-tr--clickable {
+  cursor: pointer;
+}
+.ne-tr--clickable:hover {
+  background: var(--hover-tint);
+}
+.ne-tr:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+  background: var(--hover-tint);
+}
+/* The selected row carries the tint AND a 2px cherenkov edge in its own gutter:
+   the selection is never signalled by colour alone. */
+.ne-tr--selected {
+  background: var(--selected-tint);
+  box-shadow: inset 2px 0 0 var(--cherenkov);
+}
+.ne-td {
+  padding: 0 var(--space-8);
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+/* Every numeric and time column: tabular figures, right-aligned, so a column of
+   numbers can be compared by eye down its own edge (§2.1). */
+.ne-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ne-mono {
+  font-family: var(--font-mono);
+}
+.ne-td--menu {
+  width: 40px;
+  text-align: right;
+}
+.ne-td--state {
+  padding: var(--space-24) var(--space-8);
+}
+.ne-absent {
+  color: var(--text-dim);
+}
+.ne-table__note {
+  padding: var(--space-8) var(--space-8) 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+  font-variant-numeric: tabular-nums;
+}
+/* Skeleton rows in the table's OWN geometry — never a spinner paragraph. */
+.ne-skeleton {
+  display: block;
+  height: 10px;
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  animation: ne-shimmer var(--motion-breathe) linear infinite;
+}
+@keyframes ne-shimmer {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.ne-rowmenu__trigger {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font: var(--type-cell);
+  opacity: 0;
+}
+.ne-tr:hover .ne-rowmenu__trigger,
+.ne-tr:focus-within .ne-rowmenu__trigger {
+  opacity: 1;
+}
+.ne-rowmenu__trigger:focus-visible {
+  opacity: 1;
+  outline: 1px solid var(--cherenkov);
+}
+
+.ne-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================== state blocks ============================== */
+.ne-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  text-align: center;
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+.ne-state--loading {
+  align-items: flex-start;
+  text-align: left;
+  margin: 0;
+  padding: var(--space-8) 0;
+}
+.ne-state__line {
+  margin: 0;
+  color: var(--text);
+}
+.ne-state__detail {
+  margin: 0;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.ne-state--denied,
+.ne-state--error {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* ============================== detail pane ============================== */
+.ne-detail {
+  position: fixed;
+  top: var(--topbar-height);
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--rule-strong);
+  background: var(--panel);
+  box-shadow: var(--shadow-pane);
+}
+.ne-detail:focus {
+  outline: none;
+}
+.ne-detail__grip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+}
+.ne-detail__grip:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+.ne-detail__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-raised);
+}
+/* The title block must SHRINK (flex min-width defaults to content size): a
+ * 64-char unbroken hash title otherwise widens the head past the pane and
+ * pushes the close button off the right edge of the viewport — the pane the
+ * owner could not close. The close control never shrinks or moves. */
+.ne-detail__head > div {
+  min-width: 0;
+}
+.ne-detail__title {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.ne-detail__subtitle {
+  margin: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ne-detail__close {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font: var(--type-section);
+  line-height: 1;
+}
+.ne-detail__close {
+  border-radius: var(--radius);
+  padding: 0 var(--space-4);
+}
+.ne-detail__close:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+.ne-detail__close:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+.ne-detail__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--space-16);
+}
+.ne-detail__foot {
+  border-top: 1px solid var(--rule);
+  padding: var(--space-12) var(--space-16);
+  display: flex;
+  gap: var(--space-8);
+  justify-content: flex-end;
+}
+/* One line at the head of a pane saying what the pane is FOR, above the fields
+ * that carry the facts. Quiet enough that the facts stay the subject and the
+ * reader who already knows can skip it in one glance. */
+.ne-detail__lead {
+  margin: 0 0 var(--space-16);
+  padding-bottom: var(--space-12);
+  border-bottom: 1px solid var(--rule);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ne-detail__fields {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-12);
+}
+.ne-detail__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.ne-detail__label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ne-detail__value {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* ================================ hash chip ================================ */
+.ne-hashchip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  /* Eight characters and a copy button. There is no width at which breaking
+     this improves anything, and every width at which breaking it turns a
+     governed identifier into fragments stacked down the page. */
+  white-space: nowrap;
+  flex: none;
+}
+.ne-hashchip__copy {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  font: var(--type-cell);
+}
+.ne-hashchip__copy:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+  border-radius: var(--radius);
+}
+.ne-hashchip__copy:focus-visible {
+  outline: 1px solid var(--cherenkov);
+}
+
+/* ========================= §2.3 status pill restyle ========================= */
+/* 11px uppercase word + leading dot glyph, 1px border, tinted background,
+   --radius. NEVER colour-only — the word carries the meaning. */
+.ne-pill {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0 var(--space-4);
+  background: var(--dim-tint);
+  /* One uppercase word. It shrinks for nobody — a clipped "AVAILABL" is a
+     state readout that no longer reads as its own state. */
+  white-space: nowrap;
+  flex: none;
+}
+.ne-pill--affirm {
+  background: var(--affirm-tint);
+}
+.ne-pill--success {
+  color: var(--green);
+  background: var(--green-tint);
+}
+.ne-pill--refuse {
+  background: var(--red-tint);
+}
+.ne-pill--warn {
+  background: var(--amber-tint);
+}
+.ne-pill--gated {
+  background: var(--gated-tint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-skeleton {
+    animation: none;
+  }
+}
+
+/* ===================== §2.5 the pending marker ===================== */
+/* PENDING IS RENDERED ON THE OBJECT, NOT AS A TOAST — a sub-line under the
+   object's row. The old value stays the displayed value beside it. */
+.ne-pending {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+.ne-pending__line {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* The desktop toolbar remains one measured row. At phone width, every group
+ * must instead participate in the available inline size: actions wrap as
+ * actions, filters surrender their intrinsic select width, and the table below
+ * keeps ownership of any data-column scrolling. */
+@media (max-width: 48rem) {
+  .ne-toolbar {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .ne-toolbar__spacer {
+    display: none;
+  }
+
+  .ne-toolbar__filters,
+  .ne-toolbar__actions {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-toolbar__filters {
+    flex: 1 1 100%;
+  }
+
+  .ne-toolbar__actions {
+    margin-left: auto;
+  }
+
+  .ne-toolbar__count {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .ne-searchwithin__input {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-filter {
+    flex: 1 1 12rem;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-filter__label {
+    flex: none;
+  }
+
+  .ne-filter__select {
+    flex: 1 1 12rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,30 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-086 — the baked Helm values overlay for the Zarf air-gap deploy path.
+#
+# Zarf templates these ###ZARF_*### tokens at `zarf package deploy` (variables)
+# and `zarf package create` (constants), then hands the resolved file to Helm as
+# a `-f` values overlay for the umbrella chart.
+#
+#   ###ZARF_VAR_*###   — deploy-time (NE_HOSTNAME / NE_CONFIG_HASH; --set at deploy)
+#   ###ZARF_CONST_*### — create-time (NE_APP_REPOSITORY / NE_APP_DIGEST; baked in)
+#
+# The first-party digest is the REAL registry digest from `ne release push`
+# captured at package-create (owner dec ii). The chart's C11 fail-closed schema
+# (values.schema.json + _helpers.tpl `fail`) is therefore SATISFIED with a real
+# digest — never bypassed with a fake literal.
+#
+# bundle.files is intentionally left at the chart default (empty ConfigMap
+# render). A real engagement merges the `ne k8s render` overlay content (real
+# configHash + the promoted bundle's per-module TOMLs) into this file BEFORE
+# `zarf package create` — see deploy/airgap/zarf/README.md §runbook.
+global:
+  hostname: "###ZARF_VAR_NE_HOSTNAME###"
+  configHash: "###ZARF_VAR_NE_CONFIG_HASH###"
+  image:
+    repository: "###ZARF_CONST_NE_APP_REPOSITORY###"
+    tag: "0.1.0"
+    digest: "###ZARF_CONST_NE_APP_DIGEST###"
+  ingress:
+    keycloakHost: "auth.###ZARF_VAR_NE_HOSTNAME###"

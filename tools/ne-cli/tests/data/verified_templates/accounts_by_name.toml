@@ -1,0 +1,24 @@
+template_id = "accounts-by-name"
+version = 2
+description = "Accounts whose name exactly matches the (pattern-constrained) query string."
+sparql = """
+SELECT ?account ?name WHERE {
+  #BINDINGS#
+  ?account a <https://neutron.enterprise/schema/operational/Account> .
+  ?account <https://neutron.enterprise/schema/operational/name> ?name .
+  FILTER(?name = ?q_name)
+}
+"""
+
+[args.q_name]
+type = "str"
+pattern = "^[A-Za-z0-9_ ]{1,64}$"
+max_length = 64
+
+[scope]
+graph_classes = ["alpha", "beta"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["account", "name"]
+citation_var = "account"

@@ -1,0 +1,35 @@
+{
+  "issues": [
+    {
+      "id": "30003",
+      "key": "ACME-3",
+      "fields": {
+        "summary": "Add dark mode",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Support a dark theme."
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "name": "In Progress"
+        },
+        "issuetype": {
+          "name": "Story"
+        },
+        "updated": "2026-01-03T10:30:00.000+0000",
+        "security": null
+      }
+    }
+  ],
+  "isLast": true
+}

@@ -1,0 +1,24 @@
+Neutron Enterprise — ne-eval
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+  SQLAlchemy / 2.0.x / MIT / https://www.sqlalchemy.org
+  pydantic / 2.x / MIT / https://pydantic.dev
+  promptfoo / 0.121.17 / MIT / https://promptfoo.dev
+    (external pinned npm CLI invoked by promptfoo/run_gate.sh; not embedded, not
+     a Python dependency — never resolved into uv.lock)
+  ragas / 0.4.3 / Apache-2.0 / https://github.com/vibrantlabsai/ragas
+    (dev-only cross-validation oracle in an isolated hash-pinned venv under
+     ragas_env/; never a platform dependency, never resolved into uv.lock)
+    Oracle-venv langchain stack, all MIT (isolated, never in uv.lock; verified
+    against PyPI 2026-07-06): langchain-core >=1.2.22 (resolved 1.4.8 —
+    CVE-2026-34070 / CVE-2026-26013 remediation), langchain 1.x, langchain-community
+    0.4.1 (pinned — see ragas_env/README.md), langchain-classic, langchain-openai,
+    langchain-text-splitters, langgraph (+ langgraph-checkpoint/-prebuilt/-sdk),
+    langchain-protocol.
+
+Test-data fixtures (data only; not platform code):
+  SQuAD v1.1 (dev subset) / CC BY-SA 4.0 / https://rajpurkar.github.io/SQuAD-explorer/
+    (the data files under goldensets/public/ only — squad_corpus.jsonl,
+     squad_golden.jsonl, calibration/*_labels.jsonl — carry their own license
+     per goldensets/public/DATA-LICENSE.md; redistributable with attribution)

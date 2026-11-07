@@ -1,0 +1,205 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0 */
+
+.ne-agent-transcript {
+  color: var(--text);
+  font: var(--type-body);
+}
+
+.ne-agent-transcript__frames {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-agent-frame {
+  min-width: 0;
+  animation: ne-agent-frame-arrive var(--motion-snap) var(--ease-damped) both;
+}
+
+.ne-agent-frame > article {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+}
+
+.ne-agent-frame__rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  color: var(--text-dim);
+  font: var(--type-label);
+}
+
+.ne-agent-frame__rail::after {
+  position: absolute;
+  top: 20px;
+  bottom: calc(var(--space-8) * -1);
+  width: 1px;
+  background: var(--rule);
+  content: "";
+}
+
+.ne-agent-frame:last-child .ne-agent-frame__rail::after {
+  display: none;
+}
+
+.ne-agent-frame--active .ne-agent-frame__rail,
+.ne-agent-frame--allowed .ne-agent-frame__rail,
+.ne-agent-frame--complete .ne-agent-frame__rail {
+  color: var(--state-affirm);
+}
+
+.ne-agent-frame--pending .ne-agent-frame__rail {
+  color: var(--amber);
+}
+
+.ne-agent-frame--denied .ne-agent-frame__rail,
+.ne-agent-frame--failed .ne-agent-frame__rail {
+  color: var(--red);
+}
+
+.ne-agent-frame__content {
+  min-width: 0;
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-agent-frame__header {
+  display: flex;
+  gap: var(--space-12);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.ne-agent-frame__header h3 {
+  margin: var(--space-4) 0 0;
+  font: var(--type-section);
+}
+
+.ne-agent-frame__kind,
+.ne-agent-frame__state,
+.ne-agent-frame__identity > span {
+  color: var(--text-dim);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.ne-agent-frame__state {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.ne-agent-frame__body {
+  max-width: 72ch;
+  margin: var(--space-12) 0 0;
+  white-space: pre-wrap;
+}
+
+.ne-agent-frame__identity {
+  display: flex;
+  gap: var(--space-8);
+  align-items: baseline;
+  margin: var(--space-12) 0 0;
+}
+
+.ne-agent-frame__identity code,
+.ne-agent-frame__mono,
+.ne-agent-frame__raw {
+  font: var(--type-mono);
+}
+
+.ne-agent-frame__citations,
+.ne-agent-frame__links {
+  margin: var(--space-12) 0 0;
+  padding-inline-start: var(--space-24);
+}
+
+.ne-agent-frame__details {
+  margin-top: var(--space-12);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-8);
+}
+
+.ne-agent-frame__details summary {
+  width: max-content;
+  color: var(--text-dim);
+  cursor: pointer;
+  font: var(--type-small);
+}
+
+.ne-agent-frame__details dl {
+  display: grid;
+  gap: var(--space-8);
+  margin: var(--space-12) 0 0;
+}
+
+.ne-agent-frame__details dl > div {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.35fr) minmax(0, 1fr);
+  gap: var(--space-12);
+}
+
+.ne-agent-frame__details dt {
+  color: var(--text-dim);
+}
+
+.ne-agent-frame__details dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ne-agent-frame__raw {
+  max-width: 100%;
+  margin: var(--space-12) 0 0;
+  padding: var(--space-12);
+  overflow: auto;
+  border: 1px solid var(--rule);
+  background: var(--ground);
+  white-space: pre-wrap;
+}
+
+@keyframes ne-agent-frame-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-4));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 48rem) {
+  .ne-agent-frame > article {
+    grid-template-columns: 20px minmax(0, 1fr);
+  }
+
+  .ne-agent-frame__content {
+    padding: var(--space-12);
+  }
+
+  .ne-agent-frame__header {
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .ne-agent-frame__details dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-agent-frame {
+    animation: none;
+  }
+}

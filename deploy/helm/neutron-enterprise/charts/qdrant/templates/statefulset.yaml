@@ -1,0 +1,96 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# StatefulSet reproduction of deploy/compose/pilot/compose.yaml's qdrant service
+# (brain profile). uid/gid/fsGroup 1000; readOnlyRootFilesystem FALSE (compose
+# sets no read_only). QDRANT__TELEMETRY_DISABLED=true is the C2 no-phone-home
+# byte-parity flag. Byte-parity guardian: test_helm_chart.py::test_qdrant_parity.
+# NE-071c-FU: qdrant (uid 1000) writes its `.qdrant-initialized` init-file
+# indicator to its working dir /qdrant, which is image rootfs and NOT
+# uid-1000-writable → 'Failed to create init file indicator ... Permission
+# denied (os error 13)' in real deploys. Fix mirrors the upstream qdrant-helm
+# chart: QDRANT_INIT_FILE_PATH points the init-file at a writable emptyDir; the
+# image digest is deliberately UNCHANGED (C11 byte-parity — env/volume only).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qdrant
+  labels:
+    app: qdrant
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  serviceName: qdrant
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qdrant
+  template:
+    metadata:
+      labels:
+        app: qdrant
+        app.kubernetes.io/name: qdrant
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 1000 "gid" 1000 "fsGroup" 1000 "openshift" .Values.global.openshift) | nindent 8 }}
+      containers:
+        - name: qdrant
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" .Values.image.repository "tag" .Values.image.tag "digest" .Values.image.digest) }}
+          env:
+            - name: QDRANT__TELEMETRY_DISABLED
+              value: "true"
+            - name: QDRANT_INIT_FILE_PATH
+              value: /qdrant/init/.qdrant-initialized
+          ports:
+            - name: http
+              containerPort: 6333
+            - name: grpc
+              containerPort: 6334
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" false) | nindent 12 }}
+          volumeMounts:
+            - name: qdrant-data
+              mountPath: /qdrant/storage
+            - name: snapshots
+              mountPath: /qdrant/snapshots
+            - name: qdrant-init
+              mountPath: /qdrant/init
+          # tcpSocket probes — the compose healthcheck is a bash /dev/tcp open on
+          # 6333 (no HTTP shell in the image); the K8s analogue is a tcpSocket
+          # dial. startupProbe covers first-boot (~2min window).
+          startupProbe:
+            tcpSocket:
+              port: 6333
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            tcpSocket:
+              port: 6333
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 6333
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        # Snapshots are ephemeral scratch (Qdrant writes on-demand snapshots
+        # here); the durable collection data lives on the volumeClaimTemplate.
+        - name: snapshots
+          emptyDir: {}
+        # per-boot init-file indicator — upstream qdrant-helm pattern; /qdrant
+        # working dir is not uid-1000-writable.
+        - name: qdrant-init
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: qdrant-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.storage.storageClassName }}
+        storageClassName: {{ .Values.storage.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.storage.size }}

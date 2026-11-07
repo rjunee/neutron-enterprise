@@ -1,0 +1,7 @@
+{
+  "value": [
+    {"id": "g-eng", "displayName": "Engineering"},
+    {"id": "g-old", "@removed": {"reason": "deleted"}}
+  ],
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/groups/delta?$deltatoken=GROUPTOKEN2"
+}

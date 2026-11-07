@@ -1,0 +1,18 @@
+{
+  "before": {
+    "id": 1,
+    "name": "Ada Synthetic",
+    "email": "ada@synthetic.example",
+    "acl_group": "g-eng"
+  },
+  "after": null,
+  "source": {
+    "connector": "postgresql",
+    "db": "appdb",
+    "schema": "public",
+    "table": "customers",
+    "lsn": 1003
+  },
+  "op": "d",
+  "ts_ms": 1720000001000
+}

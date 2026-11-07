@@ -1,0 +1,1297 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Portions derived from jupyter-naas/abi
+# libs/naas-abi-core/naas_abi_core/utils/validate_bfo_ontology.py
+# @ a3e15eff03902091f23acfd9edbc95dc9695183f -- MIT License, Copyright (C) 2025
+# Naas.ai. The BFO 7-Buckets static-lint rule functions (check_*) and their
+# rdflib helpers are lifted from that file. DE-NAASED for NE-085-spike: the
+# urllib owl:imports network resolver, the filesystem project-root scanner, and
+# the argparse CLI are DROPPED (C2 -- the lint runs over an already-parsed,
+# in-memory graph and never touches the network); the file-based validate()/
+# main() orchestration is rewritten thin as run_bfo_lint().
+"""Static BFO-2020 "7 Buckets" conformance lint (NE-085-spike lift).
+
+Pure rdflib. ``run_bfo_lint(graph)`` runs the codified BFO rule set over an
+in-memory ``rdflib.Graph`` and returns a frozen ``LintReport(errors, warnings)``.
+Severity ERROR -> ``errors``; WARNING -> ``warnings``; INFO is dropped. The rules
+were authored against an ABI (CCO-2.0-era) snapshot -- expect rule/corpus skew
+against BFO-2020-at-pin; triage rule-by-rule (see test_validate_bfo_lint.py).
+"""
+
+from __future__ import annotations
+
+import re
+from collections import defaultdict
+from itertools import chain
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
+from rdflib import OWL, RDF, RDFS, BNode, Graph, Namespace, URIRef
+from rdflib.namespace import SKOS
+
+
+class LintReport(BaseModel):
+    """Frozen result of the BFO lint: ERROR/WARNING issue strings."""
+
+    model_config = ConfigDict(frozen=True)
+
+    errors: tuple[str, ...]
+    warnings: tuple[str, ...]
+
+
+BFO = Namespace("http://purl.obolibrary.org/obo/")
+
+BUCKET_ROOTS: dict[str, URIRef] = {
+    "WHAT (process)": BFO["BFO_0000015"],
+    "WHEN (temporal region)": BFO["BFO_0000008"],
+    "WHO (material entity)": BFO["BFO_0000040"],
+    "WHERE (site)": BFO["BFO_0000029"],
+    "HOW WE KNOW (gen. dep. continuant)": BFO["BFO_0000031"],
+    "HOW IT IS (quality)": BFO["BFO_0000019"],
+    "WHY/role (role)": BFO["BFO_0000023"],
+    "WHY/disposition (disposition)": BFO["BFO_0000016"],
+}
+
+ALL_BUCKET_ROOTS: set[URIRef] = set(BUCKET_ROOTS.values())
+
+BFO_INHERES_IN = BFO["BFO_0000197"]
+
+BFO_BEARER_OF = BFO["BFO_0000196"]
+
+REQUIRES_INHERES_IN: set[URIRef] = {
+    BFO["BFO_0000019"],
+    BFO["BFO_0000023"],
+    BFO["BFO_0000016"],
+}
+
+REQUIRED_ANNOTATIONS: list[tuple[URIRef, str]] = [
+    (RDFS.label, "rdfs:label"),
+    (SKOS.definition, "skos:definition"),
+    (SKOS.example, "skos:example"),
+]
+
+
+def _short(iri: Any, g: Graph) -> str:
+    if isinstance(iri, BNode):
+        return "_:bnode"
+    try:
+        return g.namespace_manager.qname(iri)
+    except Exception:
+        s = str(iri)
+        return s.split("/")[-1].split("#")[-1]
+
+
+def _label(iri: Any, g: Graph) -> str:
+    if not isinstance(iri, (URIRef, BNode)):
+        return str(iri) if iri is not None else "?"
+    lbl = g.value(iri, RDFS.label) if isinstance(iri, URIRef) else None
+    if lbl:
+        return str(lbl)
+    return _short(iri, g)
+
+
+def _all_superclasses(cls: URIRef, g: Graph, visited: set | None = None) -> set[URIRef]:
+    if visited is None:
+        visited = set()
+    if cls in visited:
+        return visited
+    visited.add(cls)
+    # owl:equivalentClass is symmetric: a class declared equivalent to another
+    # (e.g. an ABI mirror class equivalent to a BFO bucket root) shares that
+    # class's ancestry. Follow it in both directions before rdfs:subClassOf so
+    # ancestor-based checks see the equivalent class and everything above it.
+    for equiv in chain(g.objects(cls, OWL.equivalentClass), g.subjects(OWL.equivalentClass, cls)):
+        if isinstance(equiv, URIRef):
+            _all_superclasses(equiv, g, visited)
+    for parent in g.objects(cls, RDFS.subClassOf):
+        if isinstance(parent, URIRef):
+            _all_superclasses(parent, g, visited)
+    return visited
+
+
+def _restriction_properties(g: Graph, cls: URIRef) -> set[URIRef]:
+    props: set[URIRef] = set()
+    for parent in g.objects(cls, RDFS.subClassOf):
+        if isinstance(parent, BNode):
+            rdf_type = g.value(parent, RDF.type)
+            if rdf_type == OWL.Restriction:
+                on_prop = g.value(parent, OWL.onProperty)
+                if isinstance(on_prop, URIRef):
+                    props.add(on_prop)
+    return props
+
+
+def _restriction_fillers(g: Graph, cls: URIRef) -> set[URIRef]:
+    fillers: set[URIRef] = set()
+    for parent in g.objects(cls, RDFS.subClassOf):
+        if isinstance(parent, BNode):
+            rdf_type = g.value(parent, RDF.type)
+            if rdf_type == OWL.Restriction:
+                for pred in (OWL.allValuesFrom, OWL.someValuesFrom):
+                    filler = g.value(parent, pred)
+                    if isinstance(filler, URIRef):
+                        fillers.add(filler)
+    return fillers
+
+
+def _named_classes(g: Graph) -> list[URIRef]:
+    return [s for s in g.subjects(RDF.type, OWL.Class) if isinstance(s, URIRef)]
+
+
+def _named_object_properties(g: Graph) -> list[URIRef]:
+    return [s for s in g.subjects(RDF.type, OWL.ObjectProperty) if isinstance(s, URIRef)]
+
+
+def _all_properties_used_in_restrictions(g: Graph) -> set[URIRef]:
+    return {o for o in g.objects(None, OWL.onProperty) if isinstance(o, URIRef)}
+
+
+def _get_ontology_iri(g: Graph) -> URIRef | None:
+    for s in g.subjects(RDF.type, OWL.Ontology):
+        if isinstance(s, URIRef):
+            return s
+    return None
+
+
+def check_annotations(g: Graph) -> list[dict]:
+    issues = []
+    targets = [(c, "class") for c in _named_classes(g)] + [
+        (p, "object property") for p in _named_object_properties(g)
+    ]
+    for iri, kind in targets:
+        for ann_prop, ann_name in REQUIRED_ANNOTATIONS:
+            if not g.value(iri, ann_prop):
+                issues.append(
+                    {
+                        "severity": "WARNING",
+                        "category": "ANNOTATION",
+                        "subject": _short(iri, g),
+                        "message": (
+                            f"{kind.capitalize()} '{_label(iri, g)}' is missing {ann_name}."
+                        ),
+                    }
+                )
+    return issues
+
+
+def check_bucket_mapping(g: Graph, main_classes: set[URIRef] | None = None) -> list[dict]:
+    issues = []
+    bfo_prefix = str(BFO)
+
+    targets = main_classes if main_classes is not None else set(_named_classes(g))
+
+    for cls in targets:
+        if str(cls).startswith(bfo_prefix):
+            continue
+
+        ancestors = _all_superclasses(cls, g)
+        bucket_ancestors = ancestors & ALL_BUCKET_ROOTS
+
+        if not bucket_ancestors:
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "BUCKET_MAPPING",
+                    "subject": _short(cls, g),
+                    "message": (
+                        f"Class '{_label(cls, g)}' does not subclass any BFO "
+                        f"7 Buckets root. Every domain class must trace back "
+                        f"to one of: "
+                        + ", ".join(
+                            f"{name} ({_short(iri, g)})" for name, iri in BUCKET_ROOTS.items()
+                        )
+                        + "."
+                    ),
+                }
+            )
+
+    return issues
+
+
+def check_property_domain_range(g: Graph) -> list[dict]:
+    issues = []
+    for prop in _named_object_properties(g):
+        if not g.value(prop, RDFS.domain):
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "PROPERTY_DOMAIN",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Object property '{_label(prop, g)}' has no rdfs:domain declared."
+                    ),
+                }
+            )
+        if not g.value(prop, RDFS.range):
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "PROPERTY_RANGE",
+                    "subject": _short(prop, g),
+                    "message": (f"Object property '{_label(prop, g)}' has no rdfs:range declared."),
+                }
+            )
+    return issues
+
+
+def check_orphan_properties(g: Graph) -> list[dict]:
+    issues = []
+    used_in_restrictions = _all_properties_used_in_restrictions(g)
+    used_as_superproperty = {
+        o for o in g.objects(None, RDFS.subPropertyOf) if isinstance(o, URIRef)
+    }
+    used_as_inverse = {o for o in g.objects(None, OWL.inverseOf) if isinstance(o, URIRef)}
+
+    for prop in _named_object_properties(g):
+        if (
+            prop not in used_in_restrictions
+            and prop not in used_as_superproperty
+            and prop not in used_as_inverse
+        ):
+            used_as_predicate = any(True for _ in g.subject_objects(prop))
+            if not used_as_predicate:
+                issues.append(
+                    {
+                        "severity": "WARNING",
+                        "category": "PROPERTY_ORPHAN",
+                        "subject": _short(prop, g),
+                        "message": (
+                            f"Object property '{_label(prop, g)}' is declared "
+                            f"but never used in any class restriction, "
+                            f"subPropertyOf chain, inverseOf, or triple."
+                        ),
+                    }
+                )
+    return issues
+
+
+_VOCAB_PREFIXES_FOR_RESTRICTIONS = (
+    "http://purl.obolibrary.org/obo/",
+    "http://www.w3.org/2001/XMLSchema#",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "http://www.w3.org/2000/01/rdf-schema#",
+    "http://www.w3.org/2002/07/owl#",
+    "http://www.w3.org/2004/02/skos/core#",
+    "https://www.commoncoreontologies.org/",
+)
+
+
+def check_restriction_references(g: Graph) -> list[dict]:
+    issues = []
+    declared_classes = set(_named_classes(g))
+    declared_properties = set(_named_object_properties(g))
+    declared_data_properties = {
+        s for s in g.subjects(RDF.type, OWL.DatatypeProperty) if isinstance(s, URIRef)
+    }
+
+    def _is_known(iri: URIRef) -> bool:
+        s = str(iri)
+        if any(s.startswith(p) for p in _VOCAB_PREFIXES_FOR_RESTRICTIONS):
+            return True
+        return (
+            iri in declared_classes
+            or iri in declared_properties
+            or iri in declared_data_properties
+            or (iri, RDF.type, None) in g
+        )
+
+    for bnode in g.subjects(RDF.type, OWL.Restriction):
+        on_prop = g.value(bnode, OWL.onProperty)
+        if isinstance(on_prop, URIRef) and not _is_known(on_prop):
+            owner = g.value(None, RDFS.subClassOf, bnode)
+            if owner is None:
+                continue
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "RESTRICTION_REF",
+                    "subject": _short(owner, g) if owner else "unknown",
+                    "message": (
+                        f"Restriction on class '{_label(URIRef(str(owner)), g) if owner else '?'}' "
+                        f"references undeclared property '{_short(on_prop, g)}'."
+                    ),
+                }
+            )
+
+        for filler_pred in (OWL.allValuesFrom, OWL.someValuesFrom):
+            filler = g.value(bnode, filler_pred)
+            if isinstance(filler, URIRef) and not _is_known(filler):
+                owner = g.value(None, RDFS.subClassOf, bnode)
+                if owner is None:
+                    continue
+                owner_label = _label(URIRef(str(owner)), g)
+                issues.append(
+                    {
+                        "severity": "ERROR",
+                        "category": "RESTRICTION_REF",
+                        "subject": _short(owner, g) if owner else "unknown",
+                        "message": (
+                            f"Restriction on class '{owner_label}' "
+                            f"references undeclared class '{_short(filler, g)}' "
+                            f"in {_short(filler_pred, g)}."
+                        ),
+                    }
+                )
+    return issues
+
+
+def _collect_all_restrictions(g: Graph, cls: URIRef) -> list[dict]:
+    visited_classes: set[URIRef] = set()
+    restrictions: list[dict] = []
+
+    def _walk(c: URIRef) -> None:
+        if c in visited_classes:
+            return
+        visited_classes.add(c)
+        for parent in g.objects(c, RDFS.subClassOf):
+            if isinstance(parent, BNode):
+                if g.value(parent, RDF.type) == OWL.Restriction:
+                    on_prop = g.value(parent, OWL.onProperty)
+                    if not isinstance(on_prop, URIRef):
+                        continue
+                    avf = g.value(parent, OWL.allValuesFrom)
+                    svf = g.value(parent, OWL.someValuesFrom)
+                    if avf is not None:
+                        quantifier, filler = (
+                            "allValuesFrom",
+                            avf if isinstance(avf, URIRef) else None,
+                        )
+                    elif svf is not None:
+                        quantifier, filler = (
+                            "someValuesFrom",
+                            svf if isinstance(svf, URIRef) else None,
+                        )
+                    else:
+                        quantifier, filler = "other", None
+                    restrictions.append(
+                        {
+                            "cls": c,
+                            "on_prop": on_prop,
+                            "quantifier": quantifier,
+                            "filler": filler,
+                            "bnode": parent,
+                        }
+                    )
+            elif isinstance(parent, URIRef):
+                _walk(parent)
+
+    _walk(cls)
+    return restrictions
+
+
+def check_restriction_inheritance(g: Graph, main_only_classes: set[URIRef]) -> list[dict]:
+    issues = []
+    bfo_prefix = str(BFO)
+
+    for cls in main_only_classes:
+        if str(cls).startswith(bfo_prefix):
+            continue
+
+        all_restrictions = _collect_all_restrictions(g, cls)
+
+        own_restrictions = [r for r in all_restrictions if r["cls"] == cls]
+        own_by_prop: dict[URIRef, list[dict]] = defaultdict(list)
+        for r in own_restrictions:
+            own_by_prop[r["on_prop"]].append(r)
+
+        ancestor_restrictions = [r for r in all_restrictions if r["cls"] != cls]
+        ancestor_by_prop: dict[URIRef, list[dict]] = defaultdict(list)
+        for r in ancestor_restrictions:
+            ancestor_by_prop[r["on_prop"]].append(r)
+
+        for prop, ancestor_rs in ancestor_by_prop.items():
+            own_rs = own_by_prop.get(prop, [])
+
+            ancestor_avf = [
+                r for r in ancestor_rs if r["quantifier"] == "allValuesFrom" and r["filler"]
+            ]
+            own_avf = [r for r in own_rs if r["quantifier"] == "allValuesFrom" and r["filler"]]
+
+            for o_r in own_avf:
+                for a_r in ancestor_avf:
+                    if o_r["filler"] == a_r["filler"]:
+                        continue
+                    child_ancestors = _all_superclasses(o_r["filler"], g)
+                    if a_r["filler"] not in child_ancestors:
+                        issues.append(
+                            {
+                                "severity": "WARNING",
+                                "category": "RESTRICTION_INHERIT",
+                                "subject": _short(cls, g),
+                                "message": (
+                                    f"'{_label(cls, g)}' declares "
+                                    f"allValuesFrom {_short(prop, g)} → "
+                                    f"'{_short(o_r['filler'], g)}', "
+                                    f"but ancestor '{_label(a_r['cls'], g)}' "
+                                    f"restricts the same property to "
+                                    f"'{_short(a_r['filler'], g)}'. "
+                                    f"'{_short(o_r['filler'], g)}' is not declared "
+                                    f"as a subclass of '{_short(a_r['filler'], g)}' "
+                                    f"— this may silently contradict the parent constraint."
+                                ),
+                            }
+                        )
+
+            ancestor_svf = [
+                r for r in ancestor_rs if r["quantifier"] == "someValuesFrom" and r["filler"]
+            ]
+            for a_r in ancestor_svf:
+                for o_r in own_avf:
+                    if o_r["filler"] is None or a_r["filler"] is None:
+                        continue
+                    if o_r["filler"] == a_r["filler"]:
+                        continue
+                    child_filler_ancestors = _all_superclasses(o_r["filler"], g)
+                    anc_filler_ancestors = _all_superclasses(a_r["filler"], g)
+                    if (
+                        a_r["filler"] not in child_filler_ancestors
+                        and o_r["filler"] not in anc_filler_ancestors
+                    ):
+                        issues.append(
+                            {
+                                "severity": "ERROR",
+                                "category": "RESTRICTION_INHERIT",
+                                "subject": _short(cls, g),
+                                "message": (
+                                    f"'{_label(cls, g)}' declares "
+                                    f"allValuesFrom {_short(prop, g)} → "
+                                    f"'{_short(o_r['filler'], g)}', "
+                                    f"but ancestor '{_label(a_r['cls'], g)}' "
+                                    f"requires someValuesFrom {_short(prop, g)} → "
+                                    f"'{_short(a_r['filler'], g)}'. "
+                                    f"The child's universal restriction may make "
+                                    f"the ancestor's existential unsatisfiable."
+                                ),
+                            }
+                        )
+
+            for a_r in ancestor_svf:
+                if not own_rs:
+                    issues.append(
+                        {
+                            "severity": "INFO",
+                            "category": "RESTRICTION_INHERIT",
+                            "subject": _short(cls, g),
+                            "message": (
+                                f"'{_label(cls, g)}' inherits a someValuesFrom "
+                                f"restriction on {_short(prop, g)} → "
+                                f"'{_short(a_r['filler'], g)}' "
+                                f"from ancestor '{_label(a_r['cls'], g)}' "
+                                f"but declares no restriction of its own on "
+                                f"this property. Consider re-declaring it "
+                                f"explicitly if this class plays a distinct role."
+                            ),
+                        }
+                    )
+                    break
+
+    return issues
+
+
+def check_license(g: Graph) -> list[dict]:
+    DC = Namespace("http://purl.org/dc/terms/")
+    DC11 = Namespace("http://purl.org/dc/elements/1.1/")
+    issues: list[dict] = []
+    onto_iri = _get_ontology_iri(g)
+    if onto_iri is None:
+        return issues
+    has_license = (
+        g.value(onto_iri, DC["license"]) is not None
+        or g.value(onto_iri, DC11["license"]) is not None
+        or g.value(onto_iri, URIRef("http://purl.org/dc/terms/license")) is not None
+    )
+    if not has_license:
+        issues.append(
+            {
+                "severity": "WARNING",
+                "category": "LICENSE_MISSING",
+                "subject": _short(onto_iri, g),
+                "message": (
+                    f"Ontology '{onto_iri}' does not declare a license "
+                    f"(dc:license or dc11:license). A license is required "
+                    f"for reuse clarity."
+                ),
+            }
+        )
+    return issues
+
+
+def check_duplicate_labels(g: Graph, main_classes: set[URIRef]) -> list[dict]:
+    issues = []
+    label_map: dict[str, list[URIRef]] = defaultdict(list)
+    for cls in main_classes:
+        for lbl in g.objects(cls, RDFS.label):
+            label_map[str(lbl).lower()].append(cls)
+    for lbl_text, classes in label_map.items():
+        if len(classes) > 1:
+            subjects = ", ".join(_short(c, g) for c in classes)
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "DUPLICATE_LABEL",
+                    "subject": subjects,
+                    "message": (
+                        f"Label '{lbl_text}' is shared by {len(classes)} classes: "
+                        f"{subjects}. Each class should have a unique label."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_naming_convention(
+    g: Graph, main_classes: set[URIRef], main_properties: set[URIRef]
+) -> list[dict]:
+    issues = []
+
+    def _local(iri: URIRef) -> str:
+        s = str(iri)
+        return s.split("/")[-1].split("#")[-1]
+
+    def _is_upper_camel(name: str) -> bool:
+        return bool(re.match(r"^[A-Z][a-zA-Z0-9]*$", name))
+
+    def _is_lower_camel(name: str) -> bool:
+        return bool(re.match(r"^[a-z][a-zA-Z0-9]*$", name))
+
+    def _has_delimiter(name: str) -> bool:
+        return "_" in name or "-" in name
+
+    for cls in main_classes:
+        name = _local(cls)
+        if not name:
+            continue
+        if _has_delimiter(name):
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "NAMING_CONVENTION",
+                    "subject": _short(cls, g),
+                    "message": (
+                        f"Class '{name}' uses delimiter characters (_ or -). "
+                        f"Classes should use UpperCamelCase (e.g. 'ServiceLine')."
+                    ),
+                }
+            )
+        elif not _is_upper_camel(name):
+            issues.append(
+                {
+                    "severity": "INFO",
+                    "category": "NAMING_CONVENTION",
+                    "subject": _short(cls, g),
+                    "message": (f"Class '{name}' does not follow UpperCamelCase convention."),
+                }
+            )
+
+    for prop in main_properties:
+        name = _local(prop)
+        if not name:
+            continue
+        if _has_delimiter(name):
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "NAMING_CONVENTION",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{name}' uses delimiter characters (_ or -). "
+                        f"Properties should use lowerCamelCase (e.g. 'hasExpertise')."
+                    ),
+                }
+            )
+        elif not _is_lower_camel(name):
+            issues.append(
+                {
+                    "severity": "INFO",
+                    "category": "NAMING_CONVENTION",
+                    "subject": _short(prop, g),
+                    "message": (f"Property '{name}' does not follow lowerCamelCase convention."),
+                }
+            )
+    return issues
+
+
+def check_uri_file_extension(
+    g: Graph, main_classes: set[URIRef], main_properties: set[URIRef]
+) -> list[dict]:
+    BAD_EXTENSIONS = (".owl", ".rdf", ".ttl", ".n3", ".rdfxml", ".xml")
+    issues = []
+
+    targets: list[tuple[URIRef, str]] = []
+    onto_iri = _get_ontology_iri(g)
+    if onto_iri:
+        targets.append((onto_iri, "ontology IRI"))
+    for cls in main_classes:
+        targets.append((cls, "class"))
+    for prop in main_properties:
+        targets.append((prop, "property"))
+
+    for iri, kind in targets:
+        s = str(iri).lower().split("?")[0].split("#")[0]
+        for ext in BAD_EXTENSIONS:
+            if s.endswith(ext):
+                issues.append(
+                    {
+                        "severity": "WARNING",
+                        "category": "URI_FILE_EXTENSION",
+                        "subject": _short(iri, g),
+                        "message": (
+                            f"The {kind} IRI '{iri}' ends with '{ext}'. "
+                            f"IRIs should be stable identifiers, not file paths."
+                        ),
+                    }
+                )
+                break
+    return issues
+
+
+def check_is_property(g: Graph, main_properties: set[URIRef]) -> list[dict]:
+    issues = []
+    for prop in main_properties:
+        local = str(prop).split("/")[-1].split("#")[-1].lower()
+        label = str(g.value(prop, RDFS.label) or "").lower().strip()
+        if local == "is" or label == "is":
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "IS_PROPERTY",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' appears to encode an 'is' "
+                        f"relationship. Use rdfs:subClassOf for subclass relations, "
+                        f"rdf:type for class membership, or owl:sameAs for equality."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_synonym_classes(g: Graph, main_classes: set[URIRef]) -> list[dict]:
+    issues = []
+    onto_iri = _get_ontology_iri(g)
+    onto_ns = str(onto_iri).rsplit("/", 1)[0] + "/" if onto_iri else None
+
+    for cls in main_classes:
+        for equiv in g.objects(cls, OWL.equivalentClass):
+            if not isinstance(equiv, URIRef):
+                continue
+            if equiv == cls:
+                continue
+            if onto_ns and str(equiv).startswith(onto_ns) and str(cls).startswith(onto_ns):
+                issues.append(
+                    {
+                        "severity": "WARNING",
+                        "category": "SYNONYM_CLASS",
+                        "subject": _short(cls, g),
+                        "message": (
+                            f"'{_label(cls, g)}' is declared equivalent to "
+                            f"'{_label(equiv, g)}' within the same namespace. "
+                            f"If these are synonyms, use skos:altLabel on one "
+                            f"class rather than two equivalent classes."
+                        ),
+                    }
+                )
+    return issues
+
+
+def check_unconnected_elements(
+    g: Graph, main_classes: set[URIRef], main_properties: set[URIRef]
+) -> list[dict]:
+    issues = []
+    bfo_prefix = str(BFO)
+
+    referenced: set[URIRef] = set()
+    for _, _, o in g:
+        if isinstance(o, URIRef):
+            referenced.add(o)
+
+    for cls in main_classes:
+        if str(cls).startswith(bfo_prefix):
+            continue
+        has_parent = any(True for _ in g.objects(cls, RDFS.subClassOf))
+        has_child = any(True for _ in g.subjects(RDFS.subClassOf, cls))
+        is_referred = cls in referenced
+        if not has_parent and not has_child and not is_referred:
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "UNCONNECTED",
+                    "subject": _short(cls, g),
+                    "message": (
+                        f"Class '{_label(cls, g)}' has no subClassOf, no subclasses, "
+                        f"and is not referenced from any other element. "
+                        f"It is isolated from the rest of the ontology."
+                    ),
+                }
+            )
+
+    used_in_restrictions_cache = _all_properties_used_in_restrictions(g)
+    for prop in main_properties:
+        if str(prop).startswith(bfo_prefix):
+            continue
+        has_domain = g.value(prop, RDFS.domain) is not None
+        has_range = g.value(prop, RDFS.range) is not None
+        used_in_res = prop in used_in_restrictions_cache
+        is_referred = prop in referenced
+        if not has_domain and not has_range and not used_in_res and not is_referred:
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "UNCONNECTED",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' has no domain, no range, "
+                        f"is not used in any restriction, and is not referenced "
+                        f"from any other element."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_untyped_use(g: Graph) -> list[dict]:
+    issues = []
+    KNOWN_PREFIXES = (
+        "http://purl.obolibrary.org/obo/",
+        "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "http://www.w3.org/2000/01/rdf-schema#",
+        "http://www.w3.org/2002/07/owl#",
+        "http://www.w3.org/2004/02/skos/core#",
+        "http://purl.org/dc/",
+        "https://www.commoncoreontologies.org/",
+    )
+
+    declared_classes = {s for s in g.subjects(RDF.type, OWL.Class) if isinstance(s, URIRef)}
+    declared_classes |= {s for s in g.subjects(RDF.type, RDFS.Class) if isinstance(s, URIRef)}
+    declared_properties = {
+        s for s in g.subjects(RDF.type, OWL.ObjectProperty) if isinstance(s, URIRef)
+    }
+    declared_properties |= {
+        s for s in g.subjects(RDF.type, OWL.DatatypeProperty) if isinstance(s, URIRef)
+    }
+    declared_properties |= {s for s in g.subjects(RDF.type, RDF.Property) if isinstance(s, URIRef)}
+
+    def _is_vocab(iri: URIRef) -> bool:
+        return any(str(iri).startswith(p) for p in KNOWN_PREFIXES)
+
+    class_uses: set[URIRef] = set()
+    for o in g.objects(None, RDFS.subClassOf):
+        if isinstance(o, URIRef):
+            class_uses.add(o)
+    for o in g.objects(None, RDF.type):
+        if isinstance(o, URIRef):
+            class_uses.add(o)
+    for pred in (
+        OWL.allValuesFrom,
+        OWL.someValuesFrom,
+        OWL.unionOf,
+        OWL.intersectionOf,
+    ):
+        for o in g.objects(None, pred):
+            if isinstance(o, URIRef):
+                class_uses.add(o)
+
+    for iri in class_uses:
+        if _is_vocab(iri):
+            continue
+        if iri not in declared_classes and iri not in declared_properties:
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "UNTYPED_USE",
+                    "subject": _short(iri, g),
+                    "message": (
+                        f"'{iri}' is used in a class position (subClassOf, rdf:type, "
+                        f"or restriction filler) but is never declared as owl:Class."
+                    ),
+                }
+            )
+
+    prop_uses: set[URIRef] = set()
+    for o in g.objects(None, OWL.onProperty):
+        if isinstance(o, URIRef):
+            prop_uses.add(o)
+    for pred in (RDFS.domain, RDFS.range):
+        for s in g.subjects(pred, None):
+            if isinstance(s, URIRef):
+                prop_uses.add(s)
+
+    for iri in prop_uses:
+        if _is_vocab(iri):
+            continue
+        if iri not in declared_properties and iri not in declared_classes:
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "UNTYPED_USE",
+                    "subject": _short(iri, g),
+                    "message": (
+                        f"'{iri}' is used in a property position (onProperty, "
+                        f"domain, or range) but is never declared as owl:ObjectProperty "
+                        f"or owl:DatatypeProperty."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_multi_domain_range(g: Graph, main_properties: set[URIRef]) -> list[dict]:
+    issues = []
+    for prop in main_properties:
+        domains = list(g.objects(prop, RDFS.domain))
+        ranges = list(g.objects(prop, RDFS.range))
+        if len(domains) > 1:
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "MULTI_DOMAIN_RANGE",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' has {len(domains)} rdfs:domain "
+                        f"statements ({', '.join(_short(d, g) for d in domains)}). "
+                        f"Multiple domains are interpreted as intersection (AND), "
+                        f"not union. Use owl:unionOf in a single domain if OR is intended."
+                    ),
+                }
+            )
+        if len(ranges) > 1:
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "MULTI_DOMAIN_RANGE",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' has {len(ranges)} rdfs:range "
+                        f"statements ({', '.join(_short(r, g) for r in ranges)}). "
+                        f"Multiple ranges are interpreted as intersection (AND), "
+                        f"not union. Use owl:unionOf in a single range if OR is intended."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_missing_disjointness(g: Graph, main_classes: set[URIRef]) -> list[dict]:
+    issues = []
+    bfo_prefix = str(BFO)
+
+    parent_children: dict[URIRef, set[URIRef]] = defaultdict(set)
+    for cls in main_classes:
+        if str(cls).startswith(bfo_prefix):
+            continue
+        for parent in g.objects(cls, RDFS.subClassOf):
+            if isinstance(parent, URIRef):
+                parent_children[parent].add(cls)
+
+    disjoint_pairs: set[frozenset] = set()
+    for s, _, o in g.triples((None, OWL.disjointWith, None)):
+        if isinstance(s, URIRef) and isinstance(o, URIRef):
+            disjoint_pairs.add(frozenset([s, o]))
+    for bnode in g.subjects(RDF.type, OWL.AllDisjointClasses):
+        members_node = g.value(bnode, OWL.members)
+        if members_node:
+            members = list(g.items(members_node))
+            for i, a in enumerate(members):
+                for b in members[i + 1 :]:
+                    if isinstance(a, URIRef) and isinstance(b, URIRef):
+                        disjoint_pairs.add(frozenset([a, b]))
+
+    reported: set[frozenset] = set()
+    for parent, children in parent_children.items():
+        child_list = sorted(children, key=str)
+        for i, a in enumerate(child_list):
+            for b in child_list[i + 1 :]:
+                pair = frozenset([a, b])
+                if pair in disjoint_pairs or pair in reported:
+                    continue
+                reported.add(pair)
+                issues.append(
+                    {
+                        "severity": "INFO",
+                        "category": "MISSING_DISJOINT",
+                        "subject": f"{_short(a, g)}, {_short(b, g)}",
+                        "message": (
+                            f"Sibling classes '{_label(a, g)}' and '{_label(b, g)}' "
+                            f"share parent '{_label(parent, g)}' but have no "
+                            f"owl:disjointWith between them. If they cannot share "
+                            f"instances, add disjointness to improve reasoning."
+                        ),
+                    }
+                )
+    return issues
+
+
+def check_recursive_definitions(
+    g: Graph, main_classes: set[URIRef], main_properties: set[URIRef]
+) -> list[dict]:
+    issues = []
+
+    for cls in main_classes:
+        for parent in g.objects(cls, RDFS.subClassOf):
+            if parent == cls:
+                issues.append(
+                    {
+                        "severity": "ERROR",
+                        "category": "RECURSIVE_DEF",
+                        "subject": _short(cls, g),
+                        "message": (
+                            f"Class '{_label(cls, g)}' is listed as a subclass of itself "
+                            f"via rdfs:subClassOf — this is a recursive definition."
+                        ),
+                    }
+                )
+        for equiv in g.objects(cls, OWL.equivalentClass):
+            if equiv == cls:
+                issues.append(
+                    {
+                        "severity": "ERROR",
+                        "category": "RECURSIVE_DEF",
+                        "subject": _short(cls, g),
+                        "message": (
+                            f"Class '{_label(cls, g)}' is declared equivalent to itself "
+                            f"via owl:equivalentClass."
+                        ),
+                    }
+                )
+
+    for prop in main_properties:
+        for pred in (RDFS.domain, RDFS.range):
+            val = g.value(prop, pred)
+            if val == prop:
+                pred_label = "rdfs:domain" if pred == RDFS.domain else "rdfs:range"
+                issues.append(
+                    {
+                        "severity": "ERROR",
+                        "category": "RECURSIVE_DEF",
+                        "subject": _short(prop, g),
+                        "message": (
+                            f"Property '{_label(prop, g)}' appears in its own "
+                            f"{pred_label} — this is a recursive definition."
+                        ),
+                    }
+                )
+        for chain_node in g.objects(prop, OWL.propertyChainAxiom):
+            for member in g.items(chain_node):
+                if member == prop:
+                    issues.append(
+                        {
+                            "severity": "ERROR",
+                            "category": "RECURSIVE_DEF",
+                            "subject": _short(prop, g),
+                            "message": (
+                                f"Property '{_label(prop, g)}' appears in its own "
+                                f"owl:propertyChainAxiom."
+                            ),
+                        }
+                    )
+    return issues
+
+
+def check_wrong_inverse(g: Graph, main_properties: set[URIRef]) -> list[dict]:
+    issues = []
+    checked: set[frozenset] = set()
+
+    for prop in main_properties:
+        inv = g.value(prop, OWL.inverseOf)
+        if not isinstance(inv, URIRef):
+            continue
+        pair = frozenset([prop, inv])
+        if pair in checked:
+            continue
+        checked.add(pair)
+
+        dom_p = g.value(prop, RDFS.domain)
+        rng_p = g.value(prop, RDFS.range)
+        dom_i = g.value(inv, RDFS.domain)
+        rng_i = g.value(inv, RDFS.range)
+
+        if not all(isinstance(x, URIRef) for x in [dom_p, rng_p, dom_i, rng_i]):
+            continue
+
+        if dom_p != rng_i or rng_p != dom_i:
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "WRONG_INVERSE",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"'{_label(prop, g)}' ({_short(dom_p, g)} → {_short(rng_p, g)}) "
+                        f"is declared inverse of '{_label(inv, g)}' "
+                        f"({_short(dom_i, g)} → {_short(rng_i, g)}), "
+                        f"but a true inverse requires domain(P)=range(Q) and "
+                        f"range(P)=domain(Q). "
+                        f"Expected: '{_label(inv, g)}' to be "
+                        f"({_short(rng_p, g)} → {_short(dom_p, g)})."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_inverse_of_itself(g: Graph, main_properties: set[URIRef]) -> list[dict]:
+    issues = []
+    for prop in main_properties:
+        inv = g.value(prop, OWL.inverseOf)
+        if inv == prop:
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "INVERSE_OF_ITSELF",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' is declared as owl:inverseOf "
+                        f"itself. A self-inverse property should be declared as "
+                        f"owl:SymmetricProperty instead."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_inverse_of_symmetric(g: Graph, main_properties: set[URIRef]) -> list[dict]:
+    issues = []
+    symmetric_props = {
+        s for s in g.subjects(RDF.type, OWL.SymmetricProperty) if isinstance(s, URIRef)
+    }
+    for prop in main_properties:
+        if prop not in symmetric_props:
+            continue
+        inv = g.value(prop, OWL.inverseOf)
+        if isinstance(inv, URIRef):
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "INVERSE_OF_SYMMETRIC",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' is owl:SymmetricProperty "
+                        f"and also declares owl:inverseOf '{_label(inv, g)}'. "
+                        f"A symmetric property is its own inverse; "
+                        f"the owl:inverseOf declaration is redundant."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_wrong_transitive(g: Graph, main_properties: set[URIRef]) -> list[dict]:
+    issues = []
+    transitive_props = {
+        s for s in g.subjects(RDF.type, OWL.TransitiveProperty) if isinstance(s, URIRef)
+    }
+    for prop in main_properties:
+        if prop not in transitive_props:
+            continue
+        dom = g.value(prop, RDFS.domain)
+        rng = g.value(prop, RDFS.range)
+        if not (isinstance(dom, URIRef) and isinstance(rng, URIRef)):
+            continue
+        if dom == rng:
+            continue
+        rng_ancestors = _all_superclasses(rng, g)
+        if dom not in rng_ancestors:
+            issues.append(
+                {
+                    "severity": "WARNING",
+                    "category": "WRONG_TRANSITIVE",
+                    "subject": _short(prop, g),
+                    "message": (
+                        f"Property '{_label(prop, g)}' is owl:TransitiveProperty "
+                        f"but has domain '{_short(dom, g)}' and range '{_short(rng, g)}'. "
+                        f"For transitivity to be sound, the range must be the same "
+                        f"class as (or a subclass of) the domain so that chained "
+                        f"applications stay type-consistent."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_circular_subclass(g: Graph) -> list[dict]:
+    issues = []
+    classes = _named_classes(g)
+
+    direct_parents: dict[URIRef, set[URIRef]] = defaultdict(set)
+    for cls in classes:
+        for parent in g.objects(cls, RDFS.subClassOf):
+            if isinstance(parent, URIRef):
+                direct_parents[cls].add(parent)
+
+    for cls in classes:
+        for parent in direct_parents[cls]:
+            for bnode in g.objects(parent, RDFS.subClassOf):
+                if isinstance(bnode, BNode) and g.value(bnode, RDF.type) == OWL.Restriction:
+                    filler = g.value(bnode, OWL.someValuesFrom)
+                    if filler == cls:
+                        issues.append(
+                            {
+                                "severity": "ERROR",
+                                "category": "CIRCULAR_SUBCLASS",
+                                "subject": _short(cls, g),
+                                "message": (
+                                    f"'{_label(cls, g)}' is a subclass of "
+                                    f"'{_label(parent, g)}', which in turn has "
+                                    f"owl:someValuesFrom '{_label(cls, g)}'. "
+                                    f"This creates a circular existential dependency."
+                                ),
+                            }
+                        )
+    return issues
+
+
+def check_inheres_in(g: Graph, main_classes: set[URIRef] | None = None) -> list[dict]:
+    issues = []
+    bfo_prefix = str(BFO)
+
+    targets = main_classes if main_classes is not None else set(_named_classes(g))
+
+    for cls in targets:
+        if str(cls).startswith(bfo_prefix):
+            continue
+
+        ancestors = _all_superclasses(cls, g)
+        bucket_hit = ancestors & REQUIRES_INHERES_IN
+        if not bucket_hit:
+            continue
+
+        props_used = _restriction_properties(g, cls)
+
+        if BFO_INHERES_IN not in props_used and BFO_BEARER_OF not in props_used:
+            # Also check the property is reachable via subPropertyOf to inheres-in / bearer-of
+            ok = False
+            for p in props_used:
+                supers = set()
+                stack = [p]
+                while stack:
+                    cur = stack.pop()
+                    if cur in supers:
+                        continue
+                    supers.add(cur)
+                    # Follow rdfs:subPropertyOf and owl:equivalentProperty (the
+                    # latter symmetric) so a property declared equivalent to
+                    # bfo:inheresIn / bfo:bearerOf is recognised as anchoring.
+                    for parent in chain(
+                        g.objects(cur, RDFS.subPropertyOf),
+                        g.objects(cur, OWL.equivalentProperty),
+                        g.subjects(OWL.equivalentProperty, cur),
+                    ):
+                        if isinstance(parent, URIRef):
+                            stack.append(parent)
+                if BFO_INHERES_IN in supers or BFO_BEARER_OF in supers:
+                    ok = True
+                    break
+
+            if ok:
+                continue
+
+            bucket_name = next(name for name, iri in BUCKET_ROOTS.items() if iri in bucket_hit)
+            issues.append(
+                {
+                    "severity": "ERROR",
+                    "category": "INHERES_IN",
+                    "subject": _short(cls, g),
+                    "message": (
+                        f"Class '{_label(cls, g)}' subclasses {bucket_name} "
+                        f"but has no owl:Restriction using bfo:BFO_0000197 "
+                        f"(inheres in) or bfo:BFO_0000196 (bearer of) "
+                        f"(directly or via subPropertyOf). "
+                        f"Qualities, roles, and dispositions must be anchored "
+                        f"to a bearer."
+                    ),
+                }
+            )
+    return issues
+
+
+def check_inverse_missing(g: Graph) -> list[dict]:
+    issues = []
+    props = _named_object_properties(g)
+
+    dr_map: dict[tuple, URIRef] = {}
+    for prop in props:
+        dom = g.value(prop, RDFS.domain)
+        rng = g.value(prop, RDFS.range)
+        if isinstance(dom, URIRef) and isinstance(rng, URIRef):
+            dr_map[(dom, rng)] = prop
+
+    declared_inverses: set[frozenset] = set()
+    for prop in props:
+        inv = g.value(prop, OWL.inverseOf)
+        if inv:
+            declared_inverses.add(frozenset([prop, inv]))
+
+    for prop in props:
+        dom = g.value(prop, RDFS.domain)
+        rng = g.value(prop, RDFS.range)
+        if not (isinstance(dom, URIRef) and isinstance(rng, URIRef)):
+            continue
+        candidate_inverse = dr_map.get((rng, dom))
+        if candidate_inverse and candidate_inverse != prop:
+            pair = frozenset([prop, candidate_inverse])
+            if pair not in declared_inverses:
+                issues.append(
+                    {
+                        "severity": "INFO",
+                        "category": "INVERSE_MISSING",
+                        "subject": _short(prop, g),
+                        "message": (
+                            f"'{_label(prop, g)}' ({_short(dom, g)} → {_short(rng, g)}) "
+                            f"and '{_label(candidate_inverse, g)}' "
+                            f"({_short(rng, g)} → {_short(dom, g)}) appear to be "
+                            f"inverses but neither declares owl:inverseOf the other."
+                        ),
+                    }
+                )
+    return issues
+
+
+# ---------------------------------------------------------------------------
+# NE orchestration (rewrites ABI validate()/main() for in-memory, offline use)
+# ---------------------------------------------------------------------------
+
+
+def _format(issue: dict[str, Any]) -> str:
+    return f"[{issue['category']}] {issue['subject']}: {issue['message']}"
+
+
+def run_bfo_lint(graph: Graph) -> LintReport:
+    """Run the BFO 7-Buckets lint over an already-parsed, in-memory graph.
+
+    No network, no filesystem, no owl:imports resolution (C2): the passed graph
+    is used as both the main graph and the (would-be import-)combined graph.
+    """
+    main_classes = {s for s in graph.subjects(RDF.type, OWL.Class) if isinstance(s, URIRef)}
+    main_properties = {
+        s for s in graph.subjects(RDF.type, OWL.ObjectProperty) if isinstance(s, URIRef)
+    }
+
+    issues: list[dict[str, Any]] = []
+    issues.extend(check_annotations(graph))
+    issues.extend(check_license(graph))
+    issues.extend(check_duplicate_labels(graph, main_classes))
+    issues.extend(check_naming_convention(graph, main_classes, main_properties))
+    issues.extend(check_uri_file_extension(graph, main_classes, main_properties))
+    issues.extend(check_is_property(graph, main_properties))
+    issues.extend(check_synonym_classes(graph, main_classes))
+    issues.extend(check_unconnected_elements(graph, main_classes, main_properties))
+    issues.extend(check_untyped_use(graph))
+    issues.extend(check_multi_domain_range(graph, main_properties))
+    issues.extend(check_bucket_mapping(graph, main_classes))
+    issues.extend(check_property_domain_range(graph))
+    issues.extend(check_missing_disjointness(graph, main_classes))
+    issues.extend(check_orphan_properties(graph))
+    issues.extend(check_restriction_references(graph))
+    issues.extend(check_restriction_inheritance(graph, main_classes))
+    issues.extend(check_recursive_definitions(graph, main_classes, main_properties))
+    issues.extend(check_circular_subclass(graph))
+    issues.extend(check_inheres_in(graph, main_classes))
+    issues.extend(check_wrong_inverse(graph, main_properties))
+    issues.extend(check_inverse_of_itself(graph, main_properties))
+    issues.extend(check_inverse_of_symmetric(graph, main_properties))
+    issues.extend(check_wrong_transitive(graph, main_properties))
+    issues.extend(check_inverse_missing(graph))
+
+    errors = tuple(_format(i) for i in issues if i["severity"] == "ERROR")
+    warnings = tuple(_format(i) for i in issues if i["severity"] == "WARNING")
+    return LintReport(errors=errors, warnings=warnings)

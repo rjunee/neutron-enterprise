@@ -1,0 +1,14 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/teams/T0001/channels/C0PRIV/messages/delta?$deltatoken=PRIV1",
+  "value": [
+    {
+      "id": "mp1",
+      "messageType": "message",
+      "createdDateTime": "2026-06-01T10:30:00Z",
+      "lastModifiedDateTime": "2026-06-01T10:30:00Z",
+      "subject": "Confidential",
+      "body": { "contentType": "text", "content": "Private channel leadership note." },
+      "from": { "user": { "id": "29:user-carol", "displayName": "Carol" } }
+    }
+  ]
+}

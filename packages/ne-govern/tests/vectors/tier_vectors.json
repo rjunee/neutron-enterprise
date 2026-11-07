@@ -1,0 +1,182 @@
+[
+  {
+    "name": "tier0-read",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "tier0-draft",
+    "input": {"principal": {"id": "u1"}, "action": "draft.email", "resource": "draft:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "tier1-internal-write",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.note", "resource": "note:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 1, "obligations": {"daily_digest": true}, "reason": "tier 1: internal write — autonomous, surfaced in the daily digest"}
+  },
+  {
+    "name": "tier2-external-write",
+    "input": {"principal": {"id": "u1"}, "action": "write.external.post", "resource": "post:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "tier2-pii",
+    "input": {"principal": {"id": "u1"}, "action": "export.pii.customer", "resource": "cust:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "tier3-finance",
+    "input": {"principal": {"id": "u1"}, "action": "finance.wire", "resource": "acct:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "tier3-legal",
+    "input": {"principal": {"id": "u1"}, "action": "legal.filing", "resource": "case:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "declared-tier-honored",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:1", "context": {"tier": 2}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "declared-0-finance-escalates-to-3",
+    "input": {"principal": {"id": "u1"}, "action": "finance.wire", "resource": "acct:1", "context": {"tier": 0}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "declared-tier-invalid-falls-back",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:1", "context": {"tier": 5}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "unclassified-deny",
+    "input": {"principal": {"id": "u1"}, "action": "mystery.action", "resource": "x:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "deny", "tier": null, "obligations": {}, "reason": "unclassified action"}
+  },
+  {
+    "name": "unclassified-with-declared-tier-still-deny",
+    "input": {"principal": {"id": "u1"}, "action": "mystery.action", "resource": "x:1", "context": {"tier": 0}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "deny", "tier": null, "obligations": {}, "reason": "unclassified action"}
+  },
+  {
+    "name": "missing-principal-deny",
+    "input": {"principal": {"id": ""}, "action": "read.document", "resource": "doc:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "deny", "tier": null, "obligations": {}, "reason": "missing or invalid principal"}
+  },
+  {
+    "name": "checkpoint-d-tier-drop-external",
+    "input": {"principal": {"id": "u1"}, "action": "write.external.post", "resource": "post:1", "context": {"tier": 0}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "acl-reservation",
+    "input": {"principal": {"id": "u1"}, "action": "write.external.acl.reservation", "resource": "res:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "read-pii-escalates-to-2",
+    "input": {"principal": {"id": "u1"}, "action": "read.pii.customer", "resource": "cust:2", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "finance-pii-max-wins-3",
+    "input": {"principal": {"id": "u1"}, "action": "finance.pii.export", "resource": "cust:3", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "declared-2-on-finance-stays-3",
+    "input": {"principal": {"id": "u1"}, "action": "finance.wire", "resource": "acct:2", "context": {"tier": 2}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "declared-3-on-read-escalates",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:2", "context": {"tier": 3}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "declared-float-integral-valid",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:3", "context": {"tier": 2.0}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "declared-float-fractional-invalid",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:4", "context": {"tier": 1.5}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "declared-bool-invalid",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:5", "context": {"tier": true}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "declared-string-invalid",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:6", "context": {"tier": "3"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "declared-negative-invalid",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:7", "context": {"tier": -1}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "empty-action-deny",
+    "input": {"principal": {"id": "u1"}, "action": "", "resource": "x:2", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "deny", "tier": null, "obligations": {}, "reason": "unclassified action"}
+  },
+  {
+    "name": "write-internal-pii-escalates",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.pii.export", "resource": "cust:4", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true}, "reason": "tier 2: external/PII action — per-item human approval required"}
+  },
+  {
+    "name": "no-context-key",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:8"},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "provisional-write-internal-escalates",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.notes.append", "resource": "note:1", "context": {"tier": 1, "context_provisional": true, "extraction_mode": "read_flagged"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true, "provisional_context": true}, "reason": "tier 2: write on provisional context — escalated one tier, per-item human approval required"}
+  },
+  {
+    "name": "provisional-yolo-threads-but-does-not-escalate",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.notes.append", "resource": "note:1", "context": {"tier": 1, "context_provisional": true, "extraction_mode": "autonomous"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 1, "obligations": {"daily_digest": true}, "reason": "tier 1: internal write — autonomous, surfaced in the daily digest"}
+  },
+  {
+    "name": "provisional-absent-control",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.notes.append", "resource": "note:1", "context": {}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 1, "obligations": {"daily_digest": true}, "reason": "tier 1: internal write — autonomous, surfaced in the daily digest"}
+  },
+  {
+    "name": "provisional-write-external-escalates-to-3",
+    "input": {"principal": {"id": "u1"}, "action": "write.external.email.send", "resource": "post:1", "context": {"context_provisional": true, "extraction_mode": "read_flagged"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true, "provisional_context": true}, "reason": "tier 3: write on provisional context — escalated one tier, named approver plus a second check"}
+  },
+  {
+    "name": "provisional-read-does-not-escalate",
+    "input": {"principal": {"id": "u1"}, "action": "read.document", "resource": "doc:9", "context": {"context_provisional": true, "extraction_mode": "read_flagged"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 0, "obligations": {}, "reason": "tier 0: read/internal draft — autonomous, logged"}
+  },
+  {
+    "name": "provisional-finance-clamps-at-3",
+    "input": {"principal": {"id": "u1"}, "action": "finance.payment.initiate", "resource": "acct:3", "context": {"context_provisional": true, "extraction_mode": "read_flagged"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true}, "reason": "tier 3: finance/legal action — named approver plus a second check"}
+  },
+  {
+    "name": "provisional-mode-absent-fails-toward-escalation",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.notes.append", "resource": "note:2", "context": {"context_provisional": true}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 14400, "standing_approval_seconds": 604800, "effect": "require-approval", "tier": 2, "obligations": {"per_item_human_approval": true, "provisional_context": true}, "reason": "tier 2: write on provisional context — escalated one tier, per-item human approval required"}
+  },
+  {
+    "name": "provisional-nonboolean-does-not-escalate",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.notes.append", "resource": "note:3", "context": {"context_provisional": "true", "extraction_mode": "read_flagged"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": null, "standing_approval_seconds": null, "effect": "allow", "tier": 1, "obligations": {"daily_digest": true}, "reason": "tier 1: internal write — autonomous, surfaced in the daily digest"}
+  },
+  {
+    "name": "provisional-declared-2-on-internal-write-escalates-to-3",
+    "input": {"principal": {"id": "u1"}, "action": "write.internal.notes.append", "resource": "note:4", "context": {"tier": 2, "context_provisional": true, "extraction_mode": "read_flagged"}},
+    "expected": {"approval_window_declared": false, "approval_window_seconds": 86400, "standing_approval_seconds": 172800, "effect": "require-approval", "tier": 3, "obligations": {"named_approver": true, "second_check": true, "provisional_context": true}, "reason": "tier 3: write on provisional context — escalated one tier, named approver plus a second check"}
+  }
+]

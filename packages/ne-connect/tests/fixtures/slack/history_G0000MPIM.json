@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "ts": "1720000200.000100",
+      "user": "U00000EVE",
+      "text": "mpim message one"
+    }
+  ],
+  "response_metadata": {"next_cursor": ""}
+}

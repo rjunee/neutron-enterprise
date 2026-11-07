@@ -1,0 +1,1 @@
+{"authority":"console.vast.ai:443","default":"drop","dns":"activation-only","max_provider_addresses":16,"max_ssh_grant_s":900,"provider_transport":"tls-system-ca","schema":"ne-inference-provider-network-policy-v1"}

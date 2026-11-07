@@ -1,0 +1,43 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+[Unit]
+Description=Neutron non-root inference provider broker
+Requires=ne-inference-provider-broker.socket ne-inference-provider-network.service
+After=network-online.target ne-inference-provider-broker.socket ne-inference-provider-network.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=10002
+Group=10002
+SupplementaryGroups=10001
+Sockets=ne-inference-provider-broker.socket
+UMask=0077
+LoadCredential=vast-api-key:/etc/neutron/secrets/vast-api-key
+LoadCredential=vast-ssh-private-key:/etc/neutron/secrets/vast-ssh-private-key
+LoadCredential=vast-instance:/var/lib/neutron/vast/instance.json
+ExecCondition=/usr/local/bin/ne-inference-provider-air-gap-condition
+ExecStart=/usr/local/bin/ne-inference-provider-broker --registry /etc/neutron/inference-operator/registry.json --adapter-manifest /etc/neutron/inference-operator/adapter-manifest.json --air-gap-file /etc/neutron/inference-operator/environment --egress-receipt /run/neutron/inference-provider/egress-receipt.json --state-seed /run/credentials/ne-inference-provider-broker.service/vast-instance --state /var/lib/neutron/inference-provider/instance.json --socket /run/neutron/inference-provider/provider.sock --systemd-socket
+StateDirectory=neutron/inference-provider
+StateDirectoryMode=0700
+NetworkNamespacePath=/run/netns/neutron-inference-provider
+NoNewPrivileges=false
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/neutron/inference-operator /etc/neutron/inference-operator /run/neutron/inference-provider/egress-receipt.json
+BindReadOnlyPaths=/run/neutron/inference-provider/hosts:/etc/hosts
+InaccessiblePaths=-/run/docker.sock -/var/run/docker.sock
+ReadWritePaths=/var/lib/neutron/inference-provider /var/lib/neutron/inference-operator
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+SystemCallArchitectures=native
+Restart=on-failure
+RestartSec=2

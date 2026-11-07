@@ -1,0 +1,1279 @@
+{
+  "artifacts": [
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver"
+        ],
+        "classification": "restricted",
+        "denied_personas": [
+          "frontline"
+        ]
+      },
+      "artifact_id": "art-dispute-sop-v3",
+      "current": false,
+      "effective_date": "2025-08-01",
+      "family": "debit-card-dispute-sop",
+      "filename": "debit-card-dispute-handling-sop-v3.docx",
+      "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "seed_stage": "initial",
+      "sharepoint_path": "Debit Card Dispute Handling SOP.docx",
+      "title": "Debit Card Dispute Handling SOP",
+      "version": "3.0"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver",
+          "frontline"
+        ],
+        "classification": "internal",
+        "denied_personas": []
+      },
+      "artifact_id": "art-dispute-sop-v4",
+      "current": true,
+      "effective_date": "2026-08-18",
+      "family": "debit-card-dispute-sop",
+      "filename": "debit-card-dispute-handling-sop-v4.docx",
+      "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "seed_stage": "supersession",
+      "sharepoint_path": "Debit Card Dispute Handling SOP.docx",
+      "title": "Debit Card Dispute Handling SOP",
+      "version": "4.0"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "approver",
+          "frontline"
+        ],
+        "classification": "customer-facing",
+        "denied_personas": [
+          "ops"
+        ]
+      },
+      "artifact_id": "art-reg-dd-2026",
+      "current": true,
+      "effective_date": "2026-01-01",
+      "family": "reg-dd-disclosure",
+      "filename": "reg-dd-disclosure-2026.pdf",
+      "media_type": "application/pdf",
+      "seed_stage": "initial",
+      "sharepoint_path": "Regulation DD Deposit Account Disclosure.pdf",
+      "title": "Regulation DD Deposit Account Disclosure",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver",
+          "frontline"
+        ],
+        "classification": "customer-facing",
+        "denied_personas": []
+      },
+      "artifact_id": "art-fees-2026",
+      "current": true,
+      "effective_date": "2026-01-01",
+      "family": "fee-schedule",
+      "filename": "fee-schedule-2026.json",
+      "media_type": "application/json",
+      "seed_stage": "initial",
+      "sharepoint_path": "Consumer Deposit Fee Schedule.json",
+      "title": "Consumer Deposit Fee Schedule",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver",
+          "frontline"
+        ],
+        "classification": "internal",
+        "denied_personas": []
+      },
+      "artifact_id": "art-hardship-2026",
+      "current": true,
+      "effective_date": "2026-08-18",
+      "family": "hardship-sop",
+      "filename": "disaster-hardship-response-sop-2026.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Disaster Hardship Response SOP.md",
+      "title": "Disaster Hardship Response SOP",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "approver"
+        ],
+        "classification": "restricted",
+        "denied_personas": [
+          "ops",
+          "frontline"
+        ]
+      },
+      "artifact_id": "art-collections-2025",
+      "current": false,
+      "effective_date": "2025-01-01",
+      "family": "collections-policy",
+      "filename": "consumer-auto-collections-policy-2025.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Consumer Auto Collections Policy 2025.md",
+      "title": "Consumer Auto Collections Policy",
+      "version": "2025"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver"
+        ],
+        "classification": "restricted",
+        "denied_personas": [
+          "frontline"
+        ]
+      },
+      "artifact_id": "art-collections-2026",
+      "current": true,
+      "effective_date": "2026-01-01",
+      "family": "collections-policy",
+      "filename": "consumer-auto-collections-policy-2026.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Consumer Auto Collections Policy.md",
+      "title": "Consumer Auto Collections Policy",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "approver"
+        ],
+        "classification": "restricted",
+        "denied_personas": [
+          "ops",
+          "frontline"
+        ]
+      },
+      "artifact_id": "art-reg-e-bulletin-2025",
+      "current": false,
+      "effective_date": "2025-06-01",
+      "family": "reg-e-operations-bulletin",
+      "filename": "reg-e-operations-bulletin-2025.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Reg E Operations Bulletin 2025.md",
+      "title": "Reg E Operations Bulletin",
+      "version": "2025"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver"
+        ],
+        "classification": "restricted",
+        "denied_personas": [
+          "frontline"
+        ]
+      },
+      "artifact_id": "art-reg-e-bulletin-2026",
+      "current": true,
+      "effective_date": "2026-06-01",
+      "family": "reg-e-operations-bulletin",
+      "filename": "reg-e-operations-bulletin-2026.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Reg E Operations Bulletin.md",
+      "title": "Reg E Operations Bulletin",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "approver",
+          "frontline"
+        ],
+        "classification": "internal",
+        "denied_personas": []
+      },
+      "artifact_id": "art-disaster-counties-2026",
+      "current": true,
+      "effective_date": "2026-08-18",
+      "family": "disaster-county-reference",
+      "filename": "disaster-county-reference-2026.csv",
+      "media_type": "text/csv",
+      "seed_stage": "initial",
+      "sharepoint_path": "Disaster Declaration County Reference.csv",
+      "title": "Disaster Declaration County Reference",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "ops",
+          "frontline"
+        ],
+        "classification": "internal",
+        "denied_personas": [
+          "approver"
+        ]
+      },
+      "artifact_id": "art-servicing-notes-2026",
+      "current": true,
+      "effective_date": "2026-02-01",
+      "family": "servicing-note-standard",
+      "filename": "servicing-note-quality-standard-2026.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Servicing Note Quality Standard.md",
+      "title": "Servicing Note Quality Standard",
+      "version": "2026"
+    },
+    {
+      "acl": {
+        "allowed_personas": [
+          "approver",
+          "frontline"
+        ],
+        "classification": "restricted",
+        "denied_personas": [
+          "ops"
+        ]
+      },
+      "artifact_id": "art-complaints-2026",
+      "current": true,
+      "effective_date": "2026-03-01",
+      "family": "complaint-escalation",
+      "filename": "complaint-escalation-playbook-2026.md",
+      "media_type": "text/markdown",
+      "seed_stage": "initial",
+      "sharepoint_path": "Complaint Escalation Playbook.md",
+      "title": "Complaint Escalation Playbook",
+      "version": "2026"
+    }
+  ],
+  "as_of_date": "2026-08-18",
+  "auto_loans": [
+    {
+      "customer_id": "mer-cus-001",
+      "loan_id": "mer-loan-001",
+      "next_due_date": "2026-08-20",
+      "principal_balance_cents": 2240000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-002",
+      "loan_id": "mer-loan-002",
+      "next_due_date": "2026-08-25",
+      "principal_balance_cents": 1875000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-003",
+      "loan_id": "mer-loan-003",
+      "next_due_date": "2026-09-01",
+      "principal_balance_cents": 3190000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-004",
+      "loan_id": "mer-loan-004",
+      "next_due_date": "2026-08-22",
+      "principal_balance_cents": 0,
+      "status": "paid_off"
+    },
+    {
+      "customer_id": "mer-cus-005",
+      "loan_id": "mer-loan-005",
+      "next_due_date": "2026-08-23",
+      "principal_balance_cents": 980000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-006",
+      "loan_id": "mer-loan-006",
+      "next_due_date": "2026-08-24",
+      "principal_balance_cents": 1455000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-007",
+      "loan_id": "mer-loan-007",
+      "next_due_date": "2026-08-26",
+      "principal_balance_cents": 2710000,
+      "status": "repossession"
+    },
+    {
+      "customer_id": "mer-cus-008",
+      "loan_id": "mer-loan-008",
+      "next_due_date": "2026-09-02",
+      "principal_balance_cents": 1205000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-009",
+      "loan_id": "mer-loan-009",
+      "next_due_date": "2026-08-15",
+      "principal_balance_cents": 875000,
+      "status": "active"
+    },
+    {
+      "customer_id": "mer-cus-010",
+      "loan_id": "mer-loan-010",
+      "next_due_date": "2026-08-29",
+      "principal_balance_cents": 2030000,
+      "status": "active"
+    }
+  ],
+  "complaints": [
+    {
+      "complaint_id": "mer-cmp-001",
+      "customer_id": "mer-cus-001",
+      "dispute_id": "mer-dsp-001",
+      "received_date": "2026-08-17",
+      "status": "investigating",
+      "summary": "Customer asked when expedited provisional credit will post."
+    },
+    {
+      "complaint_id": "mer-cmp-002",
+      "customer_id": "mer-cus-003",
+      "dispute_id": "mer-dsp-003",
+      "received_date": "2026-08-08",
+      "status": "resolved",
+      "summary": "Customer requested confirmation of provisional-credit amount."
+    },
+    {
+      "complaint_id": "mer-cmp-003",
+      "customer_id": "mer-cus-011",
+      "dispute_id": null,
+      "received_date": "2026-08-16",
+      "status": "open",
+      "summary": "Customer reported difficulty reaching disaster-assistance queue."
+    }
+  ],
+  "corpus_version": "meridian-v1",
+  "customers": [
+    {
+      "address": {
+        "city": "Demo City 1",
+        "county": "Columbia",
+        "line1": "101 Meridian Demo Way",
+        "postal_code": "30001",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-001",
+      "email": "owner@example.com",
+      "first_name": "Avery",
+      "household_id": "mer-hh-001",
+      "last_name": "Arbor",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 2",
+        "county": "Richmond",
+        "line1": "102 Meridian Demo Way",
+        "postal_code": "30002",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-002",
+      "email": "customer002@meridian.example",
+      "first_name": "Jordan",
+      "household_id": "mer-hh-001",
+      "last_name": "Beacon",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 3",
+        "county": "Jefferson",
+        "line1": "103 Meridian Demo Way",
+        "postal_code": "30003",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-003",
+      "email": "customer003@meridian.example",
+      "first_name": "Morgan",
+      "household_id": "mer-hh-002",
+      "last_name": "Cedar",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 4",
+        "county": "Columbia",
+        "line1": "104 Meridian Demo Way",
+        "postal_code": "30004",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-004",
+      "email": "customer004@meridian.example",
+      "first_name": "Taylor",
+      "household_id": "mer-hh-002",
+      "last_name": "Dover",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 5",
+        "county": "Richmond",
+        "line1": "105 Meridian Demo Way",
+        "postal_code": "30005",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-005",
+      "email": "customer005@meridian.example",
+      "first_name": "Casey",
+      "household_id": "mer-hh-003",
+      "last_name": "Elm",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 1",
+        "county": "McDuffie",
+        "line1": "106 Meridian Demo Way",
+        "postal_code": "30006",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-006",
+      "email": "customer006@meridian.example",
+      "first_name": "Riley",
+      "household_id": "mer-hh-003",
+      "last_name": "Fielding",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 2",
+        "county": "Jefferson",
+        "line1": "107 Meridian Demo Way",
+        "postal_code": "30007",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-007",
+      "email": "customer007@meridian.example",
+      "first_name": "Cameron",
+      "household_id": "mer-hh-004",
+      "last_name": "Grove",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 3",
+        "county": "Columbia",
+        "line1": "108 Meridian Demo Way",
+        "postal_code": "30008",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-008",
+      "email": "customer008@meridian.example",
+      "first_name": "Quinn",
+      "household_id": "mer-hh-004",
+      "last_name": "Harbor",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 4",
+        "county": "McDuffie",
+        "line1": "109 Meridian Demo Way",
+        "postal_code": "30009",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-009",
+      "email": "customer009@meridian.example",
+      "first_name": "Parker",
+      "household_id": "mer-hh-005",
+      "last_name": "Ivory",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 5",
+        "county": "Richmond",
+        "line1": "110 Meridian Demo Way",
+        "postal_code": "30010",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-010",
+      "email": "customer010@meridian.example",
+      "first_name": "Skyler",
+      "household_id": "mer-hh-005",
+      "last_name": "Juniper",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 1",
+        "county": "Jefferson",
+        "line1": "111 Meridian Demo Way",
+        "postal_code": "30011",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-011",
+      "email": "customer011@meridian.example",
+      "first_name": "Drew",
+      "household_id": "mer-hh-006",
+      "last_name": "Keystone",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 2",
+        "county": "McDuffie",
+        "line1": "112 Meridian Demo Way",
+        "postal_code": "30012",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-012",
+      "email": "customer012@meridian.example",
+      "first_name": "Reese",
+      "household_id": "mer-hh-006",
+      "last_name": "Linden",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 3",
+        "county": "Columbia",
+        "line1": "113 Meridian Demo Way",
+        "postal_code": "30013",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-013",
+      "email": "customer013@meridian.example",
+      "first_name": "Rowan",
+      "household_id": "mer-hh-007",
+      "last_name": "Meadow",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 4",
+        "county": "McDuffie",
+        "line1": "114 Meridian Demo Way",
+        "postal_code": "30014",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-014",
+      "email": "customer014@meridian.example",
+      "first_name": "Emerson",
+      "household_id": "mer-hh-007",
+      "last_name": "North",
+      "status": "active"
+    },
+    {
+      "address": {
+        "city": "Demo City 5",
+        "county": "Richmond",
+        "line1": "115 Meridian Demo Way",
+        "postal_code": "30015",
+        "state": "GA"
+      },
+      "customer_id": "mer-cus-015",
+      "email": "customer015@meridian.example",
+      "first_name": "Finley",
+      "household_id": "mer-hh-008",
+      "last_name": "Orchard",
+      "status": "active"
+    }
+  ],
+  "debit_cards": [
+    {
+      "card_id": "mer-card-001",
+      "customer_id": "mer-cus-001",
+      "deposit_account_id": "mer-dep-001",
+      "last_four": "7987",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-002",
+      "customer_id": "mer-cus-002",
+      "deposit_account_id": "mer-dep-002",
+      "last_four": "8498",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-003",
+      "customer_id": "mer-cus-003",
+      "deposit_account_id": "mer-dep-003",
+      "last_four": "5210",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-004",
+      "customer_id": "mer-cus-004",
+      "deposit_account_id": "mer-dep-004",
+      "last_four": "7914",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-005",
+      "customer_id": "mer-cus-005",
+      "deposit_account_id": "mer-dep-005",
+      "last_four": "5805",
+      "status": "blocked"
+    },
+    {
+      "card_id": "mer-card-006",
+      "customer_id": "mer-cus-006",
+      "deposit_account_id": "mer-dep-006",
+      "last_four": "9039",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-007",
+      "customer_id": "mer-cus-007",
+      "deposit_account_id": "mer-dep-007",
+      "last_four": "8033",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-008",
+      "customer_id": "mer-cus-008",
+      "deposit_account_id": "mer-dep-008",
+      "last_four": "6520",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-009",
+      "customer_id": "mer-cus-009",
+      "deposit_account_id": "mer-dep-009",
+      "last_four": "8573",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-010",
+      "customer_id": "mer-cus-010",
+      "deposit_account_id": "mer-dep-010",
+      "last_four": "1209",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-011",
+      "customer_id": "mer-cus-011",
+      "deposit_account_id": "mer-dep-011",
+      "last_four": "2630",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-012",
+      "customer_id": "mer-cus-012",
+      "deposit_account_id": "mer-dep-012",
+      "last_four": "1079",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-013",
+      "customer_id": "mer-cus-013",
+      "deposit_account_id": "mer-dep-013",
+      "last_four": "3056",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-014",
+      "customer_id": "mer-cus-014",
+      "deposit_account_id": "mer-dep-014",
+      "last_four": "5398",
+      "status": "active"
+    },
+    {
+      "card_id": "mer-card-015",
+      "customer_id": "mer-cus-015",
+      "deposit_account_id": "mer-dep-015",
+      "last_four": "5511",
+      "status": "closed"
+    }
+  ],
+  "deposit_accounts": [
+    {
+      "account_id": "mer-dep-001",
+      "account_type": "checking",
+      "balance_cents": 143026,
+      "customer_id": "mer-cus-001",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-002",
+      "account_type": "checking",
+      "balance_cents": 160147,
+      "customer_id": "mer-cus-002",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-003",
+      "account_type": "savings",
+      "balance_cents": 182276,
+      "customer_id": "mer-cus-003",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-004",
+      "account_type": "checking",
+      "balance_cents": 195753,
+      "customer_id": "mer-cus-004",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-005",
+      "account_type": "checking",
+      "balance_cents": 215448,
+      "customer_id": "mer-cus-005",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-006",
+      "account_type": "savings",
+      "balance_cents": 234420,
+      "customer_id": "mer-cus-006",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-007",
+      "account_type": "checking",
+      "balance_cents": 251693,
+      "customer_id": "mer-cus-007",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-008",
+      "account_type": "checking",
+      "balance_cents": 266019,
+      "customer_id": "mer-cus-008",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-009",
+      "account_type": "savings",
+      "balance_cents": 284940,
+      "customer_id": "mer-cus-009",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-010",
+      "account_type": "checking",
+      "balance_cents": 305547,
+      "customer_id": "mer-cus-010",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-011",
+      "account_type": "checking",
+      "balance_cents": 317921,
+      "customer_id": "mer-cus-011",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-012",
+      "account_type": "savings",
+      "balance_cents": 337960,
+      "customer_id": "mer-cus-012",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-013",
+      "account_type": "checking",
+      "balance_cents": 353830,
+      "customer_id": "mer-cus-013",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-014",
+      "account_type": "checking",
+      "balance_cents": 376078,
+      "customer_id": "mer-cus-014",
+      "status": "open"
+    },
+    {
+      "account_id": "mer-dep-015",
+      "account_type": "savings",
+      "balance_cents": 390169,
+      "customer_id": "mer-cus-015",
+      "status": "closed"
+    }
+  ],
+  "disaster_declarations": [
+    {
+      "counties": [
+        "Columbia",
+        "Richmond",
+        "Jefferson"
+      ],
+      "declaration_date": "2024-09-30",
+      "declaration_id": "DR-4830",
+      "incident": "Hurricane Helene",
+      "scope_description": "Three FEMA-designated Georgia counties selected for the Meridian pilot; not the exhaustive DR-4830 designated-area list.",
+      "source_url": "https://www.fema.gov/disaster/4830",
+      "state": "GA"
+    }
+  ],
+  "fee_postings": [
+    {
+      "amount_cents": 3500,
+      "customer_id": "mer-cus-001",
+      "deposit_account_id": "mer-dep-001",
+      "fee_code": "OD-PAID",
+      "fee_posting_id": "mer-fee-001",
+      "posted_date": "2026-08-02",
+      "reversed": false
+    },
+    {
+      "amount_cents": 2500,
+      "customer_id": "mer-cus-002",
+      "deposit_account_id": "mer-dep-002",
+      "fee_code": "WIRE-DOM",
+      "fee_posting_id": "mer-fee-002",
+      "posted_date": "2026-08-05",
+      "reversed": false
+    },
+    {
+      "amount_cents": 3000,
+      "customer_id": "mer-cus-003",
+      "deposit_account_id": "mer-dep-003",
+      "fee_code": "STOP-PAY",
+      "fee_posting_id": "mer-fee-003",
+      "posted_date": "2026-08-07",
+      "reversed": true
+    },
+    {
+      "amount_cents": 0,
+      "customer_id": "mer-cus-004",
+      "deposit_account_id": "mer-dep-004",
+      "fee_code": "NSF-RETURN",
+      "fee_posting_id": "mer-fee-004",
+      "posted_date": "2026-08-09",
+      "reversed": false
+    },
+    {
+      "amount_cents": 3500,
+      "customer_id": "mer-cus-005",
+      "deposit_account_id": "mer-dep-005",
+      "fee_code": "OD-PAID",
+      "fee_posting_id": "mer-fee-005",
+      "posted_date": "2026-08-11",
+      "reversed": false
+    }
+  ],
+  "fee_schedule_rows": [
+    {
+      "amount_cents": 3500,
+      "effective_date": "2026-01-01",
+      "fee_code": "OD-PAID",
+      "fee_name": "Paid overdraft item"
+    },
+    {
+      "amount_cents": 0,
+      "effective_date": "2026-01-01",
+      "fee_code": "NSF-RETURN",
+      "fee_name": "Returned item"
+    },
+    {
+      "amount_cents": 2500,
+      "effective_date": "2026-01-01",
+      "fee_code": "WIRE-DOM",
+      "fee_name": "Domestic outgoing wire"
+    },
+    {
+      "amount_cents": 3000,
+      "effective_date": "2026-01-01",
+      "fee_code": "STOP-PAY",
+      "fee_name": "Stop payment"
+    }
+  ],
+  "households": [
+    {
+      "household_id": "mer-hh-001",
+      "household_name": "Meridian Household 001"
+    },
+    {
+      "household_id": "mer-hh-002",
+      "household_name": "Meridian Household 002"
+    },
+    {
+      "household_id": "mer-hh-003",
+      "household_name": "Meridian Household 003"
+    },
+    {
+      "household_id": "mer-hh-004",
+      "household_name": "Meridian Household 004"
+    },
+    {
+      "household_id": "mer-hh-005",
+      "household_name": "Meridian Household 005"
+    },
+    {
+      "household_id": "mer-hh-006",
+      "household_name": "Meridian Household 006"
+    },
+    {
+      "household_id": "mer-hh-007",
+      "household_name": "Meridian Household 007"
+    },
+    {
+      "household_id": "mer-hh-008",
+      "household_name": "Meridian Household 008"
+    },
+    {
+      "household_id": "mer-hh-009",
+      "household_name": "Meridian Household 009"
+    },
+    {
+      "household_id": "mer-hh-010",
+      "household_name": "Meridian Household 010"
+    }
+  ],
+  "payment_schedules": [
+    {
+      "amount_cents": 32750,
+      "due_date": "2026-08-20",
+      "loan_id": "mer-loan-001",
+      "payment_id": "mer-pay-001",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 34000,
+      "due_date": "2026-08-25",
+      "loan_id": "mer-loan-002",
+      "payment_id": "mer-pay-002",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 35250,
+      "due_date": "2026-09-01",
+      "loan_id": "mer-loan-003",
+      "payment_id": "mer-pay-003",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 36500,
+      "due_date": "2026-08-22",
+      "loan_id": "mer-loan-004",
+      "payment_id": "mer-pay-004",
+      "status": "cancelled"
+    },
+    {
+      "amount_cents": 37750,
+      "due_date": "2026-08-23",
+      "loan_id": "mer-loan-005",
+      "payment_id": "mer-pay-005",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 39000,
+      "due_date": "2026-08-24",
+      "loan_id": "mer-loan-006",
+      "payment_id": "mer-pay-006",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 40250,
+      "due_date": "2026-08-26",
+      "loan_id": "mer-loan-007",
+      "payment_id": "mer-pay-007",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 41500,
+      "due_date": "2026-09-02",
+      "loan_id": "mer-loan-008",
+      "payment_id": "mer-pay-008",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 42750,
+      "due_date": "2026-08-15",
+      "loan_id": "mer-loan-009",
+      "payment_id": "mer-pay-009",
+      "status": "scheduled"
+    },
+    {
+      "amount_cents": 44000,
+      "due_date": "2026-08-29",
+      "loan_id": "mer-loan-010",
+      "payment_id": "mer-pay-010",
+      "status": "paid"
+    }
+  ],
+  "personas": [
+    {
+      "display_name": "Deposit Operations Analyst",
+      "entitlements": [
+        "bank.customer.read",
+        "bank.servicing.read",
+        "bank.dispute.read",
+        "sharepoint.operations.read"
+      ],
+      "persona_id": "ops"
+    },
+    {
+      "display_name": "Regulatory Approval Officer",
+      "entitlements": [
+        "bank.customer.read",
+        "bank.servicing.read",
+        "bank.dispute.read",
+        "bank.approval.read",
+        "sharepoint.restricted.read"
+      ],
+      "persona_id": "approver"
+    },
+    {
+      "display_name": "Branch Service Representative",
+      "entitlements": [
+        "bank.customer.read",
+        "bank.account-summary.read",
+        "sharepoint.frontline.read"
+      ],
+      "persona_id": "frontline"
+    }
+  ],
+  "reg_e_disputes": [
+    {
+      "amount_cents": 65000,
+      "card_id": "mer-card-001",
+      "customer_id": "mer-cus-001",
+      "dispute_id": "mer-dsp-001",
+      "notice_date": "2026-08-10",
+      "provisional_credit_amount_cents": null,
+      "status": "open"
+    },
+    {
+      "amount_cents": 80000,
+      "card_id": "mer-card-002",
+      "customer_id": "mer-cus-002",
+      "dispute_id": "mer-dsp-002",
+      "notice_date": "2026-08-12",
+      "provisional_credit_amount_cents": null,
+      "status": "open"
+    },
+    {
+      "amount_cents": 20000,
+      "card_id": "mer-card-003",
+      "customer_id": "mer-cus-003",
+      "dispute_id": "mer-dsp-003",
+      "notice_date": "2026-08-03",
+      "provisional_credit_amount_cents": 20000,
+      "status": "open"
+    },
+    {
+      "amount_cents": 42500,
+      "card_id": "mer-card-004",
+      "customer_id": "mer-cus-004",
+      "dispute_id": "mer-dsp-004",
+      "notice_date": "2026-08-04",
+      "provisional_credit_amount_cents": null,
+      "status": "open"
+    },
+    {
+      "amount_cents": 90000,
+      "card_id": "mer-card-005",
+      "customer_id": "mer-cus-005",
+      "dispute_id": "mer-dsp-005",
+      "notice_date": "2026-07-20",
+      "provisional_credit_amount_cents": 90000,
+      "status": "closed"
+    },
+    {
+      "amount_cents": 10000,
+      "card_id": "mer-card-006",
+      "customer_id": "mer-cus-006",
+      "dispute_id": "mer-dsp-006",
+      "notice_date": "2026-08-01",
+      "provisional_credit_amount_cents": null,
+      "status": "withdrawn"
+    }
+  ],
+  "servicing_notes": [
+    {
+      "created_date": "2026-08-07",
+      "customer_id": "mer-cus-001",
+      "loan_id": "mer-loan-001",
+      "note_id": "mer-note-001",
+      "note_type": "contact",
+      "text": "Customer reported storm disruption; no hardship option offered yet.",
+      "ticket_id": "mer-tkt-001"
+    },
+    {
+      "created_date": "2026-08-08",
+      "customer_id": "mer-cus-002",
+      "loan_id": "mer-loan-002",
+      "note_id": "mer-note-002",
+      "note_type": "contact",
+      "text": "Customer requested disaster assistance information; review pending.",
+      "ticket_id": "mer-tkt-002"
+    },
+    {
+      "created_date": "2026-08-09",
+      "customer_id": "mer-cus-003",
+      "loan_id": "mer-loan-003",
+      "note_id": "mer-note-003",
+      "note_type": "contact",
+      "text": "Outbound disaster-assistance contact requested; no offer recorded.",
+      "ticket_id": "mer-tkt-003"
+    },
+    {
+      "created_date": "2026-08-10",
+      "customer_id": "mer-cus-004",
+      "loan_id": "mer-loan-004",
+      "note_id": "mer-note-004",
+      "note_type": "resolution",
+      "text": "Loan paid in full before the disaster review window.",
+      "ticket_id": "mer-tkt-004"
+    },
+    {
+      "created_date": "2026-08-11",
+      "customer_id": "mer-cus-005",
+      "loan_id": "mer-loan-005",
+      "note_id": "mer-note-005",
+      "note_type": "hardship_offered",
+      "text": "Fourteen-day payment extension already offered and accepted.",
+      "ticket_id": "mer-tkt-005"
+    },
+    {
+      "created_date": "2026-08-12",
+      "customer_id": "mer-cus-006",
+      "loan_id": "mer-loan-006",
+      "note_id": "mer-note-006",
+      "note_type": "contact",
+      "text": "Customer resides outside the declaration counties.",
+      "ticket_id": "mer-tkt-006"
+    },
+    {
+      "created_date": "2026-08-13",
+      "customer_id": "mer-cus-007",
+      "loan_id": "mer-loan-007",
+      "note_id": "mer-note-007",
+      "note_type": "repossession",
+      "text": "Repossession workflow began before the declaration date.",
+      "ticket_id": "mer-tkt-007"
+    },
+    {
+      "created_date": "2026-08-14",
+      "customer_id": "mer-cus-008",
+      "loan_id": "mer-loan-008",
+      "note_id": "mer-note-008",
+      "note_type": "contact",
+      "text": "Next scheduled payment falls outside the fourteen-day window.",
+      "ticket_id": "mer-tkt-008"
+    },
+    {
+      "created_date": "2026-08-15",
+      "customer_id": "mer-cus-009",
+      "loan_id": "mer-loan-009",
+      "note_id": "mer-note-009",
+      "note_type": "contact",
+      "text": "Scheduled due date is before the review window.",
+      "ticket_id": "mer-tkt-009"
+    },
+    {
+      "created_date": "2026-08-16",
+      "customer_id": "mer-cus-010",
+      "loan_id": "mer-loan-010",
+      "note_id": "mer-note-010",
+      "note_type": "resolution",
+      "text": "Payment due in window was already satisfied.",
+      "ticket_id": "mer-tkt-010"
+    }
+  ],
+  "servicing_tickets": [
+    {
+      "category": "hardship",
+      "customer_id": "mer-cus-001",
+      "loan_id": "mer-loan-001",
+      "opened_date": "2026-08-06",
+      "status": "open",
+      "subject": "Auto-loan servicing review 001",
+      "ticket_id": "mer-tkt-001"
+    },
+    {
+      "category": "hardship",
+      "customer_id": "mer-cus-002",
+      "loan_id": "mer-loan-002",
+      "opened_date": "2026-08-07",
+      "status": "open",
+      "subject": "Auto-loan servicing review 002",
+      "ticket_id": "mer-tkt-002"
+    },
+    {
+      "category": "hardship",
+      "customer_id": "mer-cus-003",
+      "loan_id": "mer-loan-003",
+      "opened_date": "2026-08-08",
+      "status": "open",
+      "subject": "Auto-loan servicing review 003",
+      "ticket_id": "mer-tkt-003"
+    },
+    {
+      "category": "payment",
+      "customer_id": "mer-cus-004",
+      "loan_id": "mer-loan-004",
+      "opened_date": "2026-08-09",
+      "status": "closed",
+      "subject": "Auto-loan servicing review 004",
+      "ticket_id": "mer-tkt-004"
+    },
+    {
+      "category": "hardship",
+      "customer_id": "mer-cus-005",
+      "loan_id": "mer-loan-005",
+      "opened_date": "2026-08-10",
+      "status": "open",
+      "subject": "Auto-loan servicing review 005",
+      "ticket_id": "mer-tkt-005"
+    },
+    {
+      "category": "hardship",
+      "customer_id": "mer-cus-006",
+      "loan_id": "mer-loan-006",
+      "opened_date": "2026-08-11",
+      "status": "open",
+      "subject": "Auto-loan servicing review 006",
+      "ticket_id": "mer-tkt-006"
+    },
+    {
+      "category": "repossession",
+      "customer_id": "mer-cus-007",
+      "loan_id": "mer-loan-007",
+      "opened_date": "2026-08-12",
+      "status": "open",
+      "subject": "Auto-loan servicing review 007",
+      "ticket_id": "mer-tkt-007"
+    },
+    {
+      "category": "payment",
+      "customer_id": "mer-cus-008",
+      "loan_id": "mer-loan-008",
+      "opened_date": "2026-08-13",
+      "status": "open",
+      "subject": "Auto-loan servicing review 008",
+      "ticket_id": "mer-tkt-008"
+    },
+    {
+      "category": "payment",
+      "customer_id": "mer-cus-009",
+      "loan_id": "mer-loan-009",
+      "opened_date": "2026-08-14",
+      "status": "open",
+      "subject": "Auto-loan servicing review 009",
+      "ticket_id": "mer-tkt-009"
+    },
+    {
+      "category": "payment",
+      "customer_id": "mer-cus-010",
+      "loan_id": "mer-loan-010",
+      "opened_date": "2026-08-15",
+      "status": "closed",
+      "subject": "Auto-loan servicing review 010",
+      "ticket_id": "mer-tkt-010"
+    }
+  ]
+}

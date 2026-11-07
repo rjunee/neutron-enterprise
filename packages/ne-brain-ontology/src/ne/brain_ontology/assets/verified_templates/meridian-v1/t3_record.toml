@@ -1,0 +1,27 @@
+template_id = "t3-record"
+version = 1
+description = "Every served field of one Tier-3 record the caller may see: one row per (predicate, value) pair the store asserts for the requested subject IRI, including its rdf:type class row. A subject outside the caller's ACL graphs, or absent from the release, returns no rows. This is the governed record-detail half of the Tier-3 record browser — a fixed, reviewed query bounded to one subject, never a traversal."
+max_rows = 50
+sparql = """
+SELECT ?record ?predicate ?value WHERE {
+  #BINDINGS#
+  ?record ?predicate ?value .
+  FILTER(?record = ?q_record)
+}
+"""
+
+[args.q_record]
+type = "iri"
+max_length = 96
+pattern = "^urn:ne:meridian:(customer:mer-cus-[0-9]{3}|loan:mer-loan-[0-9]{3}|payment:mer-pay-[0-9]{3}|note:mer-note-[0-9]{3}|dispute:mer-dsp-[0-9]{3}|policy:art-dispute-sop-v[0-9]+|disaster:DR-[0-9]{4})$"
+
+[scope]
+graph_classes = ["bank.customer.read", "bank.servicing.read", "bank.dispute.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["record", "predicate", "value"]
+citation_var = "record"
+contributor_vars = ["record"]
+source_status = "source_bearing"
+count_total_rows = true

@@ -1,0 +1,54 @@
+template_id = "hardship-candidate-loans"
+version = 1
+description = "The complete DR-designated hardship CANDIDATE population in one call: every ACTIVE Meridian auto loan held by a customer in one validated disaster declaration's designated counties that has a SCHEDULED (unpaid) payment due inside the SOP's 14-day window measured from the validated as-of date (inclusive of both endpoints; the window end is derived IN the fixed query as q_as_of_date + 14 days — the caller cannot mis-state it). Each row carries the declaration, customer, loan, and qualifying payment plus the served as_of_date anchor; the query itself asserts the served snapshot anchor equals q_as_of_date, so a wrong as-of date returns zero rows rather than rows judged against a window nobody stated. This template applies the SOP's two POSITIVE criteria (active; unpaid scheduled payment due in window). The two EXCLUSION criteria (no prior hardship offer; not in repossession) are negative-evidence checks the verified lane deliberately refuses to encode in a template body (UNION/MINUS/EXISTS are load-banned so every projected cell is provably graph-joined); they are applied by the versioned deterministic workflow over a complete multi-key servicing-notes read, where a loan with no notes is reported as an explicit empty member."
+max_rows = 20
+sparql = """
+SELECT ?loan ?loan_id ?customer ?customer_id ?county ?declaration ?declaration_id ?payment ?payment_id ?due_date ?amount_cents ?amount_dollars ?loan_status ?payment_status ?as_of_date WHERE {
+  #BINDINGS#
+  ?declaration a <https://neutron.enterprise/schema/meridian/DisasterDeclaration> .
+  ?declaration <https://neutron.enterprise/schema/meridian/declaration_id> ?declaration_id .
+  ?declaration <https://neutron.enterprise/schema/meridian/county> ?county .
+  FILTER(?declaration_id = ?q_declaration_id)
+  ?customer a <https://neutron.enterprise/schema/meridian/Customer> .
+  ?customer <https://neutron.enterprise/schema/meridian/customer_id> ?customer_id .
+  ?customer <https://neutron.enterprise/schema/meridian/county> ?county .
+  ?loan a <https://neutron.enterprise/schema/meridian/AutoLoan> .
+  ?loan <https://neutron.enterprise/schema/meridian/loan_id> ?loan_id .
+  ?loan <https://neutron.enterprise/schema/meridian/customer_id> ?customer_id .
+  ?loan <https://neutron.enterprise/schema/meridian/status> ?loan_status .
+  ?loan <https://neutron.enterprise/schema/meridian/as_of_date> ?as_of_date .
+  FILTER(?loan_status = "active")
+  FILTER(?as_of_date = ?q_as_of_date)
+  ?payment a <https://neutron.enterprise/schema/meridian/PaymentSchedule> .
+  ?payment <https://neutron.enterprise/schema/meridian/payment_id> ?payment_id .
+  ?payment <https://neutron.enterprise/schema/meridian/loan_id> ?loan_id .
+  ?payment <https://neutron.enterprise/schema/meridian/due_date> ?due_date .
+  ?payment <https://neutron.enterprise/schema/meridian/amount_cents> ?amount_cents .
+  ?payment <https://neutron.enterprise/schema/meridian/amount_dollars> ?amount_dollars .
+  ?payment <https://neutron.enterprise/schema/meridian/status> ?payment_status .
+  FILTER(?payment_status = "scheduled")
+  FILTER(?due_date >= ?q_as_of_date)
+  FILTER(?due_date <= ?q_as_of_date + "P14D"^^<http://www.w3.org/2001/XMLSchema#dayTimeDuration>)
+}
+"""
+
+[args.q_declaration_id]
+description = "FEMA disaster declaration identifier, format DR-NNNN (e.g. DR-4830). The query joins it to the declaration's own designated counties; an unknown declaration returns zero rows."
+type = "str"
+pattern = "^DR-[0-9]{4}$"
+max_length = 7
+
+[args.q_as_of_date]
+description = "The servicing snapshot's as-of date, YYYY-MM-DD. The SOP measures its 14-day payment window from this anchor; the query REQUIRES the served as_of_date cell to equal it (a mismatched anchor returns zero rows), and derives the inclusive window end as this date plus 14 days."
+type = "date"
+
+[scope]
+graph_classes = ["bank.customer.read", "bank.servicing.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["loan", "loan_id", "customer", "customer_id", "county", "declaration", "declaration_id", "payment", "payment_id", "due_date", "amount_cents", "amount_dollars", "loan_status", "payment_status", "as_of_date"]
+citation_var = "loan"
+contributor_vars = ["loan", "customer", "declaration", "payment"]
+source_status = "source_bearing"
+count_total_rows = true

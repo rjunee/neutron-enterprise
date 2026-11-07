@@ -1,0 +1,18 @@
+{
+  "before": null,
+  "after": {
+    "id": 6,
+    "name": "Fin Synthetic",
+    "email": "fin@synthetic.example",
+    "acl_group": "g-eng"
+  },
+  "source": {
+    "connector": "sqlserver",
+    "db": "appdb",
+    "schema": "dbo",
+    "table": "customers",
+    "change_lsn": "0000002a:00000148:0001"
+  },
+  "op": "c",
+  "ts_ms": 1720000006000
+}

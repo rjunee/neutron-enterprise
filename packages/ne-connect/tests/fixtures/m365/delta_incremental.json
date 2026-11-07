@@ -1,0 +1,17 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/drive-1/root/delta?$deltatoken=DELTA2TOKEN",
+  "value": [
+    {
+      "id": "item-user",
+      "name": "Q1 Plan (revised).docx",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Q1%20Plan.docx",
+      "lastModifiedDateTime": "2026-06-20T16:00:00Z",
+      "createdDateTime": "2026-05-01T09:00:00Z",
+      "size": 13000,
+      "eTag": "\"etag-user-v2\"",
+      "file": { "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    },
+    { "id": "del-2", "deleted": { "state": "deleted" } }
+  ]
+}

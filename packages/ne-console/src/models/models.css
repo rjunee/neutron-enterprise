@@ -1,0 +1,369 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §10 — MODELS. Two tabs in the title row, a network row, then the standard
+ * toolbar + table. Everything resolves through styles/tokens.css, so light and
+ * dark are one declaration set and nothing here themes a colour of its own. */
+
+.ne-models,
+.ne-models__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+/* ------------------------------- the tabs ------------------------------- */
+
+/* In-page tabs sit in the title row's own tab slot (§1.4), so they cost no
+ * vertical band of their own and the h1 stays the first thing on the page. */
+.ne-models__tabs {
+  display: flex;
+  gap: var(--space-16);
+}
+
+.ne-models__tab {
+  padding: 0 0 var(--space-4);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  font: var(--type-cell);
+  cursor: pointer;
+}
+
+.ne-models__tab:hover {
+  color: var(--text);
+}
+
+/* The selected tab carries the underline AND the full-strength text colour:
+ * two signals, so the state is never colour alone. */
+.ne-models__tab--on {
+  color: var(--text);
+  border-bottom-color: var(--cherenkov);
+}
+
+.ne-models__tab:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* ---------------------------- the network row --------------------------- */
+
+.ne-models__network {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-models__networklabel {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-models__networkvalue {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text);
+}
+
+.ne-models__networknote {
+  color: var(--text-dim);
+}
+
+.ne-models__shimmer {
+  width: 48px;
+  height: 12px;
+}
+
+/* ---------------------------- the usage tiles --------------------------- */
+
+.ne-models__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+
+.ne-models__tile {
+  flex: 1 1 160px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-models__tilelabel {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-models__tilevalue {
+  font: var(--type-lead);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------ cell detail ----------------------------- */
+
+/* The second fact in a two-fact cell — a lane beside its model, a masked
+ * credential beside its host. Dim, never smaller: 11px in a table row is a
+ * footnote nobody reads. */
+.ne-models__sub {
+  color: var(--text-dim);
+}
+
+.ne-models__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.ne-models__chip {
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  font: var(--type-cell-mono);
+  color: var(--text);
+}
+
+/* The one line that stands where a table cannot honestly stand. */
+.ne-models__gap {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+/* ---------------------------- serving panel ----------------------------- */
+
+/* The live observation of the privately-served lanes: one card per lane, the
+ * verdict pill beside the lane's name, the observed facts underneath. */
+.ne-models__serving {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-models__servingintro {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-8) var(--space-16);
+}
+
+.ne-models__servingtitle {
+  margin: 0;
+  font: var(--type-body);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ne-models__servingcontext {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text-dim);
+}
+
+.ne-models__servinglist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-models__servingrow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+}
+
+.ne-models__servinghead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.ne-models__servingfacts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-4) var(--space-12);
+  margin: 0;
+}
+
+.ne-models__servingfacts dt {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-models__servingfacts dd {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text);
+}
+
+.ne-models__servingendpoint {
+  font: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+/* The endpoint's word against the configuration's — caution, not fault: the
+ * lane is up, and the two names disagreeing is the fact to look at. */
+.ne-models__servingmismatch {
+  color: var(--amber);
+}
+
+.ne-models__servingfoot {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+}
+
+.ne-models__servingmeta {
+  font: var(--type-small);
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-models__servingnote {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+@media (max-width: 720px) {
+  .ne-models__servingintro {
+    grid-template-columns: 1fr;
+  }
+
+  .ne-models__servinghead,
+  .ne-models__servingfoot {
+    flex-wrap: wrap;
+  }
+}
+
+/* ------------------------------- routing -------------------------------- */
+
+/* The note under the routing table: the one sentence a reader needs about WHEN
+ * a change bites, because "takes effect on the next call" is the whole point of
+ * the surface and is not inferable from the rows. */
+.ne-models__lifecycle {
+  margin: 0 0 1rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 1rem;
+}
+
+.ne-models__lifecycleintro,
+.ne-models__lifecyclehead,
+.ne-models__lifecycleactions,
+.ne-models__lifecycleconfirm {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ne-models__lifecycleintro,
+.ne-models__lifecyclehead {
+  justify-content: space-between;
+}
+
+.ne-models__lifecyclelist {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ne-models__lifecyclerow {
+  border-top: 1px solid var(--rule);
+  padding-top: 0.75rem;
+}
+
+.ne-models__lifecyclefacts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0.65rem 0;
+}
+
+.ne-models__lifecyclefacts dt {
+  color: var(--text-dim);
+}
+
+.ne-models__lifecyclefacts dd {
+  margin: 0;
+}
+
+.ne-models__routingnote {
+  color: var(--text-dim);
+}
+
+/* The change form in the route pane. No Save button anywhere on this screen —
+ * a route change is requested, approved by a different human, and applied. */
+.ne-models__routechange,
+.ne-models__routerefused {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-16);
+}
+
+.ne-models__h2 {
+  margin: 0;
+  font: var(--type-lead);
+  color: var(--text);
+}
+
+.ne-models__label {
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+/* The consequence sentence, stated BEFORE the click (the air-gap row's §2.5
+ * discipline): a frontier repoint says prompts will leave the deployment. */
+.ne-models__consequence {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+/* Targets the SERVER refused, each with the server's own reason. A missing
+ * option is explained, never silently absent. */
+.ne-models__refusedlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* A 409: the server refused this change on its own rule. Not "denied by policy"
+ * and not "try again" — both would misdescribe it. The server's sentence,
+ * where the submit happened. */
+.ne-models__refusal {
+  margin: 0;
+  color: var(--text-warn, var(--text-dim));
+  font: var(--type-cell);
+}

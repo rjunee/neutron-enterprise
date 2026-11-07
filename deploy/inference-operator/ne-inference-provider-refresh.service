@@ -1,0 +1,18 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+[Unit]
+Description=Refresh Neutron inference provider deny-by-default network receipt
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/neutron/inference-operator/bin/provider-network-refresh.sh
+UMask=0077
+ProtectHome=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/run/neutron/inference-provider /run/lock
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN CAP_SYS_ADMIN
+NoNewPrivileges=false

@@ -1,0 +1,19 @@
+{
+  "corpus_version": "acme-v1",
+  "counts": {
+    "accounts": 120,
+    "documents": 500,
+    "orders": 80,
+    "people": 40,
+    "tickets": 50
+  },
+  "generator": "ne-acme 0.1.0",
+  "seed": 74,
+  "sha256": {
+    "acl.json": "0129ba2f4058b4d6239e2662d888dad5fd1f527a2d5060bb203f7c547322f20c",
+    "content.json": "ea8ba0ac3fb85f5bbdbb9e098132cab37578ef247f756b0434ad0d1b8aadbe48",
+    "ground_truth.json": "185fcd856f32e0d0066a7f3142a3df9b77f8a844b686ae6d8396484e74ee5e89",
+    "org.json": "26a87fadfd6370fd1966ea72d888be9577d0c286de423783ca60e37ad9795e99",
+    "records.json": "6c4dbb2ac82dd2539547b06dbe9e437ce33a30fa386d7e22d75691706de97f6b"
+  }
+}

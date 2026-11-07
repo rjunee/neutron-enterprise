@@ -1,0 +1,51 @@
+{
+  "issues": [
+    {
+      "id": "30004",
+      "key": "ACME-4",
+      "fields": {
+        "summary": "New onboarding flow",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A brand-new onboarding wizard."
+                }
+              ]
+            }
+          ]
+        },
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Story"
+        },
+        "updated": "2026-01-10T12:00:00.000+0000",
+        "security": null
+      }
+    },
+    {
+      "id": "30005",
+      "key": "ACME-5",
+      "fields": {
+        "summary": "",
+        "description": null,
+        "status": {
+          "name": "Open"
+        },
+        "issuetype": {
+          "name": "Story"
+        },
+        "updated": "2026-01-11T09:00:00.000+0000",
+        "security": null
+      }
+    }
+  ],
+  "isLast": true
+}

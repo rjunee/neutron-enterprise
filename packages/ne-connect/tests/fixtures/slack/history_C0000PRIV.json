@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "ts": "1720000100.000100",
+      "user": "U00000ADA",
+      "text": "priv message one"
+    },
+    {
+      "type": "message",
+      "ts": "1720000110.000200",
+      "user": "U00000BOB",
+      "text": "priv message two"
+    }
+  ],
+  "response_metadata": {"next_cursor": ""}
+}

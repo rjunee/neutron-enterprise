@@ -1,0 +1,28 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Optional backup storage (design §1.8) — a ReadWriteOnce PVC the ne-backup
+# CronJob writes pg_dumpall snapshots to. Gated behind backup.enabled (default
+# false) so it renders NOTHING by default (byte-parity guardians stay green).
+# DELIBERATELY not gated on profiles.core (unlike the CronJob): a helm upgrade
+# that toggled core off would otherwise DELETE this PVC — and every dump on it.
+# While backup.enabled stays true the PVC survives a profile toggle; only the
+# (guaranteed-to-fail-without-postgres) CronJob is core-gated.
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ne-backup-storage
+  labels:
+    app: ne-backup
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.backup.storage.size }}
+  {{- if .Values.backup.storage.storageClassName }}
+  storageClassName: {{ .Values.backup.storage.storageClassName }}
+  {{- end }}
+{{- end }}

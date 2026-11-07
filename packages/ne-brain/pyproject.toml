@@ -1,0 +1,86 @@
+[project]
+name = "ne-brain"
+version = "0.1.0"
+description = "Brain T1: ingest, retrieval, and knowledge-write API."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-events",
+    "ne-net",
+    "ne-envbuild",
+    "qdrant-client>=1.18.0,<2",
+    "fastembed>=0.9.1,<0.10",
+    "httpx>=0.28.1,<1",
+    "jsonschema>=4.26,<5",
+    "sqlalchemy>=2.0.51,<2.1",
+]
+
+[project.optional-dependencies]
+testkit = ["pytest>=9.1"]
+# The pgvector-backed ChunkStore alternate (NE-091) — an OPTIONAL extra, never a
+# [project.dependencies] runtime dep: a Qdrant deployment never installs it.
+# psycopg is LGPL-3.0, owner-approved case-by-case (tools/supply-chain/
+# license-policy.toml) and already in the shipped ne-app image closure via dbos.
+# Install `ne-brain[pgvector]` to select it (NE_API_VECTOR_STORE=pgvector).
+pgvector = ["psycopg[binary]>=3.3.4,<4"]
+
+[dependency-groups]
+# Test-only: ne-audit (in-workspace) provides the real PostgresAuditSink round
+# trip proving the write→AuditEvent seam. NOT a runtime dep — the writer emits
+# into whatever AuditSink the hosting process configures (frozen Protocol).
+# Test-only: ne-permissions (in-workspace) provides the REAL PrincipalStore +
+# PrincipalExpander the C7 (NE-043) provable-trimming suite composes. NOT a
+# runtime dep — runtime injection crosses the ne.brain.trimming.GroupExpander
+# Protocol at the composition root; a src-level import would cycle via
+# ne-connect→ne-brain.
+dev = [
+    "ne-audit",
+    "ne-permissions",
+    # psycopg is the OPTIONAL [pgvector] ChunkStore alternate (NE-091); dev-group
+    # so the swap-parity + pgvector conformance suites run in CI under
+    # `uv sync --all-packages` — NEVER a [project.dependencies] runtime dep: a
+    # Qdrant-only deployment must not ship it (LGPL-3.0, C4 owner-approved).
+    "psycopg[binary]>=3.3.4,<4",
+]
+
+[project.entry-points."ne.plugins.vector_store"]
+qdrant = "ne.brain.qdrant:QdrantChunkStore"
+pgvector = "ne.brain.pgvector.store:PgvectorChunkStore"
+
+[project.entry-points."ne.plugins.sparse_encoder"]
+fastembed-bm25 = "ne.brain.sparse:FastEmbedBM25Encoder"
+
+[project.entry-points."ne.plugins.embedder"]
+tei = "ne.brain.embedder:TEIEmbedder"
+
+[project.entry-points."ne.plugins.reranker"]
+tei = "ne.brain.reranker:TEIReranker"
+vllm = "ne.brain.reranker:VllmReranker"
+
+[project.entry-points."ne.plugins.document_parser"]
+docling = "ne.brain.ingest.docling_parser:DoclingParser"
+
+[project.entry-points."ne.plugins.chunker"]
+structural = "ne.brain.ingest.chunker:StructuralChunker"
+
+[project.entry-points."ne.plugins.enricher"]
+contextual = "ne.brain.ingest.enricher:ContextualEnricher"
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-events = { workspace = true }
+ne-net = { workspace = true }
+ne-envbuild = { workspace = true }
+ne-audit = { workspace = true }
+ne-permissions = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.brain"
+namespace = true

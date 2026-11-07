@@ -1,0 +1,4 @@
+{ "value": [
+  { "id": "perm-unres-1", "roles": ["read"],
+    "grantedToV2": { "siteGroup": { "loginName": "Contoso Site Owners", "displayName": "Contoso Site Owners" } } }
+] }

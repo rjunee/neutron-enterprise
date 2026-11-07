@@ -1,0 +1,23 @@
+template_id = "accounts-search"
+version = 1
+description = "Accounts by exact name, UNPATTERNED arg — proves n3 binding neutralizes injection."
+sparql = """
+SELECT ?account ?name WHERE {
+  #BINDINGS#
+  ?account a <https://neutron.enterprise/schema/operational/Account> .
+  ?account <https://neutron.enterprise/schema/operational/name> ?name .
+  FILTER(?name = ?q_name)
+}
+"""
+
+[args.q_name]
+type = "str"
+max_length = 256
+
+[scope]
+graph_classes = ["alpha", "beta"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["account", "name"]
+citation_var = "account"

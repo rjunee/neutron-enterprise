@@ -1,0 +1,12 @@
+[
+  {"name": "ev-001", "content": "ACME Corp approved the Q3 invoice for $12,400 on the vendor portal.", "occurred_at": "2026-05-01T09:00:00+00:00"},
+  {"name": "ev-002", "content": "The steward rejected vendor BetaSupply for missing a W-9 form.", "occurred_at": "2026-05-02T10:30:00+00:00"},
+  {"name": "ev-003", "content": "ACME Corp's accounts-payable contact is Dana Lee (dana.lee@acme.example).", "occurred_at": "2026-05-03T14:15:00+00:00"},
+  {"name": "ev-004", "content": "The agent decided to route refund requests over $5,000 to human review.", "occurred_at": "2026-05-04T11:00:00+00:00"},
+  {"name": "ev-005", "content": "BetaSupply later submitted a valid W-9 and was approved as a vendor.", "occurred_at": "2026-05-10T08:45:00+00:00"},
+  {"name": "ev-006", "content": "Invoice INV-8891 from ACME Corp was flagged as a duplicate of INV-8890.", "occurred_at": "2026-05-11T16:20:00+00:00"},
+  {"name": "ev-007", "content": "The steward set the auto-approval threshold to $2,000 for trusted vendors.", "occurred_at": "2026-05-12T13:05:00+00:00"},
+  {"name": "ev-008", "content": "Dana Lee changed roles; the new AP contact for ACME Corp is Sam Ortiz.", "occurred_at": "2026-06-01T09:30:00+00:00"},
+  {"name": "ev-009", "content": "A payment run to vendor Gamma LLC failed due to a stale bank routing number.", "occurred_at": "2026-06-02T15:40:00+00:00"},
+  {"name": "ev-010", "content": "Gamma LLC updated its banking details and the retry payment succeeded.", "occurred_at": "2026-06-03T10:10:00+00:00"}
+]

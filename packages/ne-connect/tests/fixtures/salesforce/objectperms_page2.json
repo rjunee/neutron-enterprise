@@ -1,0 +1,39 @@
+{
+  "totalSize": 4,
+  "done": true,
+  "records": [
+    {
+      "attributes": {"type": "ObjectPermissions"},
+      "SobjectType": "Account",
+      "PermissionsRead": true,
+      "Parent": {
+        "attributes": {"type": "PermissionSet"},
+        "Id": "0PS000000000001AAA",
+        "IsOwnedByProfile": false,
+        "ProfileId": null
+      }
+    },
+    {
+      "attributes": {"type": "ObjectPermissions"},
+      "SobjectType": "Opportunity",
+      "PermissionsRead": true,
+      "Parent": {
+        "attributes": {"type": "PermissionSet"},
+        "Id": "0PS000000000001AAA",
+        "IsOwnedByProfile": false,
+        "ProfileId": null
+      }
+    },
+    {
+      "attributes": {"type": "ObjectPermissions"},
+      "SobjectType": "Forged__c",
+      "PermissionsRead": true,
+      "Parent": {
+        "attributes": {"type": "PermissionSet"},
+        "Id": "acl:tenant-all",
+        "IsOwnedByProfile": false,
+        "ProfileId": null
+      }
+    }
+  ]
+}

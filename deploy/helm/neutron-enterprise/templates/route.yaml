@@ -1,0 +1,50 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# OpenShift Route alternative to the Ingress (design §1.8) — the two front-door
+# vhosts (console/API on ne-api:8000, Keycloak on keycloak:8080) as
+# route.openshift.io/v1 Routes. Gated behind route.enabled (default false) AND
+# profiles.core — the ne-api/keycloak Services these Routes target only exist on
+# the core profile (same gate as templates/ingress.yaml, which self-suppresses
+# when route.enabled is true: mutually-exclusive front door).
+# route.openshift.io/v1 is an OpenShift 4.x GA CRD — this file must
+# NEVER be piped to `kubeconform -strict` (its schema is absent from the vanilla
+# K8s schema set; the guardian's flagged-render kubeconform test deliberately
+# excludes route.enabled). TLS: edge termination with the cluster router's
+# default cert; a customer cert is supplied via `oc create route` / the Route
+# spec's tls.certificate fields (documented in deploy/helm/README.md).
+{{- if and .Values.route.enabled .Values.profiles.core }}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: neutron-enterprise-console
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  host: {{ .Values.global.hostname }}
+  to:
+    kind: Service
+    name: ne-api
+  port:
+    targetPort: 8000
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: neutron-enterprise-keycloak
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  host: {{ include "neutron.keycloakHost" . }}
+  to:
+    kind: Service
+    name: keycloak
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+{{- end }}

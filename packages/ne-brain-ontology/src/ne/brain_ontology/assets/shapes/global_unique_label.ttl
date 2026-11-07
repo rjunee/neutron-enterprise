@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# GLOBAL-scope curated shape (NE-085a). Corpus-wide rdfs:label uniqueness: no two
+# distinct resources may carry the same rdfs:label. This is intrinsically
+# NON-LOCAL — it cannot be decided from a single node's CBD, so it uses an
+# sh:sparql constraint and is EXCLUDED from the per-write gateway validator; it
+# runs only in validate_full_graph (nightly + at ontology reload). This file is
+# the split proof: it demonstrates the per-write vs. global shape scoping.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix neg:  <urn:ne:shapes:global#> .
+
+neg:UniqueLabelShape a sh:NodeShape ;
+    sh:targetSubjectsOf rdfs:label ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "Two distinct resources share an rdfs:label (corpus-wide uniqueness)" ;
+        sh:select """
+            SELECT $this ?other WHERE {
+                $this <http://www.w3.org/2000/01/rdf-schema#label> ?l .
+                ?other <http://www.w3.org/2000/01/rdf-schema#label> ?l .
+                FILTER($this != ?other)
+            }
+        """
+    ] .

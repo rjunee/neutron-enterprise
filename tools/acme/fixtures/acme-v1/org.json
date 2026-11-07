@@ -1,0 +1,416 @@
+{
+  "groups": [
+    {
+      "member_ids": [
+        "per-0000",
+        "per-0001",
+        "per-0002",
+        "per-0003",
+        "per-0004",
+        "per-0005",
+        "per-0006",
+        "per-0007",
+        "per-0008",
+        "per-0009",
+        "per-0010",
+        "per-0011",
+        "per-0012",
+        "per-0013",
+        "per-0014",
+        "per-0015",
+        "per-0016",
+        "per-0017",
+        "per-0018",
+        "per-0019",
+        "per-0020",
+        "per-0021",
+        "per-0022",
+        "per-0023",
+        "per-0024",
+        "per-0025",
+        "per-0026",
+        "per-0027",
+        "per-0028",
+        "per-0029",
+        "per-0030",
+        "per-0031",
+        "per-0032",
+        "per-0033",
+        "per-0034",
+        "per-0035",
+        "per-0036",
+        "per-0037",
+        "per-0038",
+        "per-0039"
+      ],
+      "name": "all-employees"
+    },
+    {
+      "member_ids": [
+        "per-0000",
+        "per-0001",
+        "per-0002",
+        "per-0003",
+        "per-0004"
+      ],
+      "name": "executive"
+    },
+    {
+      "member_ids": [
+        "per-0000",
+        "per-0001",
+        "per-0002",
+        "per-0003",
+        "per-0004"
+      ],
+      "name": "dept-executive"
+    },
+    {
+      "member_ids": [
+        "per-0005",
+        "per-0006",
+        "per-0007",
+        "per-0008",
+        "per-0009",
+        "per-0010",
+        "per-0011",
+        "per-0012",
+        "per-0013",
+        "per-0014"
+      ],
+      "name": "dept-engineering"
+    },
+    {
+      "member_ids": [
+        "per-0015",
+        "per-0016",
+        "per-0017",
+        "per-0018",
+        "per-0019",
+        "per-0020",
+        "per-0021",
+        "per-0022"
+      ],
+      "name": "dept-sales"
+    },
+    {
+      "member_ids": [
+        "per-0023",
+        "per-0024",
+        "per-0025",
+        "per-0026",
+        "per-0027",
+        "per-0028"
+      ],
+      "name": "dept-support"
+    },
+    {
+      "member_ids": [
+        "per-0029",
+        "per-0030",
+        "per-0031",
+        "per-0032",
+        "per-0033"
+      ],
+      "name": "dept-finance"
+    },
+    {
+      "member_ids": [
+        "per-0034",
+        "per-0035",
+        "per-0036"
+      ],
+      "name": "dept-hr"
+    },
+    {
+      "member_ids": [
+        "per-0037",
+        "per-0038",
+        "per-0039"
+      ],
+      "name": "dept-legal"
+    }
+  ],
+  "members": [
+    {
+      "department": "Executive",
+      "grade": "exec",
+      "manager_id": null,
+      "person_id": "per-0000",
+      "role": "Chief Executive Officer"
+    },
+    {
+      "department": "Executive",
+      "grade": "exec",
+      "manager_id": "per-0000",
+      "person_id": "per-0001",
+      "role": "Chief Financial Officer"
+    },
+    {
+      "department": "Executive",
+      "grade": "exec",
+      "manager_id": "per-0000",
+      "person_id": "per-0002",
+      "role": "Chief Technology Officer"
+    },
+    {
+      "department": "Executive",
+      "grade": "exec",
+      "manager_id": "per-0000",
+      "person_id": "per-0003",
+      "role": "VP Sales"
+    },
+    {
+      "department": "Executive",
+      "grade": "exec",
+      "manager_id": "per-0000",
+      "person_id": "per-0004",
+      "role": "VP Support"
+    },
+    {
+      "department": "Engineering",
+      "grade": "manager",
+      "manager_id": "per-0002",
+      "person_id": "per-0005",
+      "role": "Engineering Manager"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0006",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0007",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0008",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0009",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0010",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0011",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0012",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0013",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Engineering",
+      "grade": "ic",
+      "manager_id": "per-0005",
+      "person_id": "per-0014",
+      "role": "Software Engineer"
+    },
+    {
+      "department": "Sales",
+      "grade": "manager",
+      "manager_id": "per-0003",
+      "person_id": "per-0015",
+      "role": "Sales Manager"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0016",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0017",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0018",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0019",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0020",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0021",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Sales",
+      "grade": "ic",
+      "manager_id": "per-0015",
+      "person_id": "per-0022",
+      "role": "Sales Representative"
+    },
+    {
+      "department": "Support",
+      "grade": "manager",
+      "manager_id": "per-0004",
+      "person_id": "per-0023",
+      "role": "Support Manager"
+    },
+    {
+      "department": "Support",
+      "grade": "ic",
+      "manager_id": "per-0023",
+      "person_id": "per-0024",
+      "role": "Support Engineer"
+    },
+    {
+      "department": "Support",
+      "grade": "ic",
+      "manager_id": "per-0023",
+      "person_id": "per-0025",
+      "role": "Support Engineer"
+    },
+    {
+      "department": "Support",
+      "grade": "ic",
+      "manager_id": "per-0023",
+      "person_id": "per-0026",
+      "role": "Support Engineer"
+    },
+    {
+      "department": "Support",
+      "grade": "ic",
+      "manager_id": "per-0023",
+      "person_id": "per-0027",
+      "role": "Support Engineer"
+    },
+    {
+      "department": "Support",
+      "grade": "ic",
+      "manager_id": "per-0023",
+      "person_id": "per-0028",
+      "role": "Support Engineer"
+    },
+    {
+      "department": "Finance",
+      "grade": "manager",
+      "manager_id": "per-0001",
+      "person_id": "per-0029",
+      "role": "Finance Manager"
+    },
+    {
+      "department": "Finance",
+      "grade": "ic",
+      "manager_id": "per-0029",
+      "person_id": "per-0030",
+      "role": "Financial Analyst"
+    },
+    {
+      "department": "Finance",
+      "grade": "ic",
+      "manager_id": "per-0029",
+      "person_id": "per-0031",
+      "role": "Financial Analyst"
+    },
+    {
+      "department": "Finance",
+      "grade": "ic",
+      "manager_id": "per-0029",
+      "person_id": "per-0032",
+      "role": "Financial Analyst"
+    },
+    {
+      "department": "Finance",
+      "grade": "ic",
+      "manager_id": "per-0029",
+      "person_id": "per-0033",
+      "role": "Financial Analyst"
+    },
+    {
+      "department": "HR",
+      "grade": "manager",
+      "manager_id": "per-0001",
+      "person_id": "per-0034",
+      "role": "HR Manager"
+    },
+    {
+      "department": "HR",
+      "grade": "ic",
+      "manager_id": "per-0034",
+      "person_id": "per-0035",
+      "role": "HR Generalist"
+    },
+    {
+      "department": "HR",
+      "grade": "ic",
+      "manager_id": "per-0034",
+      "person_id": "per-0036",
+      "role": "HR Generalist"
+    },
+    {
+      "department": "Legal",
+      "grade": "manager",
+      "manager_id": "per-0000",
+      "person_id": "per-0037",
+      "role": "Legal Manager"
+    },
+    {
+      "department": "Legal",
+      "grade": "ic",
+      "manager_id": "per-0037",
+      "person_id": "per-0038",
+      "role": "Legal Counsel"
+    },
+    {
+      "department": "Legal",
+      "grade": "ic",
+      "manager_id": "per-0037",
+      "person_id": "per-0039",
+      "role": "Legal Counsel"
+    }
+  ]
+}

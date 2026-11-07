@@ -1,0 +1,53 @@
+template_id = "payments-due-window"
+version = 1
+description = "Meridian payment-schedule rows for one or more validated loans in an inclusive validated date window. q_loan_id accepts a single loan id OR a list of up to 16 distinct ids (the window applies to every one); rows carry loan_id, and a requested loan with no payment in the window is reported as an empty member. Every row also carries the servicing snapshot's as_of_date — the date these servicing facts are current as of — so a payment and the as-of anchor it is judged against share one row. amount_dollars is the exact dollar rendering of amount_cents ($X.YY), served so an answer can state the amount in dollars."
+max_rows = 50
+sparql = """
+SELECT ?payment ?payment_id ?loan_id ?due_date ?amount_cents ?status ?as_of_date ?amount_dollars WHERE {
+  #BINDINGS#
+  ?payment a <https://neutron.enterprise/schema/meridian/PaymentSchedule> .
+  ?payment <https://neutron.enterprise/schema/meridian/payment_id> ?payment_id .
+  ?payment <https://neutron.enterprise/schema/meridian/loan_id> ?loan_id .
+  ?payment <https://neutron.enterprise/schema/meridian/due_date> ?due_date .
+  ?payment <https://neutron.enterprise/schema/meridian/amount_cents> ?amount_cents .
+  ?payment <https://neutron.enterprise/schema/meridian/amount_dollars> ?amount_dollars .
+  ?payment <https://neutron.enterprise/schema/meridian/status> ?status .
+  ?payment <https://neutron.enterprise/schema/meridian/as_of_date> ?as_of_date .
+  FILTER(?loan_id = ?q_loan_id)
+  FILTER(?due_date >= ?window_start)
+  FILTER(?due_date <= ?window_end)
+}
+"""
+
+[args.q_loan_id]
+description = "Meridian auto-loan identifier, format mer-loan-NNN (e.g. mer-loan-007). Pass one id, or a JSON array of up to 16 distinct ids; the same date window applies to every requested loan, and a loan with no payment due in the window is reported back as an empty member."
+type = "str"
+pattern = "^mer-loan-[0-9]{3}$"
+max_length = 12
+# 16 = the meridian-v1 auto-loan population (10) with ~1.6x headroom.
+list_max = 16
+key_column = "loan_id"
+
+[args.window_start]
+description = "First due date of the window, YYYY-MM-DD. INCLUSIVE: a payment due on exactly this date is in the window. Must be on or before window_end; the window may span at most 31 days."
+type = "date"
+
+[args.window_end]
+description = "Last due date of the window, YYYY-MM-DD. INCLUSIVE: a payment due on exactly this date is in the window. Must be on or after window_start; the window may span at most 31 days."
+type = "date"
+
+[date_window]
+start_arg = "window_start"
+end_arg = "window_end"
+max_days = 31
+
+[scope]
+graph_classes = ["bank.servicing.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["payment", "payment_id", "loan_id", "due_date", "amount_cents", "status", "as_of_date", "amount_dollars"]
+citation_var = "payment"
+contributor_vars = ["payment"]
+source_status = "source_bearing"
+count_total_rows = true

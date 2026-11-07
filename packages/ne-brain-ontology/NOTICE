@@ -1,0 +1,74 @@
+Neutron Enterprise — ne-brain-ontology
+Copyright (c) 2026 Ryan Junee.
+
+Portions derived from jupyter-naas/abi (pinned commit
+a3e15eff03902091f23acfd9edbc95dc9695183f)
+MIT License, Copyright (C) 2025 Naas.ai
+https://github.com/jupyter-naas/abi
+  Lifted (see vendor/MANIFEST.toml):
+    - src/ne/brain_ontology/store/oxigraph.py  (from services/triple_store/oxigraph_server.py)
+    - src/ne/brain_ontology/lint/validate_bfo.py  (from utils/validate_bfo_ontology.py)
+    - src/ne/brain_ontology/store/fuseki.py  (from adaptors/secondary/ApacheJenaTDB2.py —
+        MRSW retry ops knowledge cribbed; adapter written fresh as an async httpx GSP client)
+    - src/ne/brain_ontology/store/sync.py  (from TripleStoreService.py:436-604 — the sha256
+        hash-diff idempotent hot-reload algorithm)
+    - src/ne/brain_ontology/verified/  (pattern lift from
+        modules/templatablesparqlquery/workflows/TemplatableSparqlQueryLoader.py — the
+        "SPARQL template → governed tool with typed argument validation" DESIGN, rewritten
+        OFF LangChain onto runtime-free ToolSpec defs; no LangChain dependency introduced,
+        no ABI code vendored verbatim; templates moved out of the graph into git/TOML)
+  Each lifted file carries its ABI source path + the pin sha in a header comment.
+
+Vendored ontology assets (committed in-repo, not resolved into the platform
+lock/SBOM — mirrors the ne-brain Qdrant/bm25 precedent):
+
+BFO-2020 (Basic Formal Ontology) / commit
+dd89f4a193038b66ef0e891d546c05a5b477f40f / CC-BY-4.0 /
+https://github.com/BFO-ontology/BFO-2020
+  Vendored artifact: 21838-2/owl/bfo-core.ttl. The license is stated IN-ARTIFACT
+  via dcterms:license <https://creativecommons.org/licenses/by/4.0/> and in the
+  repository README (§License, "CC BY 4.0"); the repository has NO LICENSE file
+  (GitHub reports license=null). Attribution (CC-BY-4.0): "Basic Formal Ontology
+  (BFO) 2020, © the BFO-2020 authors, licensed CC BY 4.0." Committed in-repo,
+  not resolved into the platform lock/SBOM.
+
+Common Core Ontologies (CCO) v2.1 / tag v2.1, commit
+25cc29d0b815323a1181355d074a0c768a6d35b8 / BSD-3-Clause, Copyright (c) 2017
+CUBRC, INC / https://github.com/CommonCoreOntology/CommonCoreOntologies
+  Vendored artifacts: the 11 src/cco-modules/*.ttl modules (AgentOntology,
+  ArtifactOntology, CurrencyUnitOntology, EventOntology, ExtendedRelationOntology,
+  FacilityOntology, GeospatialOntology, InformationEntityOntology, QualityOntology,
+  TimeOntology, UnitsOfMeasureOntology). Committed in-repo, not resolved into the
+  platform lock/SBOM. Re-pinned from CCO UPSTREAM at v2.1 — NOT inherited from
+  ABI's stale CCO-2.0 snapshot.
+
+Self-authored operational-alignment ontology (NE-085b):
+assets/ontologies/ne/operational-alignment.ttl is FIRST-PARTY, self-authored
+content (Apache-2.0) — NOT third-party and NOT vendored
+from any upstream. It subclasses the platform's operational entity classes
+(neop:*) under the vendored CCO-2.1 / BFO-2020 corpus and reifies the Tier-2
+SAME_AS edge as nea:IdentityAssertion. It carries no external license obligation.
+
+Third-party runtime dependencies (name / version / license / homepage):
+pyshacl / 0.40.0 / Apache-2.0 / https://github.com/RDFLib/pySHACL
+rdflib / 7.6.0 / BSD-3-Clause / https://github.com/RDFLib/rdflib
+pyoxigraph / 0.5.9 / MIT OR Apache-2.0 / https://github.com/oxigraph/oxigraph
+owlrl / 7.6.2 / W3C-20150513 / https://github.com/RDFLib/OWL-RL
+  (mandatory transitive dependency of pyshacl; W3C Software and Document Notice
+   and License — OSI-approved, permissive, no copyleft)
+httpx / workspace pin (>=0.28.1,<1) / BSD-3-Clause / https://github.com/encode/httpx
+pydantic / workspace pin (>=2.11,<3) / MIT / https://github.com/pydantic/pydantic
+sqlalchemy / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+  (NE-ONTOLOGY-FLYWHEEL: the governed, append-only ne_verified_templates HITL
+   template store — SQLAlchemy-Core only, no ORM; already workspace-locked at
+   2.0.51 via ne-flywheel/ne-brain-graph)
+greenlet (transitive, platform-conditional) / MIT / https://github.com/python-greenlet/greenlet
+
+Apache Jena Fuseki (production T3 backend) is an out-of-process service accessed
+over the version-stable SPARQL 1.1 Query + Graph Store Protocol (HTTP). The
+CLIENT ADAPTER ships here (src/ne/brain_ontology/store/fuseki.py); Fuseki itself
+— the server, the JVM distribution, and any container image — is NOT distributed
+with this package (like TEI/Qdrant in ne-brain's NOTICE). Current upstream
+release is Apache Jena Fuseki 6.1.0 (Apache-2.0, requires Java 21); the tier-3
+spec named "5.x" — the drift is immaterial to this adapter (SPARQL 1.1 protocol
+is version-stable), but the future deploy/compose lane must pin against 6.x/Java-21.

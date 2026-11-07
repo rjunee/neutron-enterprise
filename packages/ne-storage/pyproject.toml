@@ -1,0 +1,41 @@
+[project]
+name = "ne-storage"
+version = "0.1.0"
+description = "ObjectStore WORM adapters: s3 (Object Lock) and azure_blob (immutability policies)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-net",
+    "aiobotocore>=3.8.0,<4",
+    "azure-storage-blob[aio]>=12.30.0,<13",
+    "azure-identity>=1.25.3,<2",
+]
+
+[project.entry-points."ne.plugins.object_store"]
+s3 = "ne.storage.s3:S3ObjectStore"
+azure_blob = "ne.storage.azure_blob:AzureBlobObjectStore"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.storage"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-net = { workspace = true }
+ne-audit = { workspace = true }
+
+[dependency-groups]
+# Test-only: test_s3_worm_live.py::test_signed_checkpoint_lands_in_worm proves
+# the #249-independent seam (ne.audit.checkpoint.write_checkpoint — the exact
+# primitive NE-AUDIT-CRON's loop calls) lands a real signed checkpoint in this
+# adapter. ne-storage never depends on ne-audit at runtime (the reverse
+# direction is the real one: ne-audit's ObjectStore Protocol dependency is
+# already satisfied by ne-contracts; a production audit-checkpoint loop
+# resolves this adapter by NAME through PluginRegistry, no import edge).
+dev = ["ne-audit"]
+

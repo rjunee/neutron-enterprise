@@ -1,0 +1,142 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §9 — SOURCES, screen-local only.
+ *
+ * The title row, the toolbar, the table, the pills, the state blocks and the
+ * detail pane are all the shared standard (src/styles/). Nothing here restyles
+ * them. What is left is the three things only this screen has: the quarantine
+ * section's own heading and spacing, the pane's sync-record line, and the
+ * degraded note.
+ *
+ * Every value resolves through a token. No raw colour, no px font-size. */
+
+/* The screen is the list; the detail pane is its sibling in the shell's row, so
+ * this wrapper must not become a box between them. */
+.ne-sources {
+  display: contents;
+}
+
+.ne-sources__sync {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.ne-sources__synccounts {
+  max-width: 28ch;
+  color: var(--text-dim);
+  font: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* A snapshot is a readable historical lane, not a failed live connector. The
+ * border and explicit words carry that distinction without relying on colour. */
+.ne-sources__snapshot {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--text-dim);
+  font: var(--type-small);
+  white-space: nowrap;
+}
+
+/* ---------------------------- quarantine section --------------------------- */
+
+.ne-sources__quarantine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--rule-strong);
+}
+
+.ne-sources__sectiontitle {
+  margin: 0;
+  font: var(--type-section);
+  color: var(--text);
+}
+
+/* ----------------------- authority recovery section ----------------------- */
+
+.ne-sources__authority {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--rule-strong);
+}
+
+.ne-sources__authoritynote {
+  margin: 0;
+  font: var(--type-cell);
+  color: var(--text-dim);
+}
+
+/* The reason cell carries the validator's full message; one line in the table,
+ * the full text in the pane. */
+.ne-sources__qreason {
+  display: block;
+  max-width: 48ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--type-cell);
+  font-family: var(--font-mono);
+}
+
+/* ------------------------- quarantined-record pane ------------------------- */
+
+.ne-sources__qpanetitle {
+  margin: var(--space-16) 0 var(--space-8);
+  font: var(--type-section);
+  color: var(--text);
+}
+
+/* The validator's message, verbatim: monospace, wrapped, never clipped — the
+ * offending value (a trailing space, a mojibake escape) IS the content. */
+.ne-sources__qpanereason {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border-left: 2px solid var(--amber);
+  background: var(--panel-raised);
+  font: var(--type-cell);
+  font-family: var(--font-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.ne-sources__qpanenote {
+  margin: var(--space-8) 0 0;
+  font: var(--type-cell);
+  color: var(--text-dim);
+}
+
+/* ------------------------------- detail pane ------------------------------- */
+
+.ne-sources__syncrecord {
+  margin: var(--space-16) 0 0;
+  font: var(--type-cell);
+  color: var(--text-dim);
+}
+
+/* §9's one operational line on a degraded mirror. It carries the caution tint
+ * AND says what is happening in words — a state a reader cannot see in colour
+ * still has to arrive. */
+.ne-sources__degraded {
+  margin: var(--space-12) 0 0;
+  padding: var(--space-8) var(--space-12);
+  border-left: 2px solid var(--amber);
+  background: var(--panel-raised);
+  font: var(--type-cell);
+  color: var(--text);
+}

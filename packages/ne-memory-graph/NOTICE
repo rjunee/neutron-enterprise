@@ -1,0 +1,60 @@
+Neutron Enterprise — ne-memory-graph
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+httpx / 0.28.1 / BSD-3-Clause / https://github.com/encode/httpx
+fastapi / 0.139.x / MIT / https://github.com/fastapi/fastapi
+uvicorn / 0.51.x / BSD-3-Clause / https://github.com/encode/uvicorn
+sqlalchemy / 2.0.51 / MIT / https://github.com/sqlalchemy/sqlalchemy
+pydantic / 2.11.x / MIT / https://github.com/pydantic/pydantic
+
+NOTE: httpx / fastapi / uvicorn / sqlalchemy / pydantic (all permissive) are the
+host-side facade + llm_facade + client dependencies. Every one is ALREADY
+pinned+hash-verified in the workspace uv.lock via sibling packages (ne-api ships
+fastapi/uvicorn; httpx/sqlalchemy/pydantic are ubiquitous), so ne-memory-graph
+adds NO new lock entry beyond the workspace member itself. `ne check licenses`
+needs no policy edit for this unit.
+
+SIDECAR-ONLY (OUT-OF-PROCESS, NOT in uv.lock — C4): the Graphiti closure lives
+ONLY in a git-ignored, hash-pinned sidecar venv
+(ne.envbuild.ensure_sidecar_venv; graphiti_env/) and is invoked as a SUBPROCESS
+uvicorn server over loopback HTTP. None of it enters the platform uv.lock or the
+C4 Python license gate (proven by tests/test_no_graph_closure_in_lock.py and the
+.importlinter memory-graph-sidecar-out-of-process contract):
+graphiti-core / 0.29.2 / Apache-2.0 / https://github.com/getzep/graphiti (sidecar-only)
+neo4j (Python driver) / 6.2.0 / Apache-2.0 AND Python-2.0 / https://github.com/neo4j/neo4j-python-driver (sidecar-only)
+openai (SDK) / 2.45.0 / Apache-2.0 / https://github.com/openai/openai-python (sidecar-only; ALSO legitimately in the platform lock via litellm — the grep test does NOT assert its absence)
+posthog / 7.22.0 / MIT / https://github.com/PostHog/posthog-python (sidecar-only; telemetry FORCE-DISABLED in service.py — C1)
+
+Neo4j Community Edition SERVER / 5.26-community / GPLv3 / https://github.com/neo4j/neo4j
+  is a DEV/TEST docker CONTAINER ONLY — never a Python dependency (never in
+  uv.lock), never in a customer bundle. The AGE-driver cutover (which drops Neo4j
+  CE entirely, running Graphiti on the customer's Apache-2.0 AGE-on-Postgres) is
+  NE-083c; Neo4j CE never enters a shipped deployment.
+
+Apache AGE (Apache-2.0) itself (the NE-083c target backend) is a PostgreSQL
+EXTENSION loaded into the customer's Postgres (`LOAD 'age'`), not a Python
+dependency — it never enters uv.lock or the C4 Python license gate.
+
+psycopg / 3.3.4 / LGPL-3.0-only / https://github.com/psycopg/psycopg
+  is the AGE driver's Postgres execution surface, added to the sidecar venv
+  (graphiti_env/requirements.txt) by NE-083c. It is sidecar-only HERE, but is ALSO
+  legitimately present in the platform uv.lock via ne-brain-graph (the C4 posture was
+  settled at NE-081), so tests/test_no_graph_closure_in_lock.py does NOT assert its
+  absence and `ne check licenses` needs no policy edit.
+
+The `graphiti_age` driver (graphiti_env/graphiti_age/) is FIRST-PARTY Ryan Junee
+code, licensed Apache-2.0 like the rest of the repository. Per the NE-083
+Option-B decision it is authored to be separable for contribution upstream to
+getzep/graphiti; see docs/architecture/ne083c-graphiti-age-upstream.md.
+
+This package also consumes in-workspace packages (ne-contracts, ne-runtime,
+ne-envbuild, ne-audit, ne-events, ne-schema, ne-net, ne-gateway, ne-govern) whose
+own third-party components are recorded in their respective NOTICE files. litellm
+stays confined to ne.gateway._litellm (the C3 chokepoint is untouched); this
+package imports ne-gateway only for the llm_facade's real gateway wiring.
+ne-govern supplies the fail-closed redaction stage wired into the llm-facade
+gateway (NE-162b); its Presidio backend lives ONLY in ne-govern's isolated
+hash-pinned venv (packages/ne-govern/presidio_env/), so this dependency adds NO
+new third-party entry to the platform uv.lock and `ne check licenses` needs no
+policy edit.

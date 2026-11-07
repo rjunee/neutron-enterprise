@@ -1,0 +1,231 @@
+/* Copyright (c) 2026 Ryan Junee. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The record — the audit-pane anatomy, docked (screens/graph.html §record
+ * pane). Shared by two hosts: the docked pane (GraphQuickDrawer, an <aside>,
+ * always in the floor) and Record mode's own reading view (GraphRecord, the
+ * workbar's second face). Both render the SAME content vocabulary below
+ * (`.ne-paneheading`, `.ne-proptable`, `.ne-rel`) at two depths — quick vs
+ * every field with its provenance ref. */
+
+.ne-record {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.ne-record__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-record__title {
+  margin: 0;
+  font: 600 16px/22px var(--font-ui);
+  color: var(--text);
+}
+
+.ne-record__subtitle {
+  margin: var(--space-4) 0 0;
+  font: 400 12px/16px var(--font-mono);
+  color: var(--text-dim);
+}
+
+.ne-record__assur {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: var(--space-8) 0 0;
+}
+
+.ne-record__close {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  font: var(--type-section);
+  cursor: pointer;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius);
+}
+
+.ne-record__close:hover {
+  color: var(--text);
+  background: var(--hover-tint);
+}
+
+.ne-record__close:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+.ne-record__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-16);
+  overflow-y: auto;
+}
+
+.ne-record__foot {
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  border-top: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+/* Section headings shared by the docked pane and the full Record view. */
+.ne-paneheading {
+  margin: 0 0 var(--space-8);
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-graph-record__section + .ne-graph-record__section {
+  margin-top: var(--space-16);
+}
+
+.ne-quicknote {
+  margin: var(--space-4) 0 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* Properties: a two-column key/value table (screens/graph.html §record pane;
+ * NOT the shipped 3-header data table — the pane reads as a quiet property
+ * sheet, not a grid). */
+.ne-proptable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 var(--space-4);
+  font: 400 12.5px/18px var(--font-ui);
+}
+
+.ne-proptable td {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: baseline;
+  overflow-wrap: anywhere;
+}
+
+.ne-proptable tr:last-child td {
+  border-bottom: none;
+}
+
+.ne-proptable td:first-child {
+  width: 30%;
+  padding-right: var(--space-8);
+  color: var(--text-dim);
+  font: 400 11.5px/16px var(--font-mono);
+}
+
+/* Relationships: one row per relation — direction, kind, the other entity,
+ * its provenance ref (full Record mode only) and an UNCONFIRMED pill when the
+ * relation itself is provisional. */
+.ne-rel {
+  display: grid;
+  grid-template-columns: 16px minmax(84px, auto) minmax(0, 1fr);
+  column-gap: var(--space-8);
+  align-items: baseline;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--rule);
+  font: 400 12.5px/18px var(--font-ui);
+}
+
+.ne-rel:last-child {
+  border-bottom: none;
+}
+
+.ne-rel__dir {
+  color: var(--text-dim);
+}
+
+.ne-rel__kind {
+  color: var(--text-dim);
+  font: 500 11px/16px var(--font-mono);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.ne-rel__other {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-rel__other a {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ne-graph-record__table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ne-graph-record__note {
+  margin: var(--space-8) 0 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* Record mode: the workbar's second face — the same entity at reading depth,
+ * no pane chrome (no head/close/foot dock), just the content vocabulary above
+ * under its own heading. */
+.ne-graph-record {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-16);
+  padding: var(--space-16);
+}
+
+.ne-graph-record__header h2 {
+  margin: 0;
+  font: var(--type-section);
+}
+
+.ne-graph-record__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+/* The paths finder (GraphPathsFinder.tsx), reused unchanged by both hosts. */
+.ne-graph-record__paths form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-8);
+}
+
+.ne-graph-record__paths label {
+  display: grid;
+  min-width: min(100%, 18rem);
+  gap: var(--space-4);
+}
+
+.ne-graph-record__paths input {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ne-graph-record__paths-list,
+.ne-graph-record__path-edges {
+  display: grid;
+  gap: var(--space-8);
+  padding-left: var(--space-24);
+}

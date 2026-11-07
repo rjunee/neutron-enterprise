@@ -1,0 +1,18 @@
+{
+  "before": null,
+  "after": {
+    "id": 5,
+    "name": "Eve Synthetic",
+    "email": "eve@synthetic.example",
+    "acl_group": "g-eng"
+  },
+  "source": {
+    "connector": "mysql",
+    "db": "appdb",
+    "table": "customers",
+    "file": "binlog.000042",
+    "pos": 1007
+  },
+  "op": "c",
+  "ts_ms": 1720000005000
+}

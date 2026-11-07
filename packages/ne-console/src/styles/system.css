@@ -1,0 +1,878 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * REDESIGN §1 — the design system the twelve screens are assembled from:
+ * Readout / StatePill / EvidenceDrawer / StatusStrip / InspectSwitch /
+ * RefusalProof / EmptyState / AnnunciatorRow / PageFrame.
+ *
+ * Palette is UNCHANGED — every value resolves through tokens.css, and no hex is
+ * added. --text-faint is BANNED for text (§1.3): it fails contrast in both
+ * themes (~2.6:1 light, ~3.3:1 dark) and it was the colour of every provenance
+ * line — exactly the text this redesign makes load-bearing. It survives here for
+ * hairlines only.
+ */
+
+/* ============================ Readout (L1) ============================ */
+.ne-readout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.ne-readout--right {
+  align-items: flex-end;
+  text-align: right;
+}
+.ne-readout__legend {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ne-readout__value--figure {
+  font: var(--type-figure);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  overflow-wrap: anywhere;
+}
+.ne-readout__value--word {
+  font: var(--type-lead);
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  overflow-wrap: anywhere;
+}
+.ne-readout__absent {
+  color: var(--text-dim);
+}
+.ne-readout__unit {
+  font: var(--type-small);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ne-readout__caption {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ne-readout__source {
+  font: var(--type-small);
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* ============================ StatePill (L5) ============================ */
+.ne-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  /* THE GLYPH AND THE WORD STAY TOGETHER; THE DETAIL WRAPS.
+     `white-space: nowrap` on the whole pill was the root cause of a verified
+     overlap on the home screen's DEPLOYMENT tiles: a pill carrying a sentence-
+     length `detail` ("No external host is sanctioned…") could not break, so it
+     ran out of its grid column and painted across the tile beside it —
+     "SEALED No external host is sanctio**HELD**", 26px of intersecting glyphs.
+     A state word must never break; a sentence must. */
+  flex-wrap: wrap;
+  white-space: normal;
+  min-width: 0;
+  color: var(--text-dim);
+}
+.ne-pill__glyph,
+.ne-pill__word {
+  white-space: nowrap;
+}
+.ne-pill__detail {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.ne-pill__glyph {
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.ne-pill__word {
+  color: inherit;
+}
+.ne-pill__detail {
+  font-family: var(--font-mono);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-dim);
+}
+/* The STATE slot draws from --state-* (tokens.css), not from the fill palette.
+ * --cherenkov-deep is tuned as a FILL and measured 2.99:1 as 11px text in dark. */
+.ne-pill--affirm {
+  color: var(--state-affirm);
+}
+.ne-pill--idle {
+  color: var(--text-dim);
+}
+.ne-pill--refuse {
+  color: var(--red);
+}
+.ne-pill--warn {
+  color: var(--amber);
+}
+/* GATED — "the server will not open this to your role" — is NOT a fault, and it
+ * must not borrow the fault colour. Slate, with its own glyph and its own word. */
+.ne-pill--gated {
+  color: var(--state-gated);
+}
+.ne-pill--large {
+  font: var(--type-section);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+/* ============================ EvidenceDrawer ============================ */
+.ne-drawer {
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-8);
+}
+.ne-drawer__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  cursor: pointer;
+  font: var(--type-small);
+  color: var(--text-dim);
+  list-style: none;
+  padding: var(--space-4) 0;
+}
+.ne-drawer__summary::-webkit-details-marker {
+  display: none;
+}
+.ne-drawer__summary:hover,
+.ne-drawer__summary:focus-visible {
+  color: var(--text);
+}
+.ne-drawer__summary:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-drawer__caret {
+  font-family: var(--font-mono);
+  transition: transform var(--motion-snap) var(--ease-damped);
+  display: inline-block;
+}
+.ne-drawer[open] > .ne-drawer__summary .ne-drawer__caret {
+  transform: rotate(90deg);
+}
+.ne-drawer__body {
+  padding: var(--space-8) 0 var(--space-8) var(--space-16);
+  font: var(--type-small);
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  border-left: 1px solid var(--rule);
+  margin-left: var(--space-4);
+}
+.ne-drawer__body code,
+.ne-drawer__body li,
+.ne-drawer__body p {
+  overflow-wrap: anywhere;
+}
+.ne-drawer--quiet {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ============================ StatusStrip ============================ */
+.ne-strip {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  min-height: var(--space-48);
+  padding: var(--space-4) 0;
+  margin-bottom: var(--space-16);
+  border-bottom: 1px solid var(--rule-strong);
+  background: var(--ground);
+  flex-wrap: wrap;
+}
+.ne-strip__title {
+  font: var(--type-title);
+  letter-spacing: var(--tracking-display);
+  color: var(--text);
+  margin: 0;
+}
+.ne-strip__chips {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-chip {
+  position: relative;
+}
+.ne-chip__face {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  cursor: pointer;
+  list-style: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-8);
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  white-space: nowrap;
+}
+.ne-chip__face::-webkit-details-marker {
+  display: none;
+}
+.ne-chip__face:hover,
+.ne-chip__face:focus-visible {
+  border-color: var(--rule-strong);
+  background: var(--panel-overlay);
+}
+.ne-chip__face:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+.ne-chip__label {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+.ne-chip__value {
+  font: var(--type-mono);
+  color: var(--text);
+}
+.ne-chip__sub {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  border-left: 1px solid var(--rule);
+  padding-left: var(--space-8);
+}
+.ne-chip__drawer {
+  position: absolute;
+  top: calc(100% + var(--space-4));
+  right: 0;
+  z-index: 50;
+  width: min(440px, 80vw);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  background: var(--panel-overlay);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  padding: var(--space-12);
+}
+.ne-chip__note {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-copyline {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+.ne-copyline__value {
+  font: var(--type-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ne-copyline__btn {
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  cursor: pointer;
+  padding: 0 var(--space-4);
+  flex: none;
+}
+.ne-copyline__btn:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* ============================ InspectSwitch ============================ */
+.ne-inspect {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-8);
+  cursor: pointer;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ne-inspect:hover {
+  color: var(--text);
+  background: var(--panel-overlay);
+}
+.ne-inspect:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+.ne-inspect__track {
+  width: var(--space-24);
+  height: var(--space-12);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  box-shadow: var(--well-inset);
+  display: inline-flex;
+  align-items: center;
+  padding: 1px;
+}
+.ne-inspect__knob {
+  width: var(--space-8);
+  height: var(--space-8);
+  background: var(--rule-strong);
+  display: block;
+  transition: transform var(--motion-snap) var(--ease-damped);
+}
+.ne-inspect--on {
+  color: var(--text);
+  border-color: var(--cherenkov-deep);
+}
+.ne-inspect--on .ne-inspect__track {
+  border-color: var(--cherenkov-deep);
+}
+.ne-inspect--on .ne-inspect__knob {
+  background: var(--cherenkov-deep);
+  transform: translateX(var(--space-12));
+}
+
+/* ============================ RefusalProof (L4) ============================ */
+.ne-refusal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 640px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule-strong);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 var(--edge-highlight),
+    var(--shadow-card);
+  padding: var(--space-16);
+}
+.ne-refusal__head {
+  font: var(--type-section);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text);
+  margin: 0;
+}
+.ne-refusal__body {
+  font: var(--type-body);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-refusal__link {
+  font: var(--type-body);
+  color: var(--cherenkov);
+  text-decoration: none;
+}
+.ne-refusal__link:hover,
+.ne-refusal__link:focus-visible {
+  text-decoration: underline;
+}
+
+/* ============================ EmptyState ============================ */
+.ne-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  max-width: 620px;
+  padding: var(--space-24) 0;
+}
+.ne-empty__title {
+  font: var(--type-title);
+  letter-spacing: var(--tracking-display);
+  color: var(--text);
+  margin: 0;
+}
+.ne-empty__body {
+  font: var(--type-body);
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.ne-empty__body p {
+  margin: 0;
+}
+.ne-empty__action {
+  align-self: flex-start;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text);
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: var(--space-8) var(--space-12);
+  text-decoration: none;
+}
+.ne-empty__action:hover,
+.ne-empty__action:focus-visible {
+  border-color: var(--cherenkov-deep);
+  background: var(--panel-overlay);
+}
+.ne-empty__aside {
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-lg);
+  background: var(--sunken);
+  padding: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* ============================ AnnunciatorRow (G5) ============================ */
+.ne-annrow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) 0;
+  border-top: 1px solid var(--rule);
+  scroll-margin-top: var(--space-64);
+}
+.ne-annrow__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+.ne-annrow__id {
+  font: var(--type-mono-plate);
+  color: var(--text);
+}
+.ne-annrow__short {
+  font: var(--type-section);
+  color: var(--text);
+}
+.ne-annrow__enforcement {
+  font: var(--type-body);
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 80ch;
+}
+/* ============================ Shared page furniture ============================ */
+/* A band: the horizontal unit most screens are built from. */
+.ne-band {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.ne-band__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-4);
+}
+.ne-band__title {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-note {
+  font: var(--type-body);
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 80ch;
+}
+.ne-note--lead {
+  font: var(--type-lead);
+  color: var(--text);
+}
+
+/* THE SHARED DATA TABLE IS STYLED IN table.css AND ONLY THERE (§2.1). The
+ * pre-redesign element-scoped block that used to live here (`.ne-table th`,
+ * `.ne-table thead th`, `.ne-table th.ne-num`, `.ne-table tbody tr:hover`,
+ * `.ne-table-scroll`) outranked table.css's `.ne-th` — a descendant selector
+ * beats a single class no matter which file loads last — so the header row's
+ * type was decided by the OLD design while the new design's rule sat inert. It
+ * split one header row into three faces: uppercase+tracked where the header was
+ * plain text, mono where the column was `.ne-num`, and neither where the header
+ * was a sort <button> (the UA button style resets text-transform and
+ * letter-spacing, and `font: inherit` restores neither). It is deleted, not
+ * narrowed: `.ne-table` markup is emitted by primitives/DataTable.tsx alone, and
+ * every cell and header it emits carries `.ne-td`/`.ne-th`. */
+/* THE DATA FACE — and the one declaration on it that has broken three screens.
+ *
+ * IT USED TO SAY `overflow-wrap: anywhere`. That is not "wrap a long value if
+ * you must": it lowers the element's MIN-CONTENT CONTRIBUTION to about one
+ * character, which removes the floor every flex and grid track sizes itself
+ * against. A `.ne-mono` sharing a row with `white-space: nowrap` siblings then
+ * absorbs the entire width deficit, and a governed identifier is drawn one
+ * fragment per line: `9dc85b6a` came out of the Agents catalog card as
+ * `9dc` / `85b` / `6a`, three lines tall, at 1500px.
+ *
+ * `break-word` is the same protection WITHOUT the collapse. Its min-content
+ * contribution is the longest word, so a track can never be sized below one,
+ * and a break happens only where a value genuinely cannot fit the line it is
+ * on — which is the case this property was added for (a 64-char hash in a
+ * 280px rail column). Identifiers that must fit a fixed slot ellipsize with the
+ * full value in `title` (primitives/HashChip.tsx) rather than fragmenting. */
+.ne-mono {
+  font: var(--type-mono);
+  color: var(--text);
+  overflow-wrap: break-word;
+}
+.ne-dim {
+  color: var(--text-dim);
+}
+
+/* SCREEN-READER-ONLY, AND IT WAS NOT.
+ *
+ * This class had NO RULE anywhere in the package, so every element wearing it
+ * rendered at full size to sighted readers. That is a correctness bug about
+ * what the screen SAYS, not a cosmetic one: the content it holds is written to
+ * be heard and not seen — agents/AgentRunPage.tsx puts its `aria-live` run
+ * announcements here, so the page was narrating its own state changes in the
+ * middle of the layout.
+ *
+ * THE CLIP RECTANGLE, not `display: none` and not `visibility: hidden`. Both of
+ * those remove the element from the accessibility tree as well as from the
+ * screen, which would fix the visible half by deleting the half that is the
+ * whole point — an aria-live region nothing can announce is worse than a
+ * visible one. This keeps the node rendered, laid out and announceable, and
+ * merely gives it no painted area. `white-space: nowrap` stops a long string
+ * being wrapped into a 1px column and reflowing the page around it. */
+.ne-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* AND IT UN-CLIPS WHEN FOCUSED. Nothing wears this class interactively today,
+ * but the pattern's classic failure is a skip link that cannot be seen by the
+ * keyboard reader who just focused it — invisible-when-focused is a trap, not a
+ * convenience. `:focus-within` covers a wrapper holding the control. */
+.ne-sr-only:focus-visible,
+.ne-sr-only:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+/* A primary action, used for the few real verbs on this console. */
+.ne-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  border-radius: var(--radius);
+  padding: var(--space-8) var(--space-12);
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid var(--rule-strong);
+  background: var(--panel-raised);
+  box-shadow: inset 0 1px 0 var(--edge-highlight);
+  color: var(--text);
+}
+.ne-action:hover:not(:disabled) {
+  border-color: var(--cherenkov-deep);
+  background: var(--panel-overlay);
+}
+.ne-action:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+.ne-action:disabled {
+  cursor: not-allowed;
+  color: var(--text-dim);
+  border-color: var(--rule);
+}
+/* A DISABLED PRIMARY IS AN OUTLINE, NOT A FADED FILL.
+ * `.ne-action--primary` sets `color: var(--panel)` and is declared after the
+ * `:disabled` rule, so a disabled primary kept white-ish text on a washed fill —
+ * in light mode the /trace "RUN THE GOVERNED DELEGATION" trigger was close to
+ * illegible, and that is the control a presenter points at while explaining the
+ * model-independence beat. Dropping the fill keeps the label readable while the
+ * outline still reads as unavailable, and the inline reason beside it carries
+ * the meaning either way. Declared LAST so it wins over `--primary`. */
+.ne-action--primary:disabled,
+.ne-action--primary[disabled] {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--rule-strong);
+  color: var(--text);
+  opacity: 0.85;
+}
+/* THE PRIMARY ACTION IS A FILL, AND THE FILL HAS ITS OWN LABEL COLOUR.
+ * --cherenkov is tuned as a text and hairline accent, so a primary drawn in it
+ * needs a label colour chosen for it rather than "whatever --text happens to
+ * be": --primary-label on --primary-fill measures 8.84:1 dark, 6.09:1 light
+ * (tokens.css). The fill carries no catchlight — an edge highlight on a
+ * saturated fill reads as a rendering artefact, not as lift. */
+.ne-action--primary {
+  background: var(--primary-fill);
+  border-color: transparent;
+  color: var(--primary-label);
+  box-shadow: none;
+}
+.ne-action--primary:hover:not(:disabled) {
+  background: var(--cherenkov);
+  border-color: transparent;
+}
+
+/* ============ round-2 additions ============ */
+
+/* The citation chip and its PROVE segment rendered as "[1]PROVE" with no space. */
+.ne-citation-chip-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+/* An answer that cited nothing SAYS so, in the answer frame. */
+.ne-message__nocite {
+  font: var(--type-small);
+  color: var(--text-dim);
+  border-left: 2px solid var(--rule-strong);
+  padding-left: var(--space-8);
+  margin: var(--space-8) 0 0;
+}
+
+/* A frame the console could not classify. Monospace, never answer typography. */
+.ne-message__raw {
+  border: 1px dashed var(--rule-strong);
+  background: var(--gated-tint);
+  padding: var(--space-8);
+  margin-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.ne-message__rawnote {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin: 0;
+}
+.ne-message__rawframe {
+  font: var(--type-mono);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+/* Model reasoning — an Inspect-layer disclosure, never the answer. */
+.ne-message__reasoning,
+.ne-message__reasoninghint {
+  font: var(--type-small);
+  color: var(--text-dim);
+  margin-top: var(--space-8);
+}
+.ne-message__reasoning summary {
+  cursor: pointer;
+}
+.ne-message__reasoningbody {
+  font: var(--type-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-left: 1px solid var(--rule);
+  padding-left: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+/* The chat cold-screen history block. */
+.ne-chat__recent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--rule);
+}
+.ne-chat__recentlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* KPI — why no headline figure is drawn. */
+.ne-kpi__assumption {
+  border-left: 2px solid var(--rule-strong);
+  padding-left: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* The evidence panel's provenance line and its labelled graph link. */
+.ne-evidence__provenance {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+.ne-evidence__graph {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--cherenkov);
+  display: inline-block;
+  margin-top: var(--space-8);
+}
+
+/* The observed-break list in the chain chip's drawer. */
+.ne-chip__breaks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* An access refusal on the ledger reads quieter than a decision about an action.
+   Not colour-only: the OUTCOME column already carries the GATED word + glyph. */
+.ne-chain__row--access-refusal .ne-chain__action,
+.ne-chain__row--access-refusal .ne-chain__resource {
+  color: var(--text-dim);
+}
+
+/* The landing headline when this key holds a decision queue: the queue takes the
+   whole strip rather than sharing it with a browser-local counter. */
+.ne-work__headline--decider {
+  width: 100%;
+}
+.ne-work__headline--decider .ne-readout__value--figure {
+  font: var(--type-display);
+}
+
+/* Flywheel: the leader line tying NOT INSTRUMENTED to its own node. */
+.ne-fly__leader {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.ne-fly__leaderdot {
+  fill: var(--rule-strong);
+}
+
+/* ===== THE EVIDENCE PANEL (round-3 major) =====
+ * PROVE landed the analyst on raw JSON with a bare 64-character hash for a
+ * heading. The panel now renders the record through the same parse the inline
+ * evidence disclosure uses, with a legend above the value and the hash kept as a
+ * labelled SOURCE REF. */
+.ne-evidence__legend {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  flex-basis: 100%;
+}
+.ne-evidence__title {
+  font: var(--type-lead);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.ne-evidence__head {
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.ne-evidence:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+.ne-evidence__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: var(--space-8) 0;
+}
+.ne-evidence__meta > div {
+  display: flex;
+  gap: var(--space-8);
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.ne-evidence__meta dd {
+  margin: 0;
+  font: var(--type-mono);
+  color: var(--text);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.ne-evidence__ref {
+  color: var(--text-dim);
+}
+.ne-evidence__text {
+  font: var(--type-body);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 32rem;
+  overflow-y: auto;
+}
+
+/* The config chip states the human fact; the hash stays in the drawer. */
+.ne-chip__face-fact {
+  font: var(--type-small);
+  color: var(--text);
+  white-space: nowrap;
+}
+.ne-chip__go {
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--cherenkov);
+}
+/* A disclosure anchored to the 48px strip must never paint over the page's own
+   headline readout. It hangs BELOW the strip rule and scrolls inside itself. */
+.ne-chip__drawer {
+  max-height: min(60vh, 30rem);
+  overflow-y: auto;
+}

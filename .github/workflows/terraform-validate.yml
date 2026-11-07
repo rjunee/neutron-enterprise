@@ -1,0 +1,211 @@
+name: terraform-validate
+
+# NE-072: validates deploy/terraform-azure + deploy/terraform-eks +
+# deploy/terraform-eks-entra-broker. A real `terraform plan`/`apply` against a
+# cloud subscription is LIVE-PARKED (owner credentials) — the validate matrix
+# proves syntax/schema coherence only: fmt, init (backend=false, provider-lock
+# verified read-only), validate, tflint, and (for the roots that carry them)
+# the offline mocked `terraform test`.
+# NE-AWS-12: the eks leg additionally runs the textual invariant guards, so
+# hardened-posture regressions fail PR CI.
+# NE-AWS-AZUREAD: the eks-provider-config-smoke job proves — on ubuntu-latest,
+# with `az` present-but-not-logged-in (the runner shape that first exposed the
+# defect) — that the AWS-only lane no longer references the Azure AD / Entra
+# provider and now `terraform apply`s its provider set credential-less, plus a
+# negative control that the original eager-auth defect still reproduces (so the
+# regression trip-wire can never go vacuously green).
+
+on:
+  pull_request:
+    paths:
+      - "deploy/terraform-azure/**"
+      - "deploy/terraform-eks/**"
+      - "deploy/terraform-eks-entra-broker/**"
+      - ".github/workflows/terraform-validate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deploy/terraform-azure/**"
+      - "deploy/terraform-eks/**"
+      - "deploy/terraform-eks-entra-broker/**"
+      - ".github/workflows/terraform-validate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CHECKPOINT_DISABLE: "1"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dir: [deploy/terraform-azure, deploy/terraform-eks, deploy/terraform-eks-entra-broker]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: terraform fmt -check
+        working-directory: ${{ matrix.dir }}
+        run: terraform fmt -check -recursive
+
+      - name: terraform init (no backend, locked)
+        working-directory: ${{ matrix.dir }}
+        run: terraform init -backend=false -lockfile=readonly
+
+      - name: terraform validate
+        working-directory: ${{ matrix.dir }}
+        run: terraform validate
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@6e1e0642c0289bd619021bf6b34e3c08ed1e005a # v6.3.0
+        with:
+          tflint_version: v0.63.1
+
+      - name: tflint
+        run: tflint --chdir ${{ matrix.dir }}
+
+      # All three roots carry offline mocked tftests (NE-LP-AZURE-VLW-FIX
+      # added deploy/terraform-azure/tests/storage_worm.tftest.hcl).
+      - name: terraform test (offline golden-plan guardrails)
+        working-directory: ${{ matrix.dir }}
+        run: terraform test
+
+      - name: static invariant guards
+        if: matrix.dir == 'deploy/terraform-eks'
+        run: bash deploy/terraform-eks/tests/static_guards.sh
+
+  # NE-AWS-AZUREAD: the permanent runner-side reproducing test. The Azure AD /
+  # Entra provider defect is runner-specific (GitHub-hosted runners are Azure
+  # VMs with `az` installed but not logged in), so `terraform validate` — which
+  # never configures providers — could never have caught it. This job runs a
+  # real credential-less `terraform apply` of the fixed AWS-only lane's provider
+  # set on ubuntu-latest and asserts it completes, plus a negative control that
+  # the original eager-auth repro still fails (guards against vacuity).
+  eks-provider-config-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+
+      - name: Assert azuread absent from the AWS-only provider closure
+        run: |
+          set -euo pipefail
+          # The provider must not be declared or count-referenced in the lane.
+          ! grep -rn azuread deploy/terraform-eks/versions.tf deploy/terraform-eks/identity.tf deploy/terraform-eks/modules/identity/main.tf
+          ! grep -n azuread deploy/terraform-eks/.terraform.lock.hcl
+          terraform -chdir=deploy/terraform-eks init -backend=false -input=false -lockfile=readonly -no-color
+          terraform -chdir=deploy/terraform-eks providers | tee "$RUNNER_TEMP/providers.txt"
+          ! grep -q azuread "$RUNNER_TEMP/providers.txt"
+
+      - name: Precondition — runner has az present + NOT logged in
+        run: |
+          set -euo pipefail
+          # This job only proves anything on the host shape that triggers the
+          # bug: az installed but no Azure session. If either is false, fail
+          # LOUD so a maintainer re-evaluates rather than trusting a vacuous pass.
+          command -v az
+          if az account show; then
+            echo 'runner is Azure-logged-in — smoke preconditions broken, reassess'
+            exit 1
+          fi
+
+      - name: Fixed lane provider set applies credential-less
+        run: |
+          set -euo pipefail
+          # Throwaway config mirroring the AWS-only lane's post-fix provider set
+          # (aws/helm/null — NO azuread) and its count-gated-resource shape, which
+          # is exactly what forces provider Configure() — the mechanism that
+          # triggered the azuread failure. NO aws resources: PR runners hold no
+          # AWS creds, so a count>0 aws resource would Configure-fail for the
+          # WRONG reason; real aws-auth is exercised by the eks-hardened-apply
+          # lane. The count-0 helm_release forces the helm provider to Configure
+          # (empty helm provider configures lazily — no kubeconfig contact).
+          SMOKE="$RUNNER_TEMP/smoke"
+          mkdir -p "$SMOKE"
+          printf '%s\n' \
+            'terraform {' \
+            '  required_providers {' \
+            '    aws  = { source = "hashicorp/aws",  version = "6.55.0" }' \
+            '    helm = { source = "hashicorp/helm", version = "3.2.0" }' \
+            '    null = { source = "hashicorp/null", version = "3.3.0" }' \
+            '  }' \
+            '}' \
+            'provider "aws" { region = "us-east-1" }' \
+            'provider "helm" {}' \
+            'variable "gate" {' \
+            '  type    = bool' \
+            '  default = false' \
+            '}' \
+            'resource "helm_release" "gate" {' \
+            '  count = var.gate ? 1 : 0' \
+            '  name  = "gate"' \
+            '  chart = "gate"' \
+            '}' \
+            'resource "null_resource" "force" {}' \
+            > "$SMOKE/main.tf"
+          terraform -chdir="$SMOKE" init -no-color
+          out="$(terraform -chdir="$SMOKE" apply -auto-approve -no-color 2>&1)"
+          echo "$out"
+          echo "$out" | grep -q 'Apply complete' || {
+            echo 'FIXED-LANE SMOKE FAILED: credential-less apply of aws/helm/null did not complete'
+            exit 1
+          }
+
+      - name: Negative control — the eager-auth defect still reproduces
+        run: |
+          set -euo pipefail
+          # Re-run the original repro (empty Azure AD / Entra provider + a
+          # count-gated resource referencing it). It MUST still fail at
+          # provider-config on this runner; if it ever succeeds, the isolation
+          # rationale no longer holds and this whole test is vacuous — fail loud.
+          NEG="$RUNNER_TEMP/neg"
+          mkdir -p "$NEG"
+          printf '%s\n' \
+            'terraform {' \
+            '  required_providers {' \
+            '    azuread = { source = "hashicorp/azuread", version = "3.9.0" }' \
+            '    null    = { source = "hashicorp/null",    version = "3.3.0" }' \
+            '  }' \
+            '}' \
+            'provider "azuread" {}' \
+            'variable "gate" {' \
+            '  type    = bool' \
+            '  default = false' \
+            '}' \
+            'resource "azuread_application" "broker" {' \
+            '  count        = var.gate ? 1 : 0' \
+            '  display_name = "broker"' \
+            '}' \
+            'resource "null_resource" "force" {}' \
+            > "$NEG/main.tf"
+          terraform -chdir="$NEG" init -no-color
+          set +e
+          out="$(terraform -chdir="$NEG" apply -auto-approve -no-color 2>&1)"
+          rc=$?
+          set -e
+          echo "$out"
+          if [ "$rc" -eq 0 ]; then
+            echo 'azuread no longer eager-auths on this runner — re-evaluate the isolation rationale and this test'
+            exit 1
+          fi
+          echo "$out" | grep -iE 'AzureCli Authorizer|az login|Authorizer' || {
+            echo 'negative control failed, but NOT for the expected eager-auth reason — reassess'
+            exit 1
+          }

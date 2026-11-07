@@ -1,0 +1,169 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# CONNECTIVE_ALLOWLIST (ne.govern.grounding, NE-GA-G1) — the grounding gate's
+# pinned, versioned prose-connective wordlist (design docs/design/ne-grounded-
+# agent.md §2.3). This file's bytes are folded into GATE_VERSION (ng-1/<sha256
+# prefix>) — any edit moves the gate version, so a steward review is required
+# to grow it. Every token MUST already be normalized (ne.govern.grounding.
+# normalize(token) == (token,)) — enforced at import time (fail loud).
+#
+# Format: one token per line, lowercase, no punctuation. Blank lines and '#'
+# comment lines are ignored. Sorted.
+#
+# Contents: articles, pronouns, prepositions, conjunctions, auxiliaries,
+# discourse markers, and a small CLOSED set of reporting verbs/nouns (found,
+# returned, listed, shows, matched, fetched, see, data, results, rows,
+# verified, directory, table, ...). total/sum/count/number/value are included
+# so a sentence like "the amount total is 4200" can ground (the numeral still
+# needs a same-sentence provenance anchor from its own column/aggregate label
+# — F3 hardening, §2.7 — these words are not themselves anchors).
+#
+# DELIBERATELY EXCLUDED (an explicit test asserts none of these are present):
+#   comparatives/superlatives: more, most, less, least, fewer, than, higher,
+#     lower, larger, largest, smaller, smallest, bigger, biggest, best, worst,
+#     top, better, worse, greater, greatest
+#   modals: must, may, might, should, would, will, shall, could
+#   quantifiers/approximators: all, every, only, some, many, few, several,
+#     nearly, almost, roughly, approximately
+#   spatial comparatives: over, under, above, below
+# These exclusions mean the gate cannot assert free-text comparisons or
+# quantified/approximate claims — it can only present grounded facts and let
+# the reader compare (the fail-closed resolution of the relational-claim
+# attack, design §2.3/§7.3).
+
+a
+about
+across
+after
+against
+also
+am
+among
+an
+and
+any
+are
+arent
+as
+at
+be
+because
+been
+before
+being
+between
+but
+by
+can
+cannot
+cant
+count
+counts
+data
+did
+didnt
+directory
+do
+does
+doesnt
+done
+dont
+during
+each
+fetched
+for
+found
+from
+had
+has
+have
+having
+he
+her
+here
+him
+his
+how
+however
+i
+if
+in
+into
+is
+isnt
+it
+its
+list
+listed
+lists
+matched
+matches
+me
+my
+no
+none
+nor
+not
+nothing
+number
+numbers
+of
+on
+or
+our
+per
+result
+results
+returned
+row
+rows
+see
+seen
+she
+show
+showed
+showing
+shows
+so
+sum
+table
+tables
+that
+the
+their
+them
+then
+there
+these
+they
+this
+those
+to
+total
+totals
+us
+value
+values
+verified
+via
+was
+wasnt
+we
+were
+werent
+what
+when
+where
+whether
+which
+while
+who
+whom
+whose
+why
+with
+within
+wont
+you
+your

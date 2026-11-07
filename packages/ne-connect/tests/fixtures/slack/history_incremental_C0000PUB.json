@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "ts": "1720009999.000900",
+      "user": "U00000ADA",
+      "text": "a brand new message after the cursor"
+    }
+  ],
+  "response_metadata": {"next_cursor": ""}
+}

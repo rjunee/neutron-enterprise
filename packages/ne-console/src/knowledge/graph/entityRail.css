@@ -1,0 +1,177 @@
+/* Copyright (c) 2026 Ryan Junee. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The entity rail: a FINDER, not a data dump (screens/NOTES.md §Knowledge
+ * Graph). Search, three compact filters, then rows of glyph + name +
+ * `class · source`. The raw entity key never appears in a row's body — it
+ * moves to the row's `title` and to the record pane (round-3 recompose,
+ * CR-B9). Width is owned by the floor grid (graphWorkspace.css); this fills
+ * its 280px column. */
+
+.ne-erail {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  border-right: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* A single-line bordered text control, shared by the rail's search/source
+ * fields and the record pane's paths-finder input. */
+.ne-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: var(--space-8);
+  background: var(--ground);
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-input:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+.ne-erail__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-12) var(--space-8);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ne-erail__selects {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+/* The FilterSelect primitive (src/primitives/Toolbar.tsx, `.ne-filter`) fills
+ * all three slots. Assurance is a closed vocabulary (source/confirmed/
+ * extracted); Class and Source are SERVER-DERIVED from GET /v1/graph/facets —
+ * exactly the classes and source systems present in this principal's visible
+ * slice. Source was a free-text `.ne-input` because the source-system
+ * vocabulary is open-ended, but an open vocabulary the SERVER can enumerate
+ * is not a guess, so it is a real select now (and its dead height/padding
+ * rule went with the input). */
+.ne-erail__selects .ne-filter {
+  width: 100%;
+}
+
+.ne-erail__selects .ne-filter__select {
+  width: 100%;
+}
+
+/* The one factual line under the filters: why Class/Source are empty or
+ * inert. Quiet by construction — it is a statement of fact, not an alert. */
+.ne-erail__facet-note {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-erail__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ne-erail__list p {
+  margin: 0;
+  padding: var(--space-12);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-erail__list [role="alert"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: flex-start;
+  padding: var(--space-12);
+}
+
+.ne-erail__list [role="alert"] p {
+  padding: 0;
+}
+
+.ne-entity {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  column-gap: var(--space-8);
+  align-items: start;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-8) var(--space-12);
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ne-entity:hover {
+  background: var(--hover-tint);
+}
+
+.ne-entity[aria-selected="true"] {
+  background: var(--selected-tint);
+  box-shadow: inset 2px 0 0 var(--cherenkov);
+}
+
+.ne-entity:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+.ne-entity__glyph {
+  grid-row: 1 / 3;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--text-dim);
+}
+
+.ne-entity[aria-selected="true"] .ne-entity__glyph {
+  color: var(--cherenkov);
+}
+
+.ne-entity__name {
+  min-width: 0;
+  font: 500 13px/18px var(--font-ui);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ne-entity__meta {
+  min-width: 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ne-erail__more {
+  margin: var(--space-8) var(--space-12) var(--space-12);
+}
+
+.ne-erail__note {
+  padding: var(--space-8) var(--space-12);
+  border-top: 1px solid var(--rule);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+@media (max-width: 48rem) {
+  .ne-erail__selects {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

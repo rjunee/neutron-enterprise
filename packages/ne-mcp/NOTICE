@@ -1,0 +1,64 @@
+Neutron Enterprise — ne-mcp
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  mcp                / >=1.28.1,<2   / MIT / https://github.com/modelcontextprotocol/python-sdk
+    (the official Model Context Protocol Python SDK; pinned <2 — 2.x is
+    alpha-only. ALL mcp imports are
+    isolated in ne/mcp/_sdk.py so the ~2026-08 v2 migration is one-module work.)
+    mcp's closure adds: httpx-sse (MIT), python-multipart (Apache-2.0),
+    sse-starlette (BSD-3-Clause), uvicorn (BSD-3-Clause), and pyjwt[crypto] (MIT).
+    The full transitive closure is covered by the lock-wide license gate
+    (`ne check licenses` over uv.lock; C4/C11).
+  ne-contracts       (workspace)     / Apache-2.0
+  ne-runtime         (workspace)     / Apache-2.0
+  ne-govern          (workspace)     / Apache-2.0
+  ne-net             (workspace)     / Apache-2.0
+  ne-envbuild        (workspace)     / Apache-2.0
+    (NE-LG-DROPIN: the shared sidecar-venv builder used by langgraph_demo.py; its
+     sole third-party dep filelock is already in the lock via ne-brain/ne-govern.)
+  ne-audit           (workspace)     / Apache-2.0
+    (NE-LG-DROPIN: the durable hash-chained audit sink/engine/schema used by the demo
+     composition root for the C10 chain + receipts; already in the lock via ne-runtime.)
+
+Sidecar demo venv (NE-LG-DROPIN — NEVER in the platform uv.lock/SBOM; isolated,
+hash-pinned, dev/demo-only; installed into the git-ignored packages/ne-mcp/.langgraph-venv
+from langgraph_env/requirements.txt with --require-hashes, exactly like ne-eval's ragas
+env). The customer-side LangGraph agent's closure, all MIT (verified against PyPI
+2026-07-21):
+  langgraph                / 1.2.9         / MIT / https://github.com/langchain-ai/langgraph
+    (+ langgraph-checkpoint / langgraph-prebuilt / langgraph-sdk, all MIT)
+  langchain-mcp-adapters   / 0.3.0         / MIT / https://github.com/langchain-ai/langchain-mcp-adapters
+  langchain-core           / >=1.2.22,<2   / MIT / https://github.com/langchain-ai/langchain
+    (resolved 1.5.0 — the CVE-2026-34070 / CVE-2026-26013 security floor)
+  langchain-openai         / >=1,<2        / MIT / https://github.com/langchain-ai/langchain
+    (--model mode only, against a LOCAL OpenAI-compatible endpoint; never CI)
+
+Sidecar demo venv (NE-CREWAI-DROPIN — NEVER in the platform uv.lock/SBOM; isolated,
+hash-pinned, dev/demo-only; installed into the git-ignored packages/ne-mcp/.crewai-venv
+from crewai_env/requirements.txt with --require-hashes, exactly like the langgraph env).
+The customer-side CrewAI agent's closure (versions the 2026-07-21 compile resolved):
+  crewai                   / 1.15.5        / MIT (per the repo LICENSE) / https://github.com/crewAIInc/crewAI
+    (+ crewai-core 1.15.5 / crewai-cli 1.15.5, same repo/license. NOTE: the crewai /
+     crewai-core / crewai-cli PyPI WHEELS carry NULL license metadata — no license field,
+     no classifier — verified 2026-07-21; the repo is MIT-badged. Stated plainly here.)
+  chromadb                 / 1.1.1         / Apache-2.0 / https://github.com/chroma-core/chroma
+    (crewai's base pin chromadb~=1.1.0; carries posthog (its telemetry client) —
+     suppressed via env in the demo, NEVER in the platform lock)
+  posthog                  / 5.4.0         / MIT / https://github.com/PostHog/posthog-python
+    (chromadb's telemetry client; barred from the platform lock by ne-memory-graph's guard
+     AND tests/test_crewai_isolation.py; env-suppressed inside the sidecar for the demo)
+  lancedb                  / 0.30.0        / Apache-2.0 / https://github.com/lancedb/lancedb
+  instructor               / 1.15.4        / MIT / https://github.com/jxnl/instructor
+  openai                   / 2.46.0        / Apache-2.0 / https://github.com/openai/openai-python
+    (crewai bundles the openai SDK; --model mode only, LOCAL endpoint; never CI)
+  mcp                      / 1.28.1        / MIT / https://github.com/modelcontextprotocol/python-sdk
+    (the direct mcp-SDK client the BaseTool proxies use; crewai's own base pin mcp~=1.28.1)
+  crewai-tools EXCLUDED — ships pymupdf (AGPL-3.0) in its base deps; never added to this
+  closure (test_crewai_isolation.py asserts it is absent from requirements.in).
+
+Test-only:
+  httpx              / >=0.28.1,<1   / BSD-3-Clause / https://github.com/encode/httpx
+    (MockTransport-scripted OPA wire below the seam, dev-only)

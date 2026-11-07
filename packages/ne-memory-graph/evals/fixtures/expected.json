@@ -1,0 +1,20 @@
+{
+  "entities": [
+    "ACME Corp",
+    "BetaSupply",
+    "Dana Lee",
+    "Sam Ortiz",
+    "Gamma LLC",
+    "INV-8891",
+    "INV-8890"
+  ],
+  "facts": [
+    "ACME Corp approved a Q3 invoice",
+    "steward rejected BetaSupply for missing W-9",
+    "BetaSupply was later approved as a vendor",
+    "ACME Corp AP contact is Sam Ortiz",
+    "refund requests over $5,000 route to human review",
+    "auto-approval threshold is $2,000 for trusted vendors",
+    "Gamma LLC retry payment succeeded"
+  ]
+}

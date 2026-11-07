@@ -1,0 +1,11 @@
+Neutron Enterprise — ne-net
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime: none — Python standard library only.
+
+Lifted code:
+  ne/net/ssrf.py endpoint validation derived (via ne-gateway ssrf.py,
+  NE-012/NE-CKC10) from ABI (https://github.com/jupyter-naas/abi)
+  provider_runtime.py — MIT License, Copyright (C) 2025 Naas.ai.

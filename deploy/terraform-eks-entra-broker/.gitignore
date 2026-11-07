@@ -1,0 +1,16 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+# NE-AWS-13: the live-apply workflow writes ci-live.auto.tfvars.json on the
+# runner (carries the assumed deploy-role ARN, C12) — never committed.
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc

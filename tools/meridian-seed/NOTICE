@@ -1,0 +1,5 @@
+Neutron Enterprise — Meridian Bank tenant seed tooling
+Copyright (c) 2026 Ryan Junee.
+
+This package is licensed under the Apache License 2.0. It adds no production connector
+write surface and has no new third-party runtime dependencies.

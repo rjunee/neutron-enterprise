@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console redesign — Round 2 directions</title>
+<style>
+/* Round-2 landing page — comparison harness, not a design candidate. */
+:root {
+  color-scheme: dark;
+  --bg: #101114; --card: #17181c; --rule: #26282e; --text: #e9eaee; --dim: #9a9da6; --faint: #6c6f78;
+  --accent: #43d9ff;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f2f2f4; --card: #ffffff; --rule: #e0e1e6; --text: #1a1b1e; --dim: #565860; --faint: #8b8d95;
+  --accent: #0a6584;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text);
+  font: 400 14px/21px system-ui, -apple-system, "Segoe UI", sans-serif; padding: 36px 40px 64px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1 { margin: 0 0 6px; font-size: 22px; line-height: 28px; letter-spacing: -0.01em; }
+.sub { margin: 0 0 8px; color: var(--dim); max-width: 78ch; }
+.note { margin: 0 0 28px; color: var(--faint); font-size: 12.5px; max-width: 78ch; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; align-items: start; }
+@media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+.dir { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.dir__head { padding: 14px 16px 12px; border-bottom: 1px solid var(--rule); }
+.dir__name { margin: 0; font-size: 15px; font-weight: 600; }
+.dir__name .rank { color: var(--faint); font-weight: 500; font-size: 12.5px; margin-left: 8px; }
+.dir__tag { margin: 3px 0 0; color: var(--dim); font-size: 12.5px; }
+.dir__meta { margin: 6px 0 0; color: var(--faint); font-size: 12px; }
+.shot { display: block; position: relative; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden;
+  border-bottom: 1px solid var(--rule); background: #0c0d0f; }
+.shot iframe { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0;
+  transform-origin: top left; pointer-events: none; }
+.shot__label { position: absolute; right: 8px; bottom: 8px; z-index: 2; padding: 2px 8px; border-radius: 5px;
+  background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 11px; }
+.dir__links { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px 16px 14px; font-size: 13px; }
+.verdict { margin-top: 40px; max-width: 88ch; }
+.verdict h2 { font-size: 16px; margin: 0 0 12px; }
+.verdict ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 12px; }
+.verdict li { color: var(--dim); }
+.verdict b { color: var(--text); }
+.flipwrap { position: fixed; top: 16px; right: 20px; }
+.flip { padding: 5px 14px; border: 1px solid var(--rule); border-radius: 999px; background: var(--card);
+  color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; }
+
+</style>
+</head>
+<body>
+<div class="flipwrap"><button class="flip" id="ne-flip">◑ Light chrome</button></div>
+<h1>Console redesign — Round 2</h1>
+<p class="sub">Three rendered directions, same two screens (Approvals · Ask), same fixture data, dark and light.
+Every page is live below — open any render full-size and use its theme toggle.</p>
+<p class="note">Fixtures are byte-identical to round 1's previews, so any difference you see is the design.
+Rationales, token diff tables and the ranking argument: <a href="./RATIONALE.md">RATIONALE.md</a>.</p>
+
+<div class="grid">
+  <section class="dir">
+    <div class="dir__head">
+      <h2 class="dir__name">A — Meridian <span class="rank">recommended</span></h2>
+      <p class="dir__tag">The control room, rebuilt. Cold blue-charcoal recut as a six-step ladder; content lifted into panels; cyan spent only where it means something.</p>
+      <p class="dir__meta">IBM Plex Sans + JetBrains Mono · 4/8px radius · 40px rows</p>
+    </div>
+    <a class="shot" href="./dir-a-approvals.html"><iframe src="./dir-a-approvals.html" loading="lazy" tabindex="-1" title="Direction A — Approvals, dark"></iframe><span class="shot__label">Approvals · dark</span></a>
+    <a class="shot" href="./dir-a-ask.html"><iframe src="./dir-a-ask.html" loading="lazy" tabindex="-1" title="Direction A — Ask, dark"></iframe><span class="shot__label">Ask · dark</span></a>
+    <a class="shot" href="./dir-a-approvals.html?theme=light"><iframe src="./dir-a-approvals.html?theme=light" loading="lazy" tabindex="-1" title="Direction A — Approvals, light"></iframe><span class="shot__label">Approvals · light</span></a>
+    <div class="dir__links">
+      <a href="./dir-a-approvals.html">Approvals</a>
+      <a href="./dir-a-ask.html">Ask</a>
+      <a href="./dir-a-approvals.html?theme=light">Approvals · light</a>
+      <a href="./dir-a-ask.html?theme=light">Ask · light</a>
+    </div>
+  </section>
+
+  <section class="dir">
+    <div class="dir__head">
+      <h2 class="dir__name">B — Hairline</h2>
+      <p class="dir__tag">Monochrome restraint. The work area floats as one canvas over the app floor; hierarchy is surface lift and hairlines; status is a glyph and a word, never a badge.</p>
+      <p class="dir__meta">Inter + JetBrains Mono · 6/12px radius · 38px rows</p>
+    </div>
+    <a class="shot" href="./dir-b-approvals.html"><iframe src="./dir-b-approvals.html" loading="lazy" tabindex="-1" title="Direction B — Approvals, dark"></iframe><span class="shot__label">Approvals · dark</span></a>
+    <a class="shot" href="./dir-b-ask.html"><iframe src="./dir-b-ask.html" loading="lazy" tabindex="-1" title="Direction B — Ask, dark"></iframe><span class="shot__label">Ask · dark</span></a>
+    <a class="shot" href="./dir-b-approvals.html?theme=light"><iframe src="./dir-b-approvals.html?theme=light" loading="lazy" tabindex="-1" title="Direction B — Approvals, light"></iframe><span class="shot__label">Approvals · light</span></a>
+    <div class="dir__links">
+      <a href="./dir-b-approvals.html">Approvals</a>
+      <a href="./dir-b-ask.html">Ask</a>
+      <a href="./dir-b-approvals.html?theme=light">Approvals · light</a>
+      <a href="./dir-b-ask.html?theme=light">Ask · light</a>
+    </div>
+  </section>
+
+  <section class="dir">
+    <div class="dir__head">
+      <h2 class="dir__name">C — Atelier</h2>
+      <p class="dir__tag">Warm architectural. Graphite warmed toward umber, the roomiest density, deep soft elevation; the approval record rendered like something expensive.</p>
+      <p class="dir__meta">Geist Sans + Geist Mono · 8/12px radius · 44px rows</p>
+    </div>
+    <a class="shot" href="./dir-c-approvals.html"><iframe src="./dir-c-approvals.html" loading="lazy" tabindex="-1" title="Direction C — Approvals, dark"></iframe><span class="shot__label">Approvals · dark</span></a>
+    <a class="shot" href="./dir-c-ask.html"><iframe src="./dir-c-ask.html" loading="lazy" tabindex="-1" title="Direction C — Ask, dark"></iframe><span class="shot__label">Ask · dark</span></a>
+    <a class="shot" href="./dir-c-approvals.html?theme=light"><iframe src="./dir-c-approvals.html?theme=light" loading="lazy" tabindex="-1" title="Direction C — Approvals, light"></iframe><span class="shot__label">Approvals · light</span></a>
+    <div class="dir__links">
+      <a href="./dir-c-approvals.html">Approvals</a>
+      <a href="./dir-c-ask.html">Ask</a>
+      <a href="./dir-c-approvals.html?theme=light">Approvals · light</a>
+      <a href="./dir-c-ask.html?theme=light">Ask · light</a>
+    </div>
+  </section>
+</div>
+
+<section class="verdict">
+  <h2>Ranking (design lead)</h2>
+  <ol>
+    <li><b>A — Meridian.</b> I would ship this. Round 1 failed by changing nothing, not by keeping the character — A moves every token that caused the flatness (six-step ladder, Plex/JetBrains, 4/8px geometry, real elevation, 40px rows) while keeping the two things that are actually brand: the cold hue family and the cherenkov accent. Best queue-clearing screen of the three. Caveat, stated honestly: it clears the stranger test with the smallest margin — "same brand, new product."</li>
+    <li><b>B — Hairline.</b> The most disciplined execution and the best Ask screen; instantly distinct from today. Second because it spends the product’s identity to get there — it reads as excellent generic modern software — and glyph-only status gives an approver a smaller scanning signal than tinted pills.</li>
+    <li><b>C — Atelier.</b> The strongest first impression; the Tier-3 wire-transfer sheet looks like a document worth signing. Third because it optimises the demo over the Tuesday afternoon: 44px rows cost density in every governance list, and warm-plus-gold is the largest brand departure.</li>
+  </ol>
+</section>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  function fit() {
+    document.querySelectorAll('.shot').forEach(function (w) {
+      var f = w.querySelector('iframe');
+      if (f) f.style.transform = 'scale(' + (w.clientWidth / 1440) + ')';
+    });
+  }
+  addEventListener('resize', fit); addEventListener('load', fit); fit();
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'ne-flip') {
+      var light = !root.hasAttribute('data-theme');
+      if (light) root.setAttribute('data-theme', 'light'); else root.removeAttribute('data-theme');
+      e.target.textContent = light ? '◐ Dark chrome' : '◑ Light chrome';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

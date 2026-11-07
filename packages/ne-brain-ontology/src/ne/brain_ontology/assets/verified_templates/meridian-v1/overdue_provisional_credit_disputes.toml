@@ -1,0 +1,35 @@
+template_id = "overdue-provisional-credit-disputes"
+version = 1
+description = "Every open Meridian debit-card dispute past its provisional-credit deadline under the CURRENT dispute SOP, in one call with NO arguments: a dispute qualifies when its status is open, no provisional credit is recorded, and the servicing snapshot's as_of_date is strictly PAST the dispute's materialised provisional_credit_deadline_date (a deadline falling ON the as-of date is deadline day, not overdue). The deadline is a load-time-materialised fact, not per-query arithmetic: trusted code computed it from the dispute's own notice_date and the current SOP's business-day tier (weekends skipped), and each row carries that provenance — the tier applied (provisional_credit_deadline_business_days) and the policy it was computed under (provisional_credit_deadline_policy) — beside the two date cells the overdue comparison actually reads. Every value in the filter is a served cell; the caller supplies nothing."
+max_rows = 50
+sparql = """
+SELECT ?dispute ?dispute_id ?customer_id ?status ?notice_date ?amount_cents ?amount_dollars ?credit_amount_recorded ?provisional_credit_deadline_date ?provisional_credit_deadline_business_days ?provisional_credit_deadline_policy ?as_of_date WHERE {
+  #BINDINGS#
+  ?dispute a <https://neutron.enterprise/schema/meridian/RegEDispute> .
+  ?dispute <https://neutron.enterprise/schema/meridian/dispute_id> ?dispute_id .
+  ?dispute <https://neutron.enterprise/schema/meridian/customer_id> ?customer_id .
+  ?dispute <https://neutron.enterprise/schema/meridian/status> ?status .
+  ?dispute <https://neutron.enterprise/schema/meridian/notice_date> ?notice_date .
+  ?dispute <https://neutron.enterprise/schema/meridian/amount_cents> ?amount_cents .
+  ?dispute <https://neutron.enterprise/schema/meridian/amount_dollars> ?amount_dollars .
+  ?dispute <https://neutron.enterprise/schema/meridian/credit_amount_recorded> ?credit_amount_recorded .
+  ?dispute <https://neutron.enterprise/schema/meridian/provisional_credit_deadline_date> ?provisional_credit_deadline_date .
+  ?dispute <https://neutron.enterprise/schema/meridian/provisional_credit_deadline_business_days> ?provisional_credit_deadline_business_days .
+  ?dispute <https://neutron.enterprise/schema/meridian/provisional_credit_deadline_policy> ?provisional_credit_deadline_policy .
+  ?dispute <https://neutron.enterprise/schema/meridian/as_of_date> ?as_of_date .
+  FILTER(?status = "open")
+  FILTER(?credit_amount_recorded = false)
+  FILTER(?as_of_date > ?provisional_credit_deadline_date)
+}
+"""
+
+[scope]
+graph_classes = ["bank.dispute.read"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["dispute", "dispute_id", "customer_id", "status", "notice_date", "amount_cents", "amount_dollars", "credit_amount_recorded", "provisional_credit_deadline_date", "provisional_credit_deadline_business_days", "provisional_credit_deadline_policy", "as_of_date"]
+citation_var = "dispute"
+contributor_vars = ["dispute"]
+source_status = "source_bearing"
+count_total_rows = true

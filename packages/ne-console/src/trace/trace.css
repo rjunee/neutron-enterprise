@@ -1,0 +1,478 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §13b — the trace drill-down: a calm run overview, the aggregates table, and
+ * a governance-first vertical timeline. Every value resolves through a
+ * tokens.css property.
+ */
+
+.ne-trace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.ne-trace__overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius) * 2);
+}
+
+.ne-trace__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.ne-trace__verdict,
+.ne-trace__run {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  font: var(--type-body);
+  color: var(--text);
+}
+
+/* The verdict's REACH is the server's own sentence and it is a long one — it
+ * names the anchor entry, the records re-hashed on this call, and how long ago
+ * the prefix they extend was verified in full. The strip is a line, not a
+ * paragraph, so the line DISCLOSES it: this variant is rendered as a <button>,
+ * and the dotted underline plus the caret below say there is more of it. It was
+ * a `title` tooltip, which no keyboard and no touch screen can reach — and on
+ * THIS screen the hidden sentence is the only thing qualifying the words
+ * "Entire audit chain".
+ *
+ * SAME MARKER, SAME RULE, SAME WORDS AND SAME SHAPE AS /audit's STRIP, because
+ * it is the same verdict — and that sentence was FALSE while it sat over a
+ * `title` tooltip and /audit had already become a button and a paragraph. What
+ * is shared is everything a reader depends on: when the disclosure appears
+ * (`chainScope`, VALID and not a full walk), the dotted underline and ▾/▴, the
+ * button semantics, and the server's `detail` verbatim. What differs is only
+ * each screen's own type and surface — this strip is body type on a panel card,
+ * /audit's is cell type in a toolbar row — and that is the idiom, not the rule.
+ * Not a colour either way: the strip's one colour belongs to the pill.
+ *
+ * The three properties the bare `button` element rule would otherwise lend are
+ * declared here, on the rule that names the control, along with the font it
+ * would otherwise take from the browser instead of from the <p> it sits in:
+ * this is text in a status strip, so it draws no surface of its own and says so
+ * explicitly. */
+.ne-trace__verdictline--scoped {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: var(--type-body);
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+}
+
+/* The control has to SHOW where the keyboard is, or "reachable with a Tab"
+ * means reachable and invisible. Same ring the rest of the product draws. */
+.ne-trace__verdictline--scoped:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* The caret is the disclosure's visual state. IT IS PART OF THE ACCESSIBLE NAME,
+ * NOT OUTSIDE IT — this comment used to claim the opposite. accname 1.2 step 2F
+ * clause ii appends `::before`/`::after` content to the name computed from a
+ * node's descendants, and Chrome and Firefox both do it, so the button really
+ * announces "… ▾". Harmless as shipped: the served sentence still LEADS the
+ * name and `aria-expanded` carries the open/closed state for assistive tech, so
+ * the caret is a trailing glyph rather than the state anything relies on. Same
+ * ▾/▴ pair /audit's strip uses. */
+.ne-trace__verdictline--scoped::after {
+  content: " ▾";
+}
+
+.ne-trace__verdictline--scoped[aria-expanded="true"]::after {
+  content: " ▴";
+}
+
+/* The revealed sentence. Inside the overview card, under the head row it
+ * qualifies — so it reads as a caveat on THAT verdict and not as a second
+ * card. The raised-panel treatment this screen's tiles already use, never the
+ * break band's red: this is a caveat on a PASSING verdict, and the fault colour
+ * stays reserved for a break.
+ * STATIC — no transition, no keyframes, nothing for
+ * `prefers-reduced-motion: reduce` to have to collapse. */
+.ne-trace__reach {
+  margin: 0;
+  padding: var(--space-12) var(--space-16);
+  background: var(--panel-raised);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius) * 2);
+  color: var(--text);
+  font: var(--type-body);
+}
+
+.ne-trace__runlabel,
+.ne-trace__tilelabel {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-trace__break {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--red);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--rule);
+}
+
+/* ---- rollup tiles ------------------------------------------------------- */
+
+.ne-trace__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-8);
+}
+
+.ne-trace__tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-16);
+  background: var(--panel-raised);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius) * 2);
+}
+
+.ne-trace__tilevalue {
+  font: var(--type-lead);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ---- sections ----------------------------------------------------------- */
+
+.ne-trace__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-trace__sectionhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.ne-trace__sectioncopy {
+  margin: var(--space-4) 0 0;
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-trace__heading {
+  font: var(--type-section);
+  color: var(--text);
+  margin: 0;
+}
+
+.ne-trace__body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+
+.ne-trace__tree {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius) * 2);
+  overflow: hidden;
+}
+
+.ne-trace__treeempty {
+  margin: 0;
+  padding: var(--space-24);
+  font: var(--type-body);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* ---- span rows ---------------------------------------------------------- */
+
+.ne-trace__span {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-12);
+  min-height: 64px;
+  padding: var(--space-12) var(--space-16);
+  padding-left: calc(var(--space-16) + var(--space-16) * var(--ne-span-depth, 0));
+  border-bottom: 1px solid var(--rule);
+  font: var(--type-body);
+  color: var(--text);
+}
+
+.ne-trace__span:last-child {
+  border-bottom: none;
+}
+
+.ne-trace__span--interactive {
+  cursor: pointer;
+}
+
+.ne-trace__span--interactive:hover {
+  background: var(--panel-raised);
+}
+
+.ne-trace__span:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: -2px;
+}
+
+.ne-trace__span--selected {
+  background: var(--panel-raised);
+  box-shadow: inset 3px 0 0 var(--cherenkov);
+}
+
+.ne-trace__rail {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+}
+
+.ne-trace__rail::after {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: calc(var(--space-12) * -1 - 1px);
+  left: 50%;
+  width: 1px;
+  background: var(--rule-strong);
+}
+
+.ne-trace__span:last-child .ne-trace__rail::after {
+  display: none;
+}
+
+.ne-trace__marker {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--state-gated);
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 0 0 3px var(--panel);
+}
+
+.ne-trace__span[data-lane-tier="local"] .ne-trace__marker,
+.ne-trace__span[data-state="allow"] .ne-trace__marker,
+.ne-trace__span[data-state="allowed"] .ne-trace__marker,
+.ne-trace__span[data-state="approved"] .ne-trace__marker,
+.ne-trace__span[data-state="pass"] .ne-trace__marker,
+.ne-trace__span[data-state="success"] .ne-trace__marker,
+.ne-trace__span[data-state="succeeded"] .ne-trace__marker {
+  border-color: var(--state-affirm);
+}
+
+.ne-trace__span[data-lane-tier="frontier"] .ne-trace__marker,
+.ne-trace__span[data-state="pending"] .ne-trace__marker,
+.ne-trace__span[data-state="requested"] .ne-trace__marker,
+.ne-trace__span[data-state="required"] .ne-trace__marker {
+  border-color: var(--amber);
+}
+
+.ne-trace__span[data-state="deny"] .ne-trace__marker,
+.ne-trace__span[data-state="denied"] .ne-trace__marker,
+.ne-trace__span[data-state="blocked"] .ne-trace__marker,
+.ne-trace__span[data-state="failed"] .ne-trace__marker,
+.ne-trace__span[data-state="rejected"] .ne-trace__marker {
+  border-color: var(--red);
+}
+
+.ne-trace__spancontent {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-trace__spanhead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+}
+
+.ne-trace__spankind {
+  font: var(--type-small);
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.ne-trace__spanseq {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-trace__spanname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.ne-trace__spanfacts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.ne-trace__typedfact,
+.ne-trace__spanfact {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 2px var(--space-8);
+  font: var(--type-small);
+  color: var(--text-dim);
+  background: var(--dim-tint);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  white-space: normal;
+}
+
+.ne-trace__typedfactlabel {
+  color: var(--text-dim);
+}
+
+.ne-trace__typedfact--affirm {
+  color: var(--state-affirm);
+  background: var(--affirm-tint);
+}
+
+.ne-trace__typedfact--caution {
+  color: var(--amber);
+  background: var(--amber-tint);
+}
+
+.ne-trace__typedfact--danger {
+  color: var(--red);
+  background: var(--red-tint);
+}
+
+/* The task a model call served, beside the model that served it. */
+.ne-trace__spantask {
+  margin-left: var(--space-8);
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+/* A fallback served this call — the declared candidate did not. Marked on the
+   row because a routing downgrade that only appears in a detail pane is a
+   routing downgrade nobody sees. */
+.ne-trace__spanfallback {
+  margin-left: var(--space-8);
+  font: var(--type-small);
+  font-weight: 600;
+  color: var(--amber);
+  background: var(--amber-tint);
+  border-radius: 4px;
+  padding: 1px var(--space-4);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* A served zero: the fetch matched nothing. Distinct at a glance. */
+.ne-trace__spanfact--empty {
+  color: var(--amber);
+  background: var(--amber-tint);
+  border-radius: 4px;
+  padding: 1px var(--space-4);
+  font-weight: 600;
+}
+
+.ne-trace__spanmeta {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.ne-trace__spanlane,
+.ne-trace__spandur {
+  font: var(--type-small);
+  color: var(--text-dim);
+}
+
+.ne-trace__spandur {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ne-trace__disclosurebtn {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  z-index: 1;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: var(--space-4);
+  transform: translate(-50%, -50%);
+}
+
+.ne-trace__disclosurebtn:hover {
+  color: var(--text);
+}
+
+@media (max-width: 64rem) {
+  .ne-trace__body {
+    flex-direction: column;
+  }
+
+  .ne-trace__body > .ne-detail {
+    width: 100% !important;
+    max-width: none;
+  }
+
+  .ne-trace__body > .ne-detail .ne-detail__grip {
+    display: none;
+  }
+}
+
+@media (max-width: 48rem) {
+  .ne-trace__overview {
+    padding: var(--space-12);
+  }
+
+  .ne-trace__tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .ne-trace__span {
+    grid-template-columns: 24px minmax(0, 1fr);
+    padding-right: var(--space-12);
+    padding-left: calc(var(--space-8) + var(--space-12) * var(--ne-span-depth, 0));
+  }
+
+  .ne-trace__spanmeta {
+    grid-column: 2;
+    align-items: flex-start;
+    flex-direction: row;
+    padding-top: 0;
+  }
+
+  .ne-trace__spanname {
+    white-space: normal;
+  }
+}

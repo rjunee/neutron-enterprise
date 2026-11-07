@@ -1,0 +1,44 @@
+[Unit]
+Description=Neutron confined inference target operator
+Requires=ne-inference-operator.socket ne-inference-provider-broker.socket
+After=docker.service ne-inference-operator.socket ne-inference-provider-broker.socket
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=10001
+Sockets=ne-inference-operator.socket
+UMask=0077
+Environment=AIR_GAP=true
+ExecStart=/usr/local/bin/ne-inference-operator --registry /etc/neutron/inference-operator/registry.json --adapter-manifest /etc/neutron/inference-operator/adapter-manifest.json --journal /var/lib/neutron/inference-operator/state.jsonl --socket /run/neutron/inference-operator/operator.sock --lifetime-lock /var/lib/neutron/inference-operator/operator.lock --systemd-socket --allowed-uid 10001 --allowed-gid 10001 --air-gap-file /etc/neutron/inference-operator/environment --provider-gid 10002
+RuntimeDirectory=neutron/inference-operator
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=yes
+StateDirectory=neutron/inference-operator
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run/neutron/inference-operator /run/lock /var/lib/neutron/inference-operator
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+# Docker remains AF_UNIX-only. The CPU adapter's exact 127.0.0.1:8091
+# one-token completion proof requires IPv4, but this root service may never
+# dial a provider or any other non-loopback address.
+RestrictAddressFamilies=AF_UNIX AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+SystemCallArchitectures=native
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

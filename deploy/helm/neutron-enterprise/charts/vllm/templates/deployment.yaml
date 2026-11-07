@@ -1,0 +1,146 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Deployment reproduction of deploy/compose/serve/compose.yaml's vllm / vllm-cpu
+# services (serve profile, default-OFF, render-only in CI). One Deployment named
+# `vllm` in BOTH modes so the gateway menu api_base http://vllm:8000/v1 resolves
+# either way. mode gpu|cpu selects the image/args/env; any other value fails the
+# render (fail-closed). uid/gid/fsGroup 1000; readOnlyRootFilesystem FALSE. Args
+# and telemetry-off env are byte-parity with serve compose (${VAR:-default}
+# defaults materialized); HOME=/tmp + PORT-agnostic are the documented non-root
+# adaptations. Byte-parity guardian: test_serve_render_behind_flag.
+{{- $mode := .Values.mode }}
+{{- if not (or (eq $mode "gpu") (eq $mode "cpu")) }}
+{{- fail (printf "vllm.mode must be gpu or cpu, got %q" $mode) }}
+{{- end }}
+{{- $m := index .Values $mode }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  labels:
+    app: vllm
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm
+  template:
+    metadata:
+      labels:
+        app: vllm
+        app.kubernetes.io/name: vllm
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 1000 "gid" 1000 "fsGroup" 1000 "openshift" .Values.global.openshift) | nindent 8 }}
+      # GPU scheduling is ALREADY gated by the nvidia.com/gpu resource limit
+      # below (the standard device-plugin request); these pass-throughs render
+      # nothing at defaults and let an operator pin the node pool if desired.
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: vllm
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" $m.image.repository "tag" $m.image.tag "digest" $m.image.digest) }}
+          # BYTE-PARITY with the serve compose command, ${VAR:-default} defaults
+          # materialized from values (modelDir/servedName).
+          args:
+            - "--model"
+            - {{ printf "/models/%s" $m.modelDir | quote }}
+            - "--served-model-name"
+            - {{ $m.servedName | quote }}
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8000"
+            - "--structured-outputs-config.backend"
+            - "xgrammar"
+            {{- if eq $mode "cpu" }}
+            # Qwen3-0.6B otherwise emits an in-band <think> prefix before the
+            # constrained JSON body. Keep the bounded CPU lane byte-aligned
+            # with its Compose command while leaving the GPU reasoning lane on.
+            - "--default-chat-template-kwargs"
+            - '{"enable_thinking":false}'
+            {{- end }}
+          env:
+            # C2 no-phone-home — byte-parity with serve compose.
+            - name: HF_HUB_OFFLINE
+              value: "1"
+            - name: HF_HUB_DISABLE_TELEMETRY
+              value: "1"
+            - name: VLLM_NO_USAGE_STATS
+              value: "1"
+            - name: DO_NOT_TRACK
+              value: "1"
+            # Non-root adaptation: vLLM writes ~/.cache etc.; HOME=/tmp keeps it
+            # on the writable emptyDir (the container runs uid 1000).
+            - name: HOME
+              value: "/tmp"
+            {{- if eq $mode "cpu" }}
+            - name: VLLM_CPU_KVCACHE_SPACE
+              value: {{ $m.kvCacheSpace | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8000
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" false) | nindent 12 }}
+          volumeMounts:
+            - name: models
+              mountPath: /models
+              readOnly: true
+            - name: shm
+              mountPath: /dev/shm
+            - name: tmp
+              mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- $res := deepCopy (.Values.resources | default dict) }}
+            {{- if eq $mode "gpu" }}
+            {{- $limits := (dig "limits" dict $res) }}
+            {{- $_ := set $limits "nvidia.com/gpu" .Values.gpu.gpuCount }}
+            {{- $_ := set $res "limits" $limits }}
+            {{- end }}
+            {{- toYaml $res | nindent 12 }}
+      volumes:
+        # Model weights: a pre-staged RWO PVC in a real deploy (HF_HUB_OFFLINE=1
+        # means the pod never downloads); emptyDir when unset so render/lint/CI
+        # stays green (a render-only artifact — the pod cannot serve without
+        # real weights). See deploy/helm/README.md "Serving".
+        - name: models
+          {{- if .Values.weights.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.weights.existingClaim }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shmSize }}
+        - name: tmp
+          emptyDir: {}

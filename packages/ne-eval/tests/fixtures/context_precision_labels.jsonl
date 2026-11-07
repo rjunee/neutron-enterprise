@@ -1,0 +1,4 @@
+{"item_id": "row-1", "variables": {"question": "What is the PTO accrual rate?", "reference_answer": "1.5 days per month.", "contexts": "New hires accrue 1.5 PTO days per month."}, "human_verdict": 1, "verdict_path": "verdict"}
+{"item_id": "row-2", "variables": {"question": "What is the PTO accrual rate?", "reference_answer": "1.5 days per month.", "contexts": "The office is open from 9am to 5pm."}, "human_verdict": 0, "verdict_path": "verdict"}
+{"item_id": "row-3", "variables": {"question": "Who approves large expenses?", "reference_answer": "A manager approves expenses over 500 USD.", "contexts": "Expenses over 500 USD require manager approval."}, "human_verdict": 1, "verdict_path": "verdict"}
+{"item_id": "row-4", "variables": {"question": "Who approves large expenses?", "reference_answer": "A manager approves expenses over 500 USD.", "contexts": "The cafeteria serves lunch at noon."}, "human_verdict": 0, "verdict_path": "verdict"}

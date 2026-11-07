@@ -1,0 +1,10 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-086 — engagement/CI-tunable Helm values slot for the Zarf air-gap package.
+#
+# Committed as an empty mapping so `zarf package create` renders a valid (no-op)
+# overlay by default. The zarf-package.yml CI workflow OVERWRITES this file with
+# deploy/helm/tests/values-kind.yaml (single-node resource/replica trims) before
+# `zarf package create`. Real engagements may drop sizing/HA overrides here.
+{}

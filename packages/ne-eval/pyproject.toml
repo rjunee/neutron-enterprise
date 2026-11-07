@@ -1,0 +1,44 @@
+[project]
+name = "ne-eval"
+version = "0.1.0"
+description = "Evaluation harness — native RAGAS-methodology metrics, versioned judge rubrics, promptfoo CI gate."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-envbuild",
+    # The C2 AIR_GAP fail-closed guard on the isolated ragas venv builder now comes
+    # from the stdlib-only leaf ne-net (NE-CKC10 / P2-23 consolidation).
+    "ne-net",
+    "pydantic>=2.11,<3",
+    "sqlalchemy>=2.0.51,<2.1",
+]
+
+[dependency-groups]
+# TEST-ONLY: retrieval-baseline suites import ne.brain test doubles (qdrant store,
+# hash embedder); src no longer imports ne.brain (its air-gap guard moved to
+# ne-net in NE-CKC10 / P2-23), so ne-brain is a dev/test dependency only.
+dev = ["ne-brain"]
+
+[project.scripts]
+ne-eval = "ne.eval.cli:main"
+
+[project.entry-points."ne.plugins.eval_suite"]
+rag = "ne.eval.suite:RagEvalSuite"
+
+[project.entry-points."ne.plugins.eval_judge"]
+gateway = "ne.eval.judge:GatewayJudge"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.eval"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-envbuild = { workspace = true }
+ne-net = { workspace = true }
+ne-brain = { workspace = true }

@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "messages": [
+    {
+      "type": "message",
+      "ts": "1720000000.000100",
+      "user": "U00000ADA",
+      "text": "kickoff thread",
+      "thread_ts": "1720000000.000100"
+    },
+    {
+      "type": "message",
+      "ts": "1720000005.000150",
+      "user": "U00000EVE",
+      "text": "reply to kickoff",
+      "thread_ts": "1720000000.000100"
+    }
+  ],
+  "response_metadata": {"next_cursor": ""}
+}

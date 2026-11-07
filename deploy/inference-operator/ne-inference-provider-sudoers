@@ -1,0 +1,4 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+Defaults:neutron-inference-provider !set_home, secure_path=/usr/sbin:/usr/bin:/sbin:/bin
+neutron-inference-provider ALL=(root) NOPASSWD: /opt/neutron/inference-operator/bin/provider-ssh-grant

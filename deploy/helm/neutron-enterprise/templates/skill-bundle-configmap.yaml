@@ -1,0 +1,11 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ne-skill-bundle
+  labels:
+    app.kubernetes.io/name: ne-skill-bundle
+    app.kubernetes.io/part-of: neutron-enterprise
+binaryData:
+  meridian-hardship-draft.SKILL.md: {{ .Files.Get "files/skills/meridian-hardship-draft/SKILL.md" | b64enc | quote }}

@@ -1,0 +1,103 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-086 — full air-gap Zarf package for the entire Neutron Enterprise platform.
+#
+# C2 (THE core guarantee): this package is the offline delivery vehicle. Run
+# `zarf package create` ONCE in the egress-open staging window (it vendors every
+# image below + the Helm umbrella chart into a single self-contained tarball);
+# `zarf package deploy` then needs ZERO egress — it pushes the vendored images
+# into Zarf's in-cluster registry and installs the chart with image refs
+# rewritten to that registry (###ZARF_REGISTRY### mutation by the Zarf agent).
+#
+# C11 (no digest drift): the three third-party image refs below are BYTE-COPIES
+# of the pins in deploy/helm/neutron-enterprise/values.yaml (== the pins in
+# deploy/compose/pilot/compose.yaml). The parity guardian
+# tools/ne-cli/tests/test_zarf_package.py fails CI if this set ever drifts from
+# the chart's rendered image set. Do NOT edit a digest here in isolation.
+#
+# C4: Zarf (zarf-dev/zarf, Apache-2.0) is a CUSTOMER-SIDE / CI packaging TOOL
+# exactly like helm/terraform — never shipped in the product runtime, never in
+# uv.lock. See deploy/airgap/zarf/README.md.
+kind: ZarfPackageConfig
+metadata:
+  name: neutron-enterprise
+  version: "0.1.0"
+  description: >-
+    NE-086 full air-gap bundle — installs the entire Neutron Enterprise platform
+    (Helm umbrella chart + every image) into a fully disconnected Kubernetes
+    cluster from one self-contained tarball. C2 offline-deploy, C11 digest-pinned.
+
+# Deploy-time variables (###ZARF_VAR_*### in the overlay values). Defaults match
+# the CI/values-ci.yaml fixture precedent; a real install passes the promoted
+# bundle's real hostname + config_hash via `zarf package deploy --set`.
+variables:
+  - name: NE_HOSTNAME
+    description: Console/API Ingress vhost (the NE_PILOT_HOSTNAME analogue).
+    default: "zarf.ci.local"
+  - name: NE_CONFIG_HASH
+    description: >-
+      64-hex platform config_hash for the promoted bundle. Default is the
+      all-zero fixture value (matches values-ci.yaml); real installs pass the
+      promoted bundle's config_hash — see README §runbook.
+    default: "0000000000000000000000000000000000000000000000000000000000000000"
+
+# Create-time constants (###ZARF_CONST_*### in the overlay values). Baked into
+# the package at `zarf package create` from the --set package templates below,
+# which are themselves fed from `ne release push`'s digest.json (owner dec ii:
+# the first-party ne-app image has no public registry pin — its local push
+# digest IS the C11 pin, captured at package-create).
+constants:
+  - name: NE_APP_REPOSITORY
+    value: "###ZARF_PKG_TMPL_NE_APP_REPOSITORY###"
+  - name: NE_APP_DIGEST
+    value: "###ZARF_PKG_TMPL_NE_APP_DIGEST###"
+
+components:
+  - name: neutron-platform
+    required: true
+    charts:
+      - name: neutron-enterprise
+        # Resolves to deploy/helm/neutron-enterprise (the merged NE-071a/b
+        # umbrella chart) — Zarf vendors the chart + its file://charts/*
+        # subcharts into the package tarball.
+        localPath: ../../helm/neutron-enterprise
+        # MUST equal Chart.yaml's version (guardian reads it live, not hardcoded).
+        version: 0.1.0
+        namespace: neutron
+        valuesFiles:
+          - values/zarf-overlay.yaml
+          - values/zarf-tuning.yaml
+    images:
+      # --- Third-party pins: BYTE-COPIES of deploy/helm/neutron-enterprise/
+      # values.yaml (== deploy/compose/pilot/compose.yaml). C11 no-drift is
+      # enforced by test_zarf_package.py::test_zarf_third_party_images_byte_
+      # match_chart_and_compose and ::test_zarf_images_equal_chart_rendered_set.
+      - postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+      - quay.io/keycloak/keycloak:26.7.4@sha256:82a77884f3af238beab1e7afd63b5f530e1b5c0590bd7aa60b40a40463e29b2c
+      - openpolicyagent/opa:1.18.2-debug@sha256:7ee75476b179699061e61e277e1aafa7d13e126034fcdcba4beca8d233c3e865
+      # --- NE-071c brain services (join the DEFAULT render, profiles.brain
+      # default-ON — so the byte-parity default image set grew by exactly these
+      # two). TEI weights are NOT vendored: sealed installs pre-stage the cache
+      # PVCs (tei.hfOffline="1") or set profiles.brain=false. otel-collector and
+      # vllm are DELIBERATELY absent — obs/serve are default-OFF profiles and the
+      # guardian equality is against the DEFAULT render (test_zarf_package.py).
+      - qdrant/qdrant:v1.18.2@sha256:75eab8c4ba42096724fdcfde8b4de0b5713d529dde32f285a1f86fdcb2c9e50c
+      - ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3@sha256:ad950d30878eceb72aaf32024d26fa2b1d04a75304fa0b4776b49aa1941fea07
+      # --- First-party ne-app image: create-time --set token. No committed
+      # literal digest exists (owner dec ii); `ne release push` supplies
+      # repo:tag@digest at package-create. RESOLVED in the built package — the
+      # guardian's contents assert refuses any surviving ### token.
+      - "###ZARF_PKG_TMPL_NE_APP_IMAGE###"
+    # PRE-009C: carry the Pilot-only protected-generation cutover kit in the
+    # same disconnected artifact. These are inert package payloads: Zarf does
+    # not execute them during Kubernetes deployment and they make no populated-
+    # Kubernetes migration claim. The operator installs/runs the exact `ne`
+    # command on the Pilot host under the runbook's upgrade lock.
+    files:
+      - source: ../../../tools/ne-cli
+        target: /opt/neutron/pilot-cutover/tools/ne-cli
+      - source: ../../../tools/ne-backup
+        target: /opt/neutron/pilot-cutover/tools/ne-backup
+      - source: ../../compose/pilot/compose.yaml
+        target: /opt/neutron/pilot-cutover/deploy/compose/pilot/compose.yaml

@@ -1,0 +1,31 @@
+[project]
+name = "ne-meridian-seed"
+version = "0.1.0"
+description = "Offline-testable SharePoint and Salesforce seeder for Meridian Bank fixtures."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-acme-seed",
+    "ne-connect",
+    "ne-meridian",
+    "pydantic>=2.13.4,<3",
+]
+
+[project.scripts]
+ne-meridian-seed = "ne.meridian_seed.cli:main"
+
+[dependency-groups]
+dev = ["httpx>=0.28.1,<1"]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.meridian_seed"
+namespace = true
+
+[tool.uv.sources]
+ne-acme-seed = { workspace = true }
+ne-connect = { workspace = true }
+ne-meridian = { workspace = true }

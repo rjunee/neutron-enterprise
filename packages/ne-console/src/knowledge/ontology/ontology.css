@@ -1,0 +1,584 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The read-only Ontology inspector. Human descriptions lead; identifiers and
+ * immutable fingerprints stay in explicit technical disclosures.
+ */
+
+.ne-ontology,
+.ne-ontology .ne-screen {
+  min-width: 0;
+  width: 100%;
+}
+
+.ne-ontology__tabs,
+.ne-ontology__view-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.ne-ontology__tabs button,
+.ne-ontology__view-tabs button {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  padding: var(--space-4) var(--space-8);
+  color: var(--text-dim);
+  font: var(--type-cell);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ne-ontology__tabs button:hover,
+.ne-ontology__view-tabs button:hover {
+  color: var(--text);
+}
+
+.ne-ontology__tabs button:focus-visible,
+.ne-ontology__view-tabs button:focus-visible,
+.ne-ontology button:focus-visible,
+.ne-ontology summary:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+.ne-ontology__tabs button[aria-selected="true"],
+.ne-ontology__view-tabs button[aria-pressed="true"] {
+  border-bottom-color: var(--cherenkov);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.ne-ontology__panel,
+.ne-ontology__overview,
+.ne-ontology__explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.ne-ontology__states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+.ne-ontology__state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  border: 1px solid var(--rule);
+  border-left-width: var(--space-4);
+  padding: var(--space-12);
+  background: var(--panel);
+}
+
+.ne-ontology__state span {
+  color: var(--text-dim);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.ne-ontology__state strong {
+  color: var(--text);
+  font: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+.ne-ontology__state--healthy,
+.ne-ontology__state--loaded,
+.ne-ontology__state--configured {
+  border-left-color: var(--state-affirm);
+}
+
+.ne-ontology__state--issues,
+.ne-ontology__state--not_loaded,
+.ne-ontology__state--unconfigured {
+  border-left-color: var(--amber);
+}
+
+.ne-ontology__state--invalid,
+.ne-ontology__state--unavailable {
+  border-left-color: var(--red);
+}
+
+.ne-ontology__tiers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--rule);
+}
+
+.ne-ontology__tiers article {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-16);
+}
+
+.ne-ontology__tiers article + article {
+  border-left: 1px solid var(--rule);
+}
+
+.ne-ontology__tiers strong {
+  color: var(--text);
+  font: var(--type-section);
+}
+
+.ne-ontology__tiers span,
+.ne-ontology__shared,
+.ne-ontology__standards > p {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-body);
+}
+
+.ne-ontology__technical {
+  min-width: 0;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.ne-ontology__technical summary {
+  padding: var(--space-8) var(--space-12);
+  color: var(--text);
+  font: var(--type-body);
+  cursor: pointer;
+}
+
+.ne-ontology__technical dl,
+.ne-ontology__rule-detail dl,
+.ne-ontology__issue-detail dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) minmax(0, 1fr);
+  gap: var(--space-8) var(--space-16);
+  margin: 0;
+  border-top: 1px solid var(--rule);
+  padding: var(--space-12);
+}
+
+.ne-ontology__technical dt,
+.ne-ontology__rule-detail dt,
+.ne-ontology__issue-detail dt {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-ontology__technical dd,
+.ne-ontology__rule-detail dd,
+.ne-ontology__issue-detail dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font: var(--type-cell);
+  overflow-wrap: anywhere;
+}
+
+.ne-ontology code {
+  color: var(--text-dim);
+  font: var(--type-mono);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.ne-ontology__explorer-grid,
+.ne-ontology__rules-layout,
+.ne-ontology__issues-layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 2fr) minmax(20rem, 3fr);
+  gap: var(--space-16);
+  align-items: start;
+  min-width: 0;
+}
+
+.ne-ontology__catalog,
+.ne-ontology__rule-list,
+.ne-ontology__issue-list {
+  min-width: 0;
+}
+
+.ne-ontology__tree,
+.ne-ontology__tree ul,
+.ne-ontology__relationships,
+.ne-ontology__rule-list ul,
+.ne-ontology__issue-list,
+.ne-ontology__issue-detail ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-ontology__tree ul {
+  margin-left: var(--space-16);
+  border-left: 1px solid var(--rule);
+  padding-left: var(--space-8);
+}
+
+.ne-ontology__tree li + li,
+.ne-ontology__rule-list li + li,
+.ne-ontology__issue-list li + li {
+  margin-top: var(--space-4);
+}
+
+.ne-ontology__concept-button,
+.ne-ontology__rule-list button,
+.ne-ontology__issue-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: var(--space-8);
+  background: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ne-ontology__concept-button:hover,
+.ne-ontology__rule-list button:hover,
+.ne-ontology__issue-list button:hover {
+  border-color: var(--rule-strong);
+  background: var(--dim-tint);
+}
+
+.ne-ontology__concept-button--selected,
+.ne-ontology__rule-list button[aria-current="true"],
+.ne-ontology__issue-list button[aria-current="true"] {
+  border-color: var(--cherenkov);
+  background: var(--glow);
+}
+
+.ne-ontology__concept-button span,
+.ne-ontology__badge,
+.ne-ontology__required {
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 0 var(--space-4);
+  color: var(--text-dim);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.ne-ontology__concept,
+.ne-ontology__rule-detail,
+.ne-ontology__issue-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+  border: 1px solid var(--rule);
+  padding: var(--space-16);
+  background: var(--panel);
+}
+
+.ne-ontology__concept header,
+.ne-ontology__rule-detail header,
+.ne-ontology__issue-detail header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+
+.ne-ontology h3,
+.ne-ontology h4,
+.ne-ontology__concept p,
+.ne-ontology__rule-detail p {
+  margin: 0;
+}
+
+.ne-ontology h3 {
+  color: var(--text);
+  font: var(--type-section);
+}
+
+.ne-ontology h4 {
+  color: var(--text-dim);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.ne-ontology__concept p,
+.ne-ontology__rule-detail p {
+  color: var(--text-dim);
+  font: var(--type-body);
+}
+
+.ne-ontology__field-table-wrap,
+.ne-ontology__catalog {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ne-ontology__field-table,
+.ne-ontology__list {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-ontology__field-table th,
+.ne-ontology__field-table td,
+.ne-ontology__list th,
+.ne-ontology__list td {
+  border-bottom: 1px solid var(--rule);
+  padding: var(--space-8);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ne-ontology__field-table td small,
+.ne-ontology__inline-link {
+  display: block;
+  margin-top: var(--space-4);
+}
+
+.ne-ontology__required {
+  margin-left: var(--space-4);
+}
+
+.ne-ontology__inline-link,
+.ne-ontology__relationships button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cherenkov);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ne-ontology__relationships {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-ontology__relationships li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, auto) auto minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: center;
+  border-bottom: 1px solid var(--rule);
+  padding: var(--space-8);
+}
+
+.ne-ontology__relationships span {
+  display: flex;
+  flex-direction: column;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-ontology__rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.ne-ontology__rule-list button,
+.ne-ontology__issue-list button {
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.ne-ontology__rule-list button span,
+.ne-ontology__rule-list button small,
+.ne-ontology__issue-list button span,
+.ne-ontology__issue-list button small {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-ontology__count {
+  margin: 0 0 var(--space-8);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-ontology__issue-detail ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.ne-ontology__issue-detail li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-left: 2px solid var(--amber);
+  padding-left: var(--space-8);
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-ontology__standards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.ne-ontology__standards dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.ne-ontology__standards dl > div {
+  min-width: 0;
+  border: 1px solid var(--rule);
+  padding: var(--space-16);
+  background: var(--panel);
+}
+
+.ne-ontology__standards dt {
+  color: var(--text);
+  font: var(--type-section);
+}
+
+.ne-ontology__standards dd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: var(--space-8) 0 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-ontology__artifact-failure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-left: var(--space-4) solid var(--red);
+  padding: var(--space-12);
+  background: var(--red-tint);
+  color: var(--text);
+  font: var(--type-body);
+}
+
+.ne-ontology__artifact-failure span {
+  color: var(--text-dim);
+}
+
+@media (max-width: 900px) {
+  .ne-ontology__states,
+  .ne-ontology__tiers,
+  .ne-ontology__standards dl {
+    grid-template-columns: 1fr;
+  }
+
+  .ne-ontology__tiers article + article {
+    border-top: 1px solid var(--rule);
+    border-left: 0;
+  }
+
+  .ne-ontology__explorer-grid,
+  .ne-ontology__rules-layout,
+  .ne-ontology__issues-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .ne-ontology__technical dl,
+  .ne-ontology__rule-detail dl,
+  .ne-ontology__issue-detail dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ne-ontology__relationships li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-ontology *,
+  .ne-ontology *::before,
+  .ne-ontology *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Concept relationship graph — the visual for the relationships view. Drawn
+ * from the generated model's own concepts and relationships; theme-aware via
+ * the shared tokens. */
+.ne-ontology__graph {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: var(--space-8);
+  min-width: 0;
+}
+
+.ne-ontology__graph svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 26rem;
+  margin: 0 auto;
+}
+
+.ne-ontology__graph-edge {
+  stroke: var(--text-dim);
+  stroke-width: 1.25;
+  fill: none;
+}
+
+.ne-ontology__graph-arrow {
+  fill: var(--text-dim);
+}
+
+.ne-ontology__graph-edge-label {
+  fill: var(--text-dim);
+  font-size: 0.6875rem;
+  paint-order: stroke;
+  stroke: var(--panel);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.ne-ontology__graph-node {
+  cursor: pointer;
+}
+
+.ne-ontology__graph-node rect {
+  fill: var(--panel);
+  stroke: var(--rule);
+  stroke-width: 1.25;
+}
+
+.ne-ontology__graph-node:hover rect {
+  stroke: var(--text);
+}
+
+.ne-ontology__graph-node:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+.ne-ontology__graph-node--selected rect {
+  stroke: var(--cherenkov);
+  stroke-width: 2;
+}
+
+.ne-ontology__graph-node text {
+  fill: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+}

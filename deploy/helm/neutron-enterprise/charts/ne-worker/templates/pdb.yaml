@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# NE-089/NE-071b HA production-profile surface — a vanilla policy/v1
+# PodDisruptionBudget for the ne-worker Deployment. The durable worker is
+# DBOS-safe at N>1 (share-by-storage; in-flight turns re-run from the top on
+# pod loss), so a PDB is safe. Gated OFF by default (podDisruptionBudget.enabled:
+# false in values.yaml) so this file renders NOTHING unless an operator opts in
+# via examples/values-production-ha.yaml — the byte-parity guardians assert the
+# default render is unaffected.
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ne-worker
+  labels:
+    app: ne-worker
+    app.kubernetes.io/name: ne-worker
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app: ne-worker
+{{- end }}

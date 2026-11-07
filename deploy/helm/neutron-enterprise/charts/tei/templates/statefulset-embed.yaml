@@ -1,0 +1,96 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# StatefulSet reproduction of deploy/compose/pilot/compose.yaml's tei-embed
+# service (brain profile). The image is the SHARED tei pin (both embed + rerank
+# run the same text-embeddings-inference image, different --model-id — mirrors
+# compose). uid/gid/fsGroup 1000; readOnlyRootFilesystem FALSE.
+#
+# NON-ROOT PORT ADAPTATION: the TEI image defaults to listening on port 80,
+# which a non-root (uid 1000) process cannot bind (< 1024 privileged). We set
+# PORT=8080 so it binds unprivileged; the Service (service-embed.yaml) maps
+# port 80 → targetPort 8080, keeping NE_API_TEI_URL=http://tei-embed:80
+# byte-identical to compose.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tei-embed
+  labels:
+    app: tei-embed
+    app.kubernetes.io/name: tei-embed
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  serviceName: tei-embed
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tei-embed
+  template:
+    metadata:
+      labels:
+        app: tei-embed
+        app.kubernetes.io/name: tei-embed
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 1000 "gid" 1000 "fsGroup" 1000 "openshift" .Values.global.openshift) | nindent 8 }}
+      containers:
+        - name: tei-embed
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" .Values.image.repository "tag" .Values.image.tag "digest" .Values.image.digest) }}
+          # BYTE-EQUAL to the compose tei-embed `command`.
+          args:
+            - "--model-id"
+            - {{ .Values.embed.modelId | quote }}
+          env:
+            - name: HF_HUB_DISABLE_TELEMETRY
+              value: "1"
+            # Compose ${NE_PILOT_HF_OFFLINE:-0} analogue; default "0" (first boot
+            # downloads weights). Air-gap sets "1" after pre-staging the cache.
+            - name: HF_HUB_OFFLINE
+              value: {{ .Values.hfOffline | quote }}
+            # THE non-root adaptation — bind 8080 (uid 1000 cannot bind :80).
+            - name: PORT
+              value: "8080"
+          ports:
+            - name: http
+              containerPort: 8080
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" false) | nindent 12 }}
+          volumeMounts:
+            - name: cache
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+          # startupProbe covers the ~15-min first-boot model-download window
+          # (periodSeconds 10 x failureThreshold 90 = 900s) before liveness kicks
+          # in; tcpSocket because HF_HUB_OFFLINE first-boot has no HTTP yet.
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.embed.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: cache
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.embed.storage.storageClassName }}
+        storageClassName: {{ .Values.embed.storage.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.embed.storage.size }}

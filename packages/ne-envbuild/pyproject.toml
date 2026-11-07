@@ -1,0 +1,17 @@
+[project]
+name = "ne-envbuild"
+version = "0.1.0"
+description = "Sidecar-venv env-builder leaf: atomic-marker + filelock ensure-venv shared by ne-brain (docling), ne-govern (presidio), ne-schema (linkml codegen). NE-CKC8."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "filelock>=4.2.1,<5",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.envbuild"
+namespace = true

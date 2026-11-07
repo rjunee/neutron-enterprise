@@ -1,0 +1,18 @@
+template_id = "accounts-directory"
+version = 1
+description = "Every account visible to the caller, with its name (a zero-arg directory)."
+sparql = """
+SELECT ?account ?name WHERE {
+  #BINDINGS#
+  ?account a <https://neutron.enterprise/schema/operational/Account> .
+  ?account <https://neutron.enterprise/schema/operational/name> ?name .
+}
+"""
+
+[scope]
+graph_classes = ["alpha", "beta"]
+result_shape = "enumerable"
+
+[answer]
+columns = ["account", "name"]
+citation_var = "account"

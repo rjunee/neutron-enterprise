@@ -1,0 +1,48 @@
+{
+  "python": {
+    "executable": "/usr/bin/python3.12",
+    "isolated_flags": "-IS",
+    "requires": ">=3.12,<3.14"
+  },
+  "schema": "ne-vastai-offline-lock-v1",
+  "upstream": {
+    "commit": "bc7356483dd0f922ee17975c5357741f0d5d81fc",
+    "installed_sha256": "b4f51244585015e755b1d60141e6f4856e3af0e6408a2db9c4fdcad59f5a771a",
+    "name": "vast-cli",
+    "source_sha256": "efb81f79dfbb2a6a8a8230c73ffb0922c2c72925ad103eee5e197d575e1a8a91",
+    "tag": "v1.5.2",
+    "version": "1.5.2"
+  },
+  "wheels": [
+    {
+      "filename": "certifi-2026.7.22-py3-none-any.whl",
+      "name": "certifi",
+      "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+      "version": "2026.7.22"
+    },
+    {
+      "filename": "charset_normalizer-3.5.1-py3-none-any.whl",
+      "name": "charset-normalizer",
+      "sha256": "6df0ec430f9a831772c23ca5a224cba36517a58a84bb32c32bb59a9fa67c47f6",
+      "version": "3.5.1"
+    },
+    {
+      "filename": "idna-3.19-py3-none-any.whl",
+      "name": "idna",
+      "sha256": "815e7be7a7806d54abb586dc943addc79e8b2ee16915059658cbeff4b1b43bf4",
+      "version": "3.19"
+    },
+    {
+      "filename": "requests-2.34.2-py3-none-any.whl",
+      "name": "requests",
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+      "version": "2.34.2"
+    },
+    {
+      "filename": "urllib3-2.8.0-py3-none-any.whl",
+      "name": "urllib3",
+      "sha256": "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3",
+      "version": "2.8.0"
+    }
+  ]
+}

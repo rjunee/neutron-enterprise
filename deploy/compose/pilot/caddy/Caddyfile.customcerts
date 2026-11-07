@@ -1,0 +1,32 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Real-certificate variant of ./Caddyfile — identical routing, but TLS is served
+# from operator-provided certs mounted at /certs (bind ./certs:/certs:ro). Select
+# it by setting NE_PILOT_CADDYFILE=./caddy/Caddyfile.customcerts in the bundle
+# env before `ne up` (see README "cert provisioning").
+#
+# The `tls` directives name the cert/key PATHS ONLY — the key material lives in
+# ./certs (operator-provisioned, git-ignored), NEVER in this file (C12).
+
+{
+	admin off
+}
+
+http://:2020 {
+	respond /healthz "ok" 200
+	respond 404
+}
+
+# 443 — the console + /api, same-origin through ne-api (owner dec iii, NE-103b).
+# ne-api is the SOLE app upstream: it serves the console SPA at / and the
+# OIDC-guarded API at /api. TLS terminates here (operator certs); no key material.
+https://{$NE_PILOT_HOSTNAME}:443 {
+	tls /certs/tls.crt /certs/tls.key
+	reverse_proxy ne-api:8000
+}
+
+https://{$NE_PILOT_HOSTNAME}:8443 {
+	tls /certs/tls.crt /certs/tls.key
+	reverse_proxy keycloak:8080
+}

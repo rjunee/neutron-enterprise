@@ -1,0 +1,391 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §7 — Library. Only what the shared table/detail/state layer does not already
+ * draw: the tab strip, the record header, the section rhythm, and the canvas's
+ * own box. Every value resolves through a token; there is no colour here that
+ * the palette does not own, and no state that colour alone carries.
+ */
+
+.ne-library {
+  display: flex;
+  min-width: 0;
+}
+
+.ne-library .ne-screen {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ tabs -- */
+
+.ne-library__tabs {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.ne-library__tabbtn {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  padding: var(--space-4) var(--space-8);
+  color: var(--text-dim);
+  font: var(--type-cell);
+  cursor: pointer;
+}
+
+.ne-library__tabbtn:hover {
+  color: var(--text);
+}
+
+.ne-library__tabbtn:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+/* The selected tab is carried by weight and an underline as well as colour —
+ * never by colour alone. */
+.ne-library__tabbtn--on {
+  border-bottom-color: var(--cherenkov);
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- sections -- */
+
+.ne-library__tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.ne-library__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.ne-library__sectionhead {
+  margin: 0;
+  color: var(--text);
+  font: var(--type-section);
+}
+
+.ne-library__caption {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+/* A wide table inside the 420px detail pane scrolls in its own box; the page
+ * behind it never scrolls sideways. */
+.ne-library .ne-table__wrap {
+  overflow-x: auto;
+}
+
+/* ----------------------------------------------------------- entity record -- */
+
+.ne-library__recordhead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-library__recordname {
+  margin: 0;
+  color: var(--text);
+  font: var(--type-section);
+}
+
+.ne-library__class {
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 0 var(--space-4);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-library__record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-8);
+}
+
+.ne-library__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ne-library__dir {
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------------ paths -- */
+
+.ne-library__paths {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.ne-library__pathsform {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.ne-library__label {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-library__hopchains {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-library__hopchain {
+  font: var(--type-cell);
+}
+
+.ne-library__hopedge {
+  color: var(--text-dim);
+}
+
+/* --------------------------------------------------------- verified answers -- */
+
+.ne-library__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.ne-library__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-library__answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+/* The Entities idle body: the directory's own toolbar, table and replay line
+ * stack on the same rhythm as a verified answer's result table. */
+.ne-library__directory {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+/* A verified template's human `label_var` leads the row. The immutable entity
+ * key stays visible, selectable and wrapped as secondary evidence; the row
+ * itself remains the keyboard-operable exact deep link. */
+.ne-library__entity-key {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--text-dim);
+  font: var(--type-mono);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* The authored-ness line (§7): what the directory picker's entries ARE. Same
+ * quiet register as the replay line — a statement of fact, not a callout. */
+.ne-library__provenance {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-library__replay {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-library__replay--diverged {
+  color: var(--amber);
+}
+
+/* ----------------------------------------------------------------- canvas -- */
+
+.ne-chamber {
+  position: relative;
+  height: clamp(
+    480px,
+    calc(100vh - var(--topbar-height) - var(--space-64) - var(--space-64)),
+    640px
+  );
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.ne-chamber__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.ne-chamber__canvas[data-node-hovered="true"] {
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------ document journey -- */
+
+.ne-docjourney__chooser,
+.ne-docjourney__asof,
+.ne-docjourney__recordhead,
+.ne-docjourney__stagehead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.ne-docjourney__chooser select,
+.ne-docjourney__asof input {
+  min-height: 32px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 var(--space-8);
+  font: var(--type-cell);
+}
+
+.ne-docjourney__recordhead {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--space-8);
+}
+
+.ne-docjourney__recordhead h2 {
+  margin: 0;
+  font: var(--type-section);
+}
+
+.ne-docjourney__recordhead span {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-docjourney__pipeline {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(138px, 1fr));
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.ne-docjourney__stage {
+  position: relative;
+  display: flex;
+  min-height: 136px;
+  flex-direction: column;
+  gap: var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: var(--space-8);
+  background: var(--panel);
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-docjourney__stage--active {
+  border-color: var(--cherenkov);
+}
+
+.ne-docjourney__stagehead {
+  justify-content: space-between;
+  color: var(--text);
+}
+
+.ne-docjourney__arrow {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: calc(var(--space-8) * -1);
+  color: var(--text-dim);
+}
+
+.ne-docjourney__content,
+.ne-docjourney__diff {
+  max-height: 320px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: var(--space-12);
+  background: var(--panel);
+  color: var(--text);
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.ne-docjourney__diff {
+  border-color: var(--amber);
+}
+
+.ne-docjourney td a {
+  margin-left: var(--space-4);
+}
+
+/* At phone width the four addressable tabs stay visible and focusable by
+ * wrapping. Document names and verified-query labels are server-authored and
+ * can be arbitrarily long, so their controls must surrender intrinsic width;
+ * the pipeline and tables below retain their own local scrollports. */
+@media (max-width: 48rem) {
+  .ne-library__tabs {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-docjourney__chooser {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-docjourney__chooser select {
+    flex: 1 1 16rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-docjourney__asof {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-docjourney__asof input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+}

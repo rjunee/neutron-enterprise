@@ -1,0 +1,16 @@
+# Splink entity-resolution sidecar (isolated, hash-pinned venv — C4).
+#
+# Splink drags igraph (GPL-2.0+ C core) UNCONDITIONALLY, so the whole closure
+# lives ONLY in this out-of-process sidecar venv and NEVER enters the platform
+# uv.lock (proven by packages/ne-brain-graph/tests/test_no_gpl_sidecar_leak.py
+# and the `t2-sidecars-out-of-process` import-linter contract).
+#
+# Pin: splink==4.0.16 (MIT; the 5.0.0.dev pre-release is intentionally NOT used —
+# `<5` guard). It drags duckdb (MIT, the in-process ER backend), igraph (GPL),
+# pandas/numpy/sqlglot/altair/jinja2. Verified 2026-07-09 (tier2-spec §8).
+#
+# Compile with (NEVER hand-edit requirements.txt):
+#   uv pip compile packages/ne-brain-graph/splink_env/requirements.in --universal \
+#       --python-version 3.12 --generate-hashes \
+#       -o packages/ne-brain-graph/splink_env/requirements.txt
+splink==4.0.16

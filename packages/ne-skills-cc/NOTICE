@@ -1,0 +1,20 @@
+Neutron Enterprise — ne-skills-cc
+Copyright (c) 2026 Ryan Junee.
+
+This package introduces NO new third-party components. It uses only
+platform-lock-resident dependencies, all already covered by the platform
+license gate:
+
+- pyyaml 6.0.3 — MIT — https://pyyaml.org
+- pydantic 2.13.4 — MIT — https://docs.pydantic.dev
+- anyio 4.14.2 — MIT — https://anyio.readthedocs.io
+
+(Test-only dev-group deps — sqlalchemy 2.0.51 MIT, plus the workspace ne-audit
+/ ne-events / ne-schema packages — are not part of this package's runtime
+closure; see pyproject.toml's dev-group comment.)
+
+The Claude Code CLI (``claude``) is an OPTIONAL external subprocess invoked by
+a deployment's author-dispatch wiring (``ne.skills_cc.subprocess_dispatch``).
+It is NOT a bundled or declared Python dependency of this package — it is
+located on ``PATH`` and executed as a subprocess at the deployment's
+discretion, the same way a deployment might invoke any external CLI tool.

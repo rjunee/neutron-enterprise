@@ -1,0 +1,34 @@
+[project]
+name = "ne-events"
+version = "0.1.0"
+description = "Typed platform events via the Postgres outbox (ADR-001 §4.1, ADR-0002)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "sqlalchemy>=2.0.51,<2.1",
+    # pydantic is imported at module top of outbox.py (BaseModel type-guard on
+    # append) — a DIRECT dependency, not merely transitive via ne-contracts.
+    # Pinned to match the ne-contracts / ne-schema range (MIT).
+    "pydantic>=2.13.4,<3",
+]
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+
+[dependency-groups]
+# psycopg is TEST-ONLY: the live-Postgres concurrency proof
+# (tests/test_outbox_postgres_concurrency.py + test_outbox_postgres.py) runs the
+# settled-horizon fix against real Postgres. Same pin already accepted in-workspace
+# via ne-connect (LGPL-3.0, C4 case-by-case, dev/test-group only).
+dev = ["psycopg[binary]>=3.3.4,<4"]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.events"
+namespace = true

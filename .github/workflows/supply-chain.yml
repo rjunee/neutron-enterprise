@@ -1,0 +1,311 @@
+name: supply-chain
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly re-scan so newly disclosed CVEs against pinned deps surface even
+    # without a code change (Mondays 04:17 UTC).
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  # Checkpoint A red-teams THIS job: a planted banned dependency must turn it red.
+  license-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - run: uv sync --all-packages --locked
+      - name: License gate (SPEC §2 C4, fail-closed)
+        run: uv run ne check licenses
+      - name: Lock pin+hash policy
+        run: uv run ne check lock
+      # NE-061: extend C4 to the npm closure (frontend). Metadata-only install
+      # (--ignore-scripts: no lifecycle scripts run in the gate); the gate reads
+      # licenses from the installed node_modules + the pinned package-lock.json.
+      - name: Setup Node (for npm C4 gate)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: packages/ne-console/package-lock.json
+      - name: Install npm closure (metadata-only, no lifecycle scripts)
+        run: npm ci --ignore-scripts
+        working-directory: packages/ne-console
+      - name: npm license gate (SPEC §2 C4 over the npm tree, fail-closed)
+        run: uv run python tools/supply-chain/npm_license_gate.py --project packages/ne-console
+
+  vuln-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - name: Install pinned scanners (checksum-verified; NO aquasecurity actions)
+        run: sudo ./tools/supply-chain/install-scanners.sh /usr/local/bin
+      - name: PostgreSQL + AGE provenance, license, and digest guardian
+        run: uv run pytest tools/ne-cli/tests/test_ne_postgres_age_image.py -q
+      - name: Verify signed Chainguard PostgreSQL base manifests
+        run: |
+          for image in \
+            cgr.dev/chainguard/postgres:latest@sha256:4401cf2919e749cd77b634a72e4a677c1a1afc12baddb21faf28df326162472e \
+            cgr.dev/chainguard/postgres:latest-dev@sha256:3f12033ccd330632fccfc85435fa7a3f5498132c40127bec07a612322605077f
+          do
+            cosign verify \
+              --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+              --certificate-identity=https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main \
+              "$image" >/dev/null
+          done
+      - name: Cache Apache AGE 1.7.0 source (keyed on its pinned SHA-512)
+        # Only archive.apache.org still serves AGE 1.7.0 and it is slow from
+        # hosted runners, so the release files are cached and handed to the
+        # image build as the `age-src` build context. The Dockerfile verifies
+        # every digest and the release signature regardless of where they came from.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/apache-age-src
+          key: apache-age-1.7.0-src-sha512-129e64d70ec82e0fb47202145af45915b335048472c9a869129c31e4cb59f15a271a929a36a7abb2822272591e6476786c36908cb35a10cd73f2ecd0a617d3bb
+      - name: Fetch and verify Apache AGE 1.7.0 source (mirrors, retries, backoff)
+        run: sh deploy/docker/ne-postgres-age/fetch-age-src.sh "$RUNNER_TEMP/apache-age-src"
+      - name: Build pinned PostgreSQL 18.6 + Apache AGE 1.7.0 image
+        run: |
+          NE_POSTGRES_AGE_SOURCE_REV="$GITHUB_SHA" \
+            NE_POSTGRES_AGE_SRC_DIR="$RUNNER_TEMP/apache-age-src" \
+            bash deploy/airgap/scripts/build-ne-postgres-age.sh \
+              --iidfile "$RUNNER_TEMP/ne-postgres-age.iid"
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          test "$image_id" = "$(docker image inspect --format="{{.Id}}" ne-postgres-age:18.6-1.7.0)"
+          test "$GITHUB_SHA" = "$(docker image inspect --format='{{ index .Config.Labels "org.neutron.ne-postgres-age.source-rev" }}' "$image_id")"
+      - name: Live PostgreSQL 18.6 + AGE extension, GIN, and readback smoke
+        run: NE_POSTGRES_AGE_LIVE=1 NE_POSTGRES_AGE_LIVE_REQUIRED=1 uv run pytest tools/ne-cli/tests/test_ne_postgres_age_live.py -q
+      # Gate policy: fail only on HIGH/CRITICAL findings that HAVE a fix available
+      # (trivy --ignore-unfixed, grype --only-fixed, same predicate in the VEX
+      # gates). Unfixed findings are report-only: the full, unfiltered raw reports
+      # below are written BEFORE any gate runs so the job summary and the
+      # vuln-reports artifact carry every finding even when a gate fails.
+      - name: Trivy PostgreSQL + AGE image full report (JSON, un-VEX, all findings)
+        run: |
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          trivy image --scanners vuln --format json \
+            --output "$RUNNER_TEMP/ne-postgres-age-trivy-raw.json" "$image_id"
+      - name: Grype PostgreSQL + AGE image raw findings (JSON, un-VEX)
+        run: |
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          grype "$image_id" -o json --file "$RUNNER_TEMP/ne-postgres-age-grype-raw.json"
+      - name: Trivy PostgreSQL + AGE image (CRITICAL/HIGH, fail-closed)
+        run: |
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          trivy image --scanners vuln --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "$image_id"
+      - name: Export PostgreSQL + AGE image filesystem (created, never started)
+        run: |
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          probe_container="$(docker create "$image_id")"
+          docker export "$probe_container" -o "$RUNNER_TEMP/ne-postgres-age.export.tar"
+          docker rm "$probe_container"
+      - name: Image VEX gate (reachability probe, ledger exactness, fix check; fail-closed)
+        run: |
+          python3 tools/supply-chain/image_vex_gate.py \
+            --export "$RUNNER_TEMP/ne-postgres-age.export.tar" \
+            --grype "$RUNNER_TEMP/ne-postgres-age-grype-raw.json" \
+            --vex tools/supply-chain/vex/ne-postgres-age.openvex.json \
+            --reachability tools/supply-chain/vex/ne-postgres-age.reachability.json
+          rm -f "$RUNNER_TEMP/ne-postgres-age.export.tar"
+      - name: Grype PostgreSQL + AGE image (fail on high)
+        run: |
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          grype "$image_id" --fail-on high --only-fixed --vex tools/supply-chain/vex/ne-postgres-age.openvex.json
+      - name: Generate final PostgreSQL + AGE image CycloneDX SBOM
+        run: |
+          image_id="$(cat "$RUNNER_TEMP/ne-postgres-age.iid")"
+          inventory_container="$(docker create "$image_id")"
+          docker cp \
+            "$inventory_container:/usr/share/ne-postgres-age/runtime-apk-inventory.tsv" \
+            "$RUNNER_TEMP/runtime-apk-inventory.tsv"
+          docker rm "$inventory_container"
+          trivy image --format cyclonedx \
+            --output "$RUNNER_TEMP/ne-postgres-age.cdx.json" "$image_id"
+          python3 - \
+            "$RUNNER_TEMP/ne-postgres-age.cdx.json" \
+            "$RUNNER_TEMP/runtime-apk-inventory.tsv" \
+            "$image_id" <<'PY'
+          import json
+          import pathlib
+          import re
+          import sys
+
+          sbom_path = pathlib.Path(sys.argv[1])
+          inventory_path = pathlib.Path(sys.argv[2])
+          document = json.loads(sbom_path.read_text(encoding="utf-8"))
+          forbidden = re.compile(
+              r"(?:AGPL|SSPL|BUSL|FSL|NONCOMMERCIAL|(?:^|[-.])NC(?:[-.]|$))",
+              re.IGNORECASE,
+          )
+          admitted = {
+              "Apache-2.0",
+              "BSD-2-Clause AND GPL-2.0-only",
+              "BSD-3-Clause",
+              "CC-PDDC",
+              "GPL-2.0-only",
+              "GPL-2.0-or-later AND LGPL-2.0-or-later",
+              "GPL-2.0-or-later AND LGPL-2.0-or-later AND BSD-3-Clause AND MIT",
+              "GPL-2.0-or-later AND LGPL-2.1-or-later",
+              "GPL-2.0-or-later OR LGPL-2.0-or-later",
+              "GPL-3.0-or-later",
+              "GPL-3.0-or-later AND GPL-2.0-or-later AND GPL-2.0-only AND "
+              "GPL-1.0-only AND LGPL-2.1-or-later AND BSD-1-Clause AND BSD-2-Clause AND "
+              "BSD-3-Clause AND BSD-4-Clause-UC AND MIT AND CC-PDDC",
+              "GPL-3.0-or-later WITH GCC-exception-3.1",
+              "LGPL-2.1",
+              "LGPL-2.1-or-later",
+              "MIT",
+              "MPL-2.0 AND MIT",
+              "OLDAP-2.8",
+              "blessing",
+              "libselinux-1.0",
+          }
+          inventory = []
+          for line in inventory_path.read_text(encoding="utf-8").splitlines():
+              package, origin, license_expression, upstream = line.split("\t")
+              if not all((package, origin, license_expression, upstream)):
+                  raise SystemExit(f"incomplete runtime license/source row: {package!r}")
+              if forbidden.search(license_expression):
+                  raise SystemExit(f"forbidden runtime license: {package} {license_expression}")
+              if license_expression.startswith("LicenseRef-"):
+                  raise SystemExit(f"unadmitted runtime LicenseRef: {package}")
+              if license_expression not in admitted:
+                  raise SystemExit(f"unadmitted runtime license: {package} {license_expression}")
+              inventory.append(tuple(package.rsplit("=", 1)))
+          if len(inventory) != 62:
+              raise SystemExit(f"runtime inventory must contain 62 rows, got {len(inventory)}")
+
+          components = document.setdefault("components", [])
+          components.extend(
+              [
+                  {
+                      "type": "application",
+                      "bom-ref": "pkg:generic/postgresql@18.6",
+                      "name": "PostgreSQL",
+                      "version": "18.6",
+                      "purl": "pkg:generic/postgresql@18.6",
+                      "licenses": [{"license": {"name": "PostgreSQL License"}}],
+                  },
+                  {
+                      "type": "library",
+                      "bom-ref": "pkg:generic/apache-age@1.7.0",
+                      "name": "Apache AGE",
+                      "version": "1.7.0",
+                      "purl": "pkg:generic/apache-age@1.7.0",
+                      "licenses": [{"license": {"id": "Apache-2.0"}}],
+                  },
+              ]
+          )
+          observed = {(component.get("name"), component.get("version")) for component in components}
+          missing = sorted(pair for pair in inventory if not pair[0].startswith(".") and pair not in observed)
+          if missing:
+              raise SystemExit(f"CycloneDX missing runtime APK components: {missing}")
+          for component in components:
+              licenses = component.get("licenses", [])
+              if forbidden.search(json.dumps(licenses)):
+                  raise SystemExit(f"CycloneDX contains forbidden license: {component.get('name')}")
+          components.sort(
+              key=lambda item: (item.get("name", ""), item.get("version", ""), item.get("bom-ref", ""))
+          )
+          properties = document.setdefault("metadata", {}).setdefault("properties", [])
+          properties.append({"name": "neutron:image-id", "value": sys.argv[3]})
+          sbom_path.write_text(
+              json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          PY
+          grep -F '"name": "neutron:image-id"' "$RUNNER_TEMP/ne-postgres-age.cdx.json"
+          grep -F "$image_id" "$RUNNER_TEMP/ne-postgres-age.cdx.json"
+          docker save "$image_id" | gzip -n -9 > "$RUNNER_TEMP/ne-postgres-age.oci.tar.gz"
+          test -s "$RUNNER_TEMP/ne-postgres-age.oci.tar.gz"
+          uv run --package ne-cli ne release provenance \
+            --subject "$RUNNER_TEMP/ne-postgres-age.cdx.json" \
+            --subject "$RUNNER_TEMP/ne-postgres-age.oci.tar.gz" \
+            --out "$RUNNER_TEMP/ne-postgres-age.intoto.json"
+      - name: Upload final PostgreSQL + AGE image artifact, SBOM, and provenance
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ne-postgres-age-artifact
+          path: |
+            ${{ runner.temp }}/ne-postgres-age.cdx.json
+            ${{ runner.temp }}/ne-postgres-age.oci.tar.gz
+            ${{ runner.temp }}/ne-postgres-age.intoto.json
+          if-no-files-found: error
+      - name: Export pinned requirements for scanning
+        run: uv export --format requirements-txt --no-emit-project --no-dev -o requirements.txt
+      - name: Assemble VEX flag if a curated OpenVEX doc exists
+        id: vex
+        run: |
+          if [ -s tools/supply-chain/vex/openvex.json ]; then
+            echo "flag=--vex tools/supply-chain/vex/openvex.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "flag=" >> "$GITHUB_OUTPUT"
+          fi
+      # Full, unfiltered raw reports first (every severity, fixed and unfixed), so
+      # the report-only summary has them even when a gate below fails. The
+      # fail-closed scans after them reuse the vuln DBs these downloaded.
+      - name: Trivy raw findings (JSON, un-VEX, all findings)
+        run: |
+          trivy fs --scanners vuln --format json \
+            --output "$RUNNER_TEMP/trivy-raw.json" .
+      - name: Grype raw findings (JSON, un-VEX, all findings)
+        run: |
+          grype "dir:." -o json --file "$RUNNER_TEMP/grype-raw.json"
+      - name: Trivy (vuln, CRITICAL/HIGH with a fix, fail-closed)
+        run: |
+          trivy fs --scanners vuln --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed \
+            ${{ steps.vex.outputs.flag }} .
+      - name: Grype (fail on high with a fix)
+        run: |
+          grype "dir:." --fail-on high --only-fixed ${{ steps.vex.outputs.flag }}
+      # Every UN-VEX'd CRITICAL/HIGH finding with a fix available must have a VEX
+      # statement keyed by THAT scanner's own reported id; unfixed ones are listed
+      # report-only.
+      - name: "VEX dual-key gate (Finding E: same-scanner-keyed statement per fixable finding, fail-closed)"
+        run: |
+          python3 tools/supply-chain/vex_dualkey_gate.py \
+            --trivy "$RUNNER_TEMP/trivy-raw.json" \
+            --grype "$RUNNER_TEMP/grype-raw.json" \
+            --vex tools/supply-chain/vex/openvex.json
+      # Report-only pass: never fails the job. Lists every HIGH/CRITICAL finding,
+      # fixed or unfixed, in the job summary and uploads the full raw reports.
+      - name: Vulnerability report (report-only, includes unfixed findings)
+        if: always()
+        run: |
+          python3 tools/supply-chain/vuln_report.py \
+            --trivy "image=$RUNNER_TEMP/ne-postgres-age-trivy-raw.json" \
+            --grype "image=$RUNNER_TEMP/ne-postgres-age-grype-raw.json" \
+            --trivy "repo=$RUNNER_TEMP/trivy-raw.json" \
+            --grype "repo=$RUNNER_TEMP/grype-raw.json" \
+            --out "$GITHUB_STEP_SUMMARY"
+      - name: Upload full vulnerability reports (report-only, includes unfixed findings)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vuln-reports
+          path: |
+            ${{ runner.temp }}/ne-postgres-age-trivy-raw.json
+            ${{ runner.temp }}/ne-postgres-age-grype-raw.json
+            ${{ runner.temp }}/trivy-raw.json
+            ${{ runner.temp }}/grype-raw.json
+          if-no-files-found: warn
+
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - run: uv sync --all-packages --locked
+      - name: Generate CycloneDX SBOMs (bespoke stdlib, spec 1.6)
+        run: uv run ne release sbom --all --out dist/sbom
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: dist/sbom/*.cdx.json
+          if-no-files-found: error

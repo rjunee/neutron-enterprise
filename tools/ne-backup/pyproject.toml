@@ -1,0 +1,36 @@
+[project]
+name = "ne-backup"
+version = "0.1.0"
+description = "Pilot-tier backup/restore + encryption at rest (customer-managed keys) for Neutron Enterprise."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "click>=8.4.2",
+    "cryptography>=50,<51",
+    "httpx>=0.28.1,<1",
+    "ne-contracts",
+    "ne-secrets",
+    "ne-net",
+]
+
+[project.scripts]
+ne-backup = "ne.backup.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.backup"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-secrets = { workspace = true }
+ne-net = { workspace = true }
+
+[dependency-groups]
+# pyyaml is test-only: tools/ne-backup/tests/test_systemd_units.py parses the
+# committed .github/workflows/backup-restore-drill.yml to prove the drill job
+# uses only 40-hex-pinned actions and sets NE_BACKUP_DRILL=1.
+dev = ["pyyaml>=6.0.2"]

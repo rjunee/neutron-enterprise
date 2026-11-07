@@ -1,0 +1,27 @@
+[project]
+name = "ne-flywheel"
+version = "0.5.0"
+description = "Curation agent, propose-then-approve review gate, and steward-queue backend."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-schema",
+    "ne-events",
+    "ne-audit",
+    "sqlalchemy>=2.0.51,<2.1",
+]
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-schema = { workspace = true }
+ne-events = { workspace = true }
+ne-audit = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.flywheel"
+namespace = true

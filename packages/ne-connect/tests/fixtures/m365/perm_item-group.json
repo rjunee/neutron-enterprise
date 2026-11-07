@@ -1,0 +1,4 @@
+{ "value": [
+  { "id": "perm-group-1", "roles": ["write"],
+    "grantedToV2": { "group": { "id": "g-eng", "displayName": "Engineering" } } }
+] }

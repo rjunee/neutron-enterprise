@@ -1,0 +1,31 @@
+{
+  "acl": [
+    {"principals": ["oidc:sales"], "resource_id": "acme-crm/contacts"},
+    {"principals": ["oidc:finance"], "resource_id": "acme-crm/accounts"}
+  ],
+  "objects": [
+    {"kind": "resource", "name": "contacts", "source_id": "acme-crm/contacts"},
+    {"kind": "resource", "name": "accounts", "source_id": "acme-crm/accounts"}
+  ],
+  "records": [
+    {
+      "cursor": "2026-01-01T00:00:00Z",
+      "payload": {"email": "ada@example.test", "name": "Ada Byron", "updated_at": "2026-01-01T00:00:00Z"},
+      "record_id": "c1",
+      "source_id": "acme-crm/contacts"
+    },
+    {
+      "cursor": "2026-01-02T00:00:00Z",
+      "payload": {"email": "grace@example.test", "name": "Grace Hopper", "updated_at": "2026-01-02T00:00:00Z"},
+      "record_id": "c2",
+      "source_id": "acme-crm/contacts"
+    },
+    {
+      "cursor": "2026-01-01T00:00:00Z",
+      "payload": {"name": "Globex Industries", "updated_at": "2026-01-01T00:00:00Z"},
+      "record_id": "a1",
+      "source_id": "acme-crm/accounts"
+    }
+  ],
+  "source": "acme-crm"
+}

@@ -1,0 +1,419 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * §13 — AUDIT LOG, screen-local only.
+ *
+ * The table, the toolbar, the chips, the buttons, the state blocks and the
+ * detail pane are the shared standard (src/styles/table.css); nothing here
+ * restyles them. What is left is the handful of things only this screen has:
+ * the verdict strip, the window form, the break band, the dimmed tail, and the
+ * pane's payload / replay blocks.
+ *
+ * Every value resolves through a token. No raw colour, no px font-size, and no
+ * theming of --brand-teal. */
+
+.ne-audit {
+  display: contents;
+}
+
+/* §13's toolbar carries three class chips plus, once a scope is applied, its
+ * removable tokens and the Scope disclosure toggle — more than one 40px row
+ * holds at a narrow viewport. It WRAPS rather than overflowing — a filter that
+ * has scrolled out of sight is a filter the reader cannot see is applied.
+ * 48px, not the shared 40px `--toolbar-height`: this is the one toolbar in the
+ * product built to carry a scope's worth of tokens, render-measured. */
+.ne-audit .ne-toolbar {
+  flex-wrap: wrap;
+  row-gap: var(--space-4);
+  min-height: 48px;
+}
+
+.ne-audit .ne-toolbar__filters {
+  flex-wrap: wrap;
+}
+
+/* ------------------------------ verdict strip ----------------------------- */
+
+/* The chain verdict, as one line, directly under the title row. The verdict is
+ * the server's; this is a row that holds it. */
+.ne-audit__verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--toolbar-height);
+}
+
+.ne-audit__verdictline {
+  color: var(--text-dim);
+  font: var(--type-cell);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The verdict's REACH is the server's own sentence and it is a long one — it
+ * names the anchor entry, the records re-hashed on this call, and how long ago
+ * the prefix they extend was verified in full. §1.4 gives the title row a line,
+ * not a paragraph, so the line DISCLOSES it: this variant is rendered as a
+ * <button>, and the dotted underline plus the caret below say there is more of
+ * it. It was a `title` tooltip, which no keyboard and no touch screen can
+ * reach. Not a colour: the strip's one colour belongs to the pill.
+ *
+ * The three properties the bare `button` element rule would otherwise lend are
+ * declared here, on the rule that names the control: this is text in a status
+ * strip, so it draws no surface of its own and says so explicitly. */
+.ne-audit__verdictline--scoped {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+}
+
+/* The control has to SHOW where the keyboard is, or "reachable with a Tab"
+ * means reachable and invisible. Same ring the rest of the product draws. */
+.ne-audit__verdictline--scoped:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: 2px;
+}
+
+/* The caret is the disclosure's visual state. IT IS PART OF THE ACCESSIBLE NAME,
+ * NOT OUTSIDE IT — this comment used to claim the opposite. accname 1.2 step 2F
+ * clause ii appends `::before`/`::after` content to the name computed from a
+ * node's descendants, and Chrome and Firefox both do it, so the button really
+ * announces "… ▾". Harmless as shipped: the served sentence still LEADS the
+ * name and `aria-expanded` carries the open/closed state for assistive tech, so
+ * the caret is a trailing glyph rather than the state anything relies on. Same
+ * ▾/▴ pair the Scope toggle in the toolbar below uses. */
+.ne-audit__verdictline--scoped::after {
+  content: " ▾";
+}
+
+.ne-audit__verdictline--scoped[aria-expanded="true"]::after {
+  content: " ▴";
+}
+
+/* The revealed sentence. Below the toolbar, which is where §1.4 allows prose
+ * and where this screen's other sentences (the break band, the anchor notice)
+ * already live. The neutral wash, not the band's red tint: this is a caveat on
+ * a PASSING verdict, and the fault colour stays reserved for a break.
+ * STATIC — no transition, no keyframes, nothing for
+ * `prefers-reduced-motion: reduce` to have to collapse. */
+.ne-audit__reach {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius);
+  background: var(--selected-tint);
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+/* -------------------------------- scope form ------------------------------- */
+
+/* §13 render caption: "Collapsed by default... a disclosure row, not standing
+ * furniture." Opened by the toolbar's Scope toggle; the panel-raised background
+ * and the border it shares with the toolbar above it read as one revealed
+ * surface, not a second card. */
+.ne-audit__filters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-8) var(--space-12);
+  padding: var(--space-12);
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-raised);
+}
+
+.ne-audit__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ne-audit__fieldlabel {
+  color: var(--text-dim);
+  font: var(--type-small);
+  white-space: nowrap;
+}
+
+.ne-audit__input {
+  height: 28px;
+  min-width: 0;
+  width: 132px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--ground);
+  color: var(--text);
+  font: var(--type-cell);
+}
+
+.ne-audit__input:focus-visible {
+  outline: 1px solid var(--cherenkov);
+  outline-offset: -1px;
+}
+
+.ne-audit__timecontext {
+  flex-basis: 100%;
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-audit__timecontext--error {
+  color: var(--red);
+}
+
+/* --------------------------------- break ---------------------------------- */
+
+/* The band states the fact the server reported and stops. Under the default
+ * Seq-desc sort the records it describes are the ones directly beneath it.
+ * Text carries the colour, not a border around it — the red tint plus red word
+ * is the whole signal (§13 render: `.ne-band`). */
+.ne-audit__band {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius);
+  background: var(--red-tint);
+  color: var(--red);
+  font: var(--type-cell);
+}
+
+/* A `?seq=` jump that could not land highlighted on its entry. This is an
+ * ordinary informational notice, never the fault colour: the CHAIN is not in
+ * question — the navigation is — and the break band's red stays reserved for
+ * the one fact that deserves it (§13 render: `.ne-anchornote` uses the same
+ * neutral wash a selected row does). The band states which entry failed and
+ * why, and offers the one recovery it can. */
+.ne-audit__anchornote {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius);
+  background: var(--selected-tint);
+  color: var(--text);
+  font: var(--type-cell);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+/* The tail past a break is dimmed, never hidden: those records are on the chain
+ * and the reader came to see them. --text-dim, not --text-faint: the tail is
+ * de-emphasised, and de-emphasised text still has to be readable. The BREAK pill
+ * beside the entry number carries the meaning; this is reinforcement, and never
+ * the only signal. */
+.ne-audit__after {
+  color: var(--text-dim);
+}
+
+.ne-audit__seq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+/* ------------------------------ the ledger spine -------------------------- */
+
+/* §5 — the chain drawn as a chain, in the gutter of the seq column. STATIC:
+ * there is not one animation, transition or duration below, so there is nothing
+ * for the reduced-motion collapse to collapse and the evidence survives a
+ * screenshot. The rules that decide what each row draws live in spine.ts.
+ *
+ * The seq cell is the positioning context. --ledger scopes it to THIS table:
+ * the pane's replayed-events table is a different list and carries no verdict. */
+.ne-audit__ledger tbody .ne-td:first-child {
+  position: relative;
+}
+
+/* Absolutely positioned, so the hairline spans the row's FULL height (.ne-td has
+ * no vertical padding) and consecutive rows' segments meet. It participates in
+ * no layout and takes no pointer events — the row's own click still opens the
+ * record. */
+.ne-audit__spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  pointer-events: none;
+}
+
+.ne-audit__spineline {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--rule-strong);
+}
+
+.ne-audit__spinenode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--rule-strong);
+}
+
+/* Past the break the records are still on the ledger and the reader came to see
+ * them, so the spine dims rather than disappearing — the same treatment, and the
+ * same reason, as the dimmed tail (.ne-audit__after). The server verified
+ * nothing here, and a full-strength chain would say that it had. */
+.ne-audit__spine--after .ne-audit__spineline,
+.ne-audit__spine--after .ne-audit__spinenode {
+  background: var(--rule);
+}
+
+/* The entry the server named. Larger AND red: the node is told apart by size
+ * before it is told apart by hue. */
+.ne-audit__spine--break .ne-audit__spinenode {
+  width: 7px;
+  height: 7px;
+  background: var(--red);
+}
+
+/* THE GAP. The hairline stops 6px short of the edge facing the last entry the
+ * server did verify — a real void, not a recolour — and the tick sits in the
+ * middle of it with 2px of clear gutter on either side. A 2px gap filled
+ * entirely by a 2px tick would be a colour change wearing a gap's name. */
+.ne-audit__spine--cut-down .ne-audit__spineline {
+  bottom: 6px;
+}
+
+.ne-audit__spine--cut-up .ne-audit__spineline {
+  top: 6px;
+}
+
+.ne-audit__spinecut {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--red);
+}
+
+.ne-audit__spinecut--down {
+  bottom: 2px;
+}
+
+.ne-audit__spinecut--up {
+  top: 2px;
+}
+
+/* ------------------------------- detail pane ------------------------------ */
+
+/* §13 render: "prev/this hash chips" — the record's place in the chain, ahead
+ * of its own fields. A hairline joins the two rows so the pair reads as one
+ * segment of the ledger's chain rather than two more dl entries. STATIC, like
+ * the spine above: a connecting line, never a scan. */
+.ne-audit__chainseg {
+  position: relative;
+  margin: 0 0 var(--space-16);
+  padding-left: 18px;
+}
+
+.ne-audit__chainseg::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: var(--space-8);
+  bottom: var(--space-8);
+  width: 2px;
+  background: var(--rule-strong);
+}
+
+.ne-audit__chainsegrow {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+}
+
+.ne-audit__chainsegrow::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--cherenkov-deep);
+  box-shadow: 0 0 0 2px var(--panel);
+}
+
+.ne-audit__chainseglabel {
+  width: 88px;
+  flex: none;
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+}
+
+.ne-audit__paneheading {
+  margin: 0 0 var(--space-8);
+  font: var(--type-label);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.ne-audit__payload,
+.ne-audit__replay {
+  margin-top: var(--space-16);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--space-12);
+}
+
+/* Inert: pre-formatted text in a scroll box. Nothing here parses, executes or
+ * edits the payload. §13 render: the payload sits in a `--sunken` well with
+ * `--well-inset` — the same recessed vocabulary the record's own chain hashes
+ * would sit under if this product ever drew one, so "this is read-only
+ * material, not a form field" is a fact about the surface, not the border. */
+.ne-audit__json {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--sunken);
+  box-shadow: var(--well-inset);
+  color: var(--text);
+  font: var(--type-cell-mono);
+  white-space: pre;
+}
+
+.ne-audit__replaylines {
+  margin: var(--space-12) 0 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ne-audit__replayline {
+  display: grid;
+  grid-template-columns: minmax(0, 7rem) minmax(0, 1fr);
+  gap: var(--space-8);
+}
+
+.ne-audit__replayline dt {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-audit__replayline dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  font: var(--type-cell);
+  overflow-wrap: anywhere;
+}

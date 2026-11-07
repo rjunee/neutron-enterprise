@@ -1,0 +1,15 @@
+{
+  "comments": [
+    {
+      "id": 9101,
+      "author_id": 5002,
+      "body": "Internal only, no staff group on this ticket.",
+      "public": false,
+      "created_at": "2026-01-01T03:00:00Z"
+    }
+  ],
+  "meta": {
+    "has_more": false,
+    "after_cursor": null
+  }
+}

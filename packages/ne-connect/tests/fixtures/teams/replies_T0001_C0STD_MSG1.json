@@ -1,0 +1,32 @@
+{
+  "value": [
+    {
+      "id": "r1",
+      "messageType": "message",
+      "createdDateTime": "2026-06-01T10:10:00Z",
+      "lastModifiedDateTime": "2026-06-01T10:10:00Z",
+      "subject": null,
+      "body": { "contentType": "text", "content": "A reply to message one." },
+      "from": { "user": { "id": "29:user-bob", "displayName": "Bob" } }
+    },
+    {
+      "id": "r-del",
+      "messageType": "message",
+      "deletedDateTime": "2026-06-02T09:00:00Z",
+      "createdDateTime": "2026-06-01T10:20:00Z",
+      "lastModifiedDateTime": "2026-06-02T09:00:00Z",
+      "subject": null,
+      "body": { "contentType": "text", "content": "" },
+      "from": { "user": { "id": "29:user-bob", "displayName": "Bob" } }
+    },
+    {
+      "id": "r-sys",
+      "messageType": "systemEventMessage",
+      "createdDateTime": "2026-06-01T10:30:00Z",
+      "lastModifiedDateTime": "2026-06-01T10:30:00Z",
+      "subject": null,
+      "body": { "contentType": "html", "content": "<systemEventMessage/>" },
+      "from": null
+    }
+  ]
+}

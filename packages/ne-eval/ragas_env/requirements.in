@@ -1,0 +1,32 @@
+# ragas 0.4.3 dev-only cross-validation oracle (isolated, hash-pinned venv).
+#
+# Why the langchain 1.x floor (was: the 0.3 series):
+#   langchain-core 0.3.86 (the version this env previously resolved) is affected
+#   by TWO HIGH advisories per OSV/GHSA:
+#     - CVE-2026-34070 (GHSA-qh6h-p6c9-ff54): path traversal in load_prompt,
+#       fixed in langchain-core >=1.2.22.
+#     - CVE-2026-26013 (GHSA-2g6r-c272-w58r): fixed in langchain-core >=1.2.11.
+#   Both remediations land only on the langchain 1.x line, so the whole langchain
+#   stack is floored at 1.x here (full version bump — no suppression).
+#
+# Why langchain-community is PINNED ==0.4.1 (not floated):
+#   ragas 0.4.3 is STILL the newest ragas release (checked 2026-07-06 — PyPI AND
+#   vibrantlabsai/ragas; the orchestrator's "bump ragas" assumption has no target)
+#   and it eagerly imports `langchain_community.chat_models.vertexai`
+#   (src/ragas/llms/base.py:12) at package-import time. langchain-community 0.4.2
+#   REMOVED that module (chat_models/vertexai.py deleted upstream), so `import
+#   ragas` would crash on 0.4.2. 0.4.1 is the newest community release that both
+#   supports langchain-core 1.x AND still ships the vertexai module.
+#
+# Unpin trigger: a ragas release that drops the eager vertexai import — then
+#   langchain-community can float again (and this pin/comment can be removed).
+#
+# Compile with (NEVER hand-edit requirements.txt):
+#   uv pip compile packages/ne-eval/ragas_env/requirements.in --universal \
+#       --python-version 3.12 --generate-hashes \
+#       -o packages/ne-eval/ragas_env/requirements.txt
+ragas==0.4.3
+langchain>=1,<2
+langchain-core>=1.2.22,<2
+langchain-community==0.4.1
+langchain-openai>=1,<2

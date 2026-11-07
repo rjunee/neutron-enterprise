@@ -1,0 +1,75 @@
+[project]
+name = "ne-runtime"
+version = "0.1.0"
+description = "Agent runtime: durable, governed agent execution."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-audit",
+    "ne-events",
+    "ne-schema",
+    "ne-govern",
+    "ne-obs",
+    "sqlalchemy>=2.0.51,<2.1",
+    "cronsim>=2.7,<3",
+    "pydantic-ai-slim>=2.5.0,<3",
+    "dbos>=2.26.0,<3",
+    "opentelemetry-api>=1.43,<2",
+    "cryptography>=50,<51",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.runtime"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+ne-govern = { workspace = true }
+ne-obs = { workspace = true }
+ne-audit = { workspace = true }
+ne-brain = { workspace = true }
+ne-identity = { workspace = true }
+ne-connect = { workspace = true }
+ne-memory-graph = { workspace = true }
+ne-gateway = { workspace = true }
+
+[dependency-groups]
+# ne-brain, ne-identity, and ne-connect are test-only. ne-brain: the real
+# KnowledgeWriter proving the NE-037 promotion provenance CLASS end-to-end.
+# ne-identity: the real AgentScopeGuardrail proving the NE-CKD1 credential-scope
+# composition seam (test_composition_guardrail_seams.py). ne-connect (NE-050): the
+# real connector write clients (SalesforceWriteClient / GraphWriteClient /
+# SqlWriteClient) driven at the httpx-MockTransport/sqlite seam by the
+# reference-action tests — ne-runtime src NEVER imports ne.connect; the write-action
+# seams are narrow structural Protocols defined in the reference_actions modules, so
+# the C3/C5 src boundary stays intact (guardian AST scan + import-linter). None is a
+# runtime dep — the frozen Protocol seams (KnowledgeWrite, Guardrail, the action
+# client Protocols) stay the src boundary.
+# (ne-audit is now a real [project] dependency: the CronScheduler dual-appends cron
+# lifecycle facts into the tamper-evident hash chain — Checkpoint-D finding #4.)
+# ne-memory-graph is TEST-ONLY (NE-083b): it proves the memory_backend factory
+# flag returns a TemporalAgentMemory via the ne.plugins.memory_provider entry
+# point. It is NEVER a runtime dep — the entry point keeps the src boundary
+# (ne-runtime src imports importlib.metadata, never ne.memory_graph), exactly like
+# ne-brain / ne-identity above.
+# ne-gateway is TEST-ONLY (NE-166): the run-correlation acceptance test drives a
+# full governed agent run over the REAL LiteLLMGateway (router monkeypatched
+# below the litellm seam) to prove one shared trace_id under the no-op tracer;
+# ne-runtime src NEVER imports ne.gateway (C3 — import-linter + C6 guardian scan
+# src only).
+dev = [
+    "ne-brain",
+    "ne-identity",
+    "ne-connect",
+    "ne-memory-graph",
+    "ne-gateway",
+    "httpx>=0.28.1,<1",
+    "opentelemetry-sdk>=1.43,<2",
+]

@@ -1,0 +1,47 @@
+[project]
+name = "ne-brain-ontology"
+version = "0.6.0"
+description = "Brain T3: ontology knowledge tier (v1.2) — NE-085a: dual-backend triple store (oxigraph/Fuseki), fail-closed SHACL write gateway, LinkML→SHACL codegen, hash-diff hot-reload; NE-085b: BFO/CCO+alignment corpus wiring, governed BFO-conformance gate, deterministic property-graph→RDF lift; NE-085c: curated parameterized SPARQL templates as governed C6 verified-answer tools (permission-trimmed, citation-carrying); NE-085d: mutation-aware reconciling lift — per-ACL-graph validate-then-atomic-swap."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-events",
+    "ne-schema",
+    "pydantic>=2.11,<3",
+    "pyshacl>=0.40.0,<0.41",
+    "pyoxigraph>=0.5.9,<0.6",
+    "rdflib>=7.3.0,<8",
+    "httpx>=0.28.1,<1",
+    "sqlalchemy>=2.0.51,<2.1",
+]
+
+[project.entry-points."ne.plugins.triple_store"]
+fuseki = "ne.brain_ontology.gateway:build_fuseki_store"
+oxigraph = "ne.brain_ontology.gateway:build_oxigraph_store"
+
+[project.entry-points."ne.plugins.shape_validator"]
+pyshacl = "ne.brain_ontology.shapes:build_validator"
+
+[project.entry-points."ne.plugins.verified_answer_tools"]
+default = "ne.brain_ontology.verified.tools:build_verified_answer_tools"
+
+[dependency-groups]
+# Test-only: InMemoryGraphStore + convention cross-check for the RDF lift; the
+# runtime seam is the injected GraphScanSource Protocol — never a runtime dep,
+# enforced by .importlinter brain-ontology-lane (precedent: ne-brain-graph dev = ne-permissions).
+dev = ["ne-brain-graph"]
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+ne-brain-graph = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.brain_ontology"
+namespace = true

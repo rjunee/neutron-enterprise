@@ -1,0 +1,42 @@
+# NE-CREWAI-DROPIN — the CUSTOMER-SIDE CrewAI agent's isolated, hash-pinned venv.
+#
+# SOVEREIGNTY (the headline): NOTHING in this closure ever enters the platform
+# uv.lock / SBOM / C4 license gate. crewai's BASE deps pull chromadb~=1.1.0, whose
+# BASE deps pull posthog (its telemetry client) — and posthog is PERMANENTLY BARRED
+# from the platform lock by a merge-blocking sovereignty guard
+# (packages/ne-memory-graph/tests/test_no_graph_closure_in_lock.py) AND, redundantly,
+# by this unit's packages/ne-mcp/tests/test_crewai_isolation.py. Beyond posthog the
+# closure ALSO cannot resolve into the platform lock at all: four of crewai's tight
+# base pins are in hard conflict with the locked platform (verified 2026-07-21):
+#     crewai pydantic<2.13,>=2.11.9   vs  platform pydantic 2.13.4  (hard)
+#     crewai regex~=2026.1.15         vs  platform regex 2026.6.28  (hard)
+#     crewai portalocker~=2.7.0       vs  platform portalocker 3.2.0 (hard)
+#     crewai opentelemetry-*~=1.42.0  vs  platform opentelemetry-sdk 1.43.0 (hard)
+# The closure lives ONLY in the git-ignored sidecar venv
+# (packages/ne-mcp/.crewai-venv), built the same way as packages/ne-eval/ragas_env/
+# and packages/ne-mcp/langgraph_env/ via ne.envbuild.ensure_sidecar_venv.
+#
+# The customer's CrewAI agent (agent.py) consumes the platform's governed tools over
+# MCP stdio via a DIRECT mcp-SDK client (CrewAI BaseTool proxies) — every tool call is
+# C6-governed by construction because those are the ONLY tools it has.
+#
+# HARD RULE — NEVER add crewai-tools to this closure. Its MCPServerAdapter is NOT
+# needed (we build the BaseTool->mcp-client proxy directly), and crewai-tools ships
+# pymupdf (AGPL-3.0) in its BASE deps — adopting it at all is a copyleft event. The
+# core loop only needs crewai's own base tool class (crewai.tools.BaseTool).
+#
+# --model mode needs NO extra pin: crewai bundles the openai SDK in its base closure,
+# and --model targets a LOCAL OpenAI-compatible endpoint only (no frontier keys). The
+# deterministic demo/live path performs ZERO model egress.
+#
+# mcp is declared explicitly because agent.py imports it directly (ClientSession /
+# StdioServerParameters / stdio_client). crewai's own base pin mcp~=1.28.1 keeps the
+# resolution on the 1.28.x line, matching the platform's own mcp>=1.28.1,<2 pin — same
+# protocol line, no extra dependency beyond declaring it here.
+#
+# Compile with (NEVER hand-edit requirements.txt):
+#   uv pip compile packages/ne-mcp/crewai_env/requirements.in --universal \
+#       --python-version 3.12 --generate-hashes \
+#       -o packages/ne-mcp/crewai_env/requirements.txt
+crewai>=1.15.5,<2
+mcp>=1.28.1,<2

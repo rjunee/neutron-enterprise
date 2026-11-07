@@ -1,0 +1,24 @@
+template_id = "orders-per-account-count"
+version = 1
+description = "How many orders each visible account has placed (a Layer-3 verified COUNT)."
+sparql = """
+SELECT ?account ?name ?order WHERE {
+  #BINDINGS#
+  ?account a <https://neutron.enterprise/schema/operational/Account> .
+  ?account <https://neutron.enterprise/schema/operational/name> ?name .
+  ?order a <https://neutron.enterprise/schema/operational/Order> .
+  ?order <https://neutron.enterprise/schema/operational/account> ?account .
+}
+"""
+
+[scope]
+graph_classes = ["alpha", "beta"]
+result_shape = "enumerable"
+
+[answer]
+kind = "count"
+group_by = ["account", "name"]
+count_over = "order"
+as = "n_orders"
+citation_var = "account"
+count_total_rows = true

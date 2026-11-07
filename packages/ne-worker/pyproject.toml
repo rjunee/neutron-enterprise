@@ -1,0 +1,82 @@
+[project]
+name = "ne-worker"
+version = "0.1.0"
+description = "Durable ne-worker: DBOS-Postgres turn executor + cron + outbox drain (composition root)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-api",
+    # BD-10: worker-hosted Route-A writer and scheduled Answer Ledger re-ask
+    # import their owning packages directly (the ne-connect precedent below).
+    "ne-eval",
+    "ne-brain",
+    "ne-runtime",
+    "ne-contracts",
+    "ne-events",
+    # NE-INGEST (P1-4): ne.worker.ingest imports ne.connect.runner directly to seed
+    # the governed connector-sync cron; a direct import needs a declared dep even
+    # though ne-api already pulls ne-connect transitively.
+    "ne-connect",
+    # NE-FIX-SYNC-INVOKERS: ne.worker.principal_sync imports ne.permissions.factory
+    # directly (P2-20 cron seed) and ne.worker.main lazy-imports ne.obs.otlp (P2-21
+    # real exporter) — direct imports need declared deps (the ne-connect precedent).
+    "ne-permissions",
+    "ne-obs",
+    # NE-AUDIT-CRON: ne.worker.audit_checkpoint imports ne.audit directly — direct
+    # imports need declared deps even though ne-api already pulls ne-audit
+    # transitively (the ne-connect precedent).
+    "ne-audit",
+    # NE-AUDIT-CRON (P2-E): ne.worker.audit_checkpoint imports the repo's
+    # credential-redaction helper (ne.net.ssrf.redact_url_for_logs) so the
+    # checkpoint loop's error detail cannot leak embedded userinfo from a storage
+    # driver's endpoint URL — adopting the existing redactor rather than
+    # reimplementing it. Direct import needs a declared dep (ne-connect precedent).
+    #
+    # P2-1 (second review pass): this was "ne-gateway". Importing ne.gateway.ssrf
+    # runs ne/gateway/__init__.py, which eagerly imports the provider-SDK closure
+    # (litellm) — measured at +140MB RSS and +5.6s boot on EVERY worker, paid even
+    # with the checkpoint loop default-off, all for one regex redactor. The
+    # redactor moved to the stdlib-only leaf ne-net (deps: []) and ne.gateway.ssrf
+    # re-exports it; the ne-net-leaf import-linter contract now guards this.
+    "ne-net",
+    # NE-SKILL-1a: ne.worker.main imports ne.skills.reconcile directly to run the
+    # boot bundle reconcile — a direct import needs a declared dep even though ne-api
+    # already pulls ne-skills transitively (the ne-connect precedent).
+    "ne-skills",
+    # ne.worker.ingest imports cronsim directly to measure an explicit cron
+    # override's widest firing gap before it may outrank an authority source's
+    # proven sweep cadence — a direct import needs a declared dep even though
+    # ne-runtime already pulls cronsim transitively (the ne-connect precedent).
+    # Pinned to ne-runtime's range so one resolver picks one cron semantics.
+    "cronsim>=2.7,<3",
+    "dbos>=2.26.0,<3",
+    "sqlalchemy>=2.0.51,<2.1",
+    "pydantic>=2.13.4,<3",
+    "pydantic-settings>=2.14.2,<3",
+    "anyio>=4,<5",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.worker"
+namespace = true
+
+[tool.uv.sources]
+ne-api = { workspace = true }
+ne-eval = { workspace = true }
+ne-brain = { workspace = true }
+ne-runtime = { workspace = true }
+ne-contracts = { workspace = true }
+ne-events = { workspace = true }
+ne-connect = { workspace = true }
+ne-permissions = { workspace = true }
+ne-obs = { workspace = true }
+ne-audit = { workspace = true }
+ne-net = { workspace = true }
+ne-skills = { workspace = true }
+
+[dependency-groups]
+dev = ["httpx>=0.28.1,<1"]

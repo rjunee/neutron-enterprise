@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# ClusterIP `otel-collector` — OTLP gRPC (4317) + HTTP (4318). ne-api/ne-worker
+# ship traces/metrics/logs here when the obs profile is enabled.
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  labels:
+    app: otel-collector
+    app.kubernetes.io/name: otel-collector
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  type: ClusterIP
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318

@@ -1,0 +1,16 @@
+Neutron Enterprise — ne-obs
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  opentelemetry-api                            / 1.43.0 / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+  opentelemetry-sdk                            / 1.43.0 / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+  opentelemetry-semantic-conventions           / 0.64b0 / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+  opentelemetry-exporter-otlp-proto-http       / 1.43.0 / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+  opentelemetry-exporter-otlp-proto-common     / 1.43.0 / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+  opentelemetry-proto                          / 1.43.0 / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+  googleapis-common-protos                     / 1.75.0 / Apache-2.0 / https://github.com/googleapis/python-api-common-protos
+  requests                                     / 2.x / Apache-2.0 / https://github.com/psf/requests
+  sqlalchemy                                   / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+  pydantic                                     / 2.x / MIT / https://pydantic.dev

@@ -1,0 +1,106 @@
+{{- /*
+Copyright (c) 2026 Ryan Junee.
+SPDX-License-Identifier: Apache-2.0
+
+Velero half of SPEC NE-071 ("Velero + DB-native backups with RPO/RTO per
+profile") — NE-071d. This is the volume/cluster-state DR half; the
+pg_dumpall CronJob (templates/backup-cronjob.yaml) remains the DB-native
+(logical) half and is unchanged.
+
+NOTE ON COMMENT PLACEMENT: unlike this chart's other optional top-level
+templates (backup-cronjob.yaml, route.yaml, networkpolicy-*.yaml), the
+explanatory comment for THIS file lives inside a Helm template-comment
+block (stripped from output) rather than a plain "#" YAML comment before
+the enabled-flag guard below. A plain "#" comment placed before the guard
+renders UNCONDITIONALLY (helm still emits the "# Source: ..." document for
+a template whose only output is comment text) — that would make this
+brand new file add bytes to the default (velero-disabled) render, breaking
+the byte-parity invariant (a "helm template" render taken before and after
+this unit's change MUST diff empty). Wrapping the whole explanation in a
+Helm template-comment block means the file emits ZERO bytes when
+backup.velero.enabled is false.
+
+Gated behind backup.velero.enabled (default false) so the default render
+stays byte-identical (byte-parity guardian). This template NEVER installs
+or re-provisions Velero — it only emits a velero.io/v1 Schedule custom
+resource into the NAMESPACE OF THE CLUSTER-LEVEL VELERO already provisioned
+by deploy/terraform-azure/velero.tf (opt-in install_velero=true, chart
+12.1.0 / appVersion 1.18.1, BackupStorageLocation `default`). Velero only
+reconciles Schedules that live in its OWN install namespace, hence
+metadata.namespace is backup.velero.namespace (NOT .Release.Namespace).
+Enabling this on a cluster without the Velero CRDs fails a real `helm
+upgrade --install` (unknown velero.io/v1 apiVersion); `helm
+template`/`helm lint` are unaffected either way.
+
+The profile selector fails closed (mirrors charts/vllm/templates/
+deployment.yaml's mode fail pattern): an unknown backup.velero.profile
+aborts the render rather than silently falling back.
+
+The pre-hook runs `psql ... CHECKPOINT` against the postgres pod
+immediately before the volume snapshot — it flushes WAL/dirty pages so
+restore-time crash recovery is short (bounds RTO), using the same
+in-container auth path as the existing readinessProbe (`pg_isready -U ne
+-d neutron`, charts/postgres/templates/statefulset.yaml). `onError:
+Continue` makes the hook a no-op when no postgres pod exists (e.g.
+profiles.core=false) — this Schedule is therefore deliberately NOT
+core-gated (namespace DR is content-agnostic), unlike the pg_dumpall
+CronJob.
+
+NE-DR1: snapshotVolumes is now rendered EXPLICITLY (default false — this kills
+Velero's dangerous nil=true default). The VolumeSnapshotLocation wiring itself
+(CSI vs fs-backup vs which cloud snapshotter) stays infra-layer: this CR
+references only the provider-agnostic VSL NAME (backup.velero.snapshotLocation,
+default `default`), never a cloud-specific config (C9 preserved). All AWS/Azure
+specifics live in deploy/terraform-{eks,azure}/velero.tf, referenced (namespace,
+BSL/VSL names) but never edited or re-provisioned by this chart.
+
+DB-exclusion contract (SPEC §11): opting into snapshotVolumes while in-cluster
+postgres is enabled (profiles.core=true) FAILS CLOSED until the operator labels
+the DB PVC velero.io/exclude-from-backup=true and attests via
+backup.velero.dbSnapshotExclusionConfirmed=true — a live DB volume is never
+crash-consistently snapshotted (the DB is protected by managed-DB native
+backup/PITR or the pg_dumpall CronJob instead).
+*/ -}}
+{{- if .Values.backup.velero.enabled }}
+{{- $profileName := .Values.backup.velero.profile }}
+{{- $profile := get (.Values.backup.velero.profiles | default dict) $profileName }}
+{{- if not $profile }}
+{{- fail (printf "unknown backup.velero.profile %q — must be a key of backup.velero.profiles" $profileName) }}
+{{- end }}
+{{- if and .Values.backup.velero.snapshotVolumes .Values.profiles.core (not .Values.backup.velero.dbSnapshotExclusionConfirmed) }}
+{{- fail "backup.velero.snapshotVolumes=true with profiles.core=true (in-cluster postgres): label the DB PVC out of snapshots first — kubectl -n <ns> label pvc pg-data-postgres-0 velero.io/exclude-from-backup=true — then set backup.velero.dbSnapshotExclusionConfirmed=true (SPEC §11 DR posture: a live DB volume is never crash-consistently snapshotted)" }}
+{{- end }}
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: ne-velero-{{ .Release.Namespace }}
+  namespace: {{ .Values.backup.velero.namespace }}
+  labels:
+    app: ne-backup
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  schedule: {{ $profile.schedule | quote }}
+  template:
+    includedNamespaces:
+      - {{ .Release.Namespace }}
+    ttl: {{ $profile.ttl | quote }}
+    storageLocation: {{ .Values.backup.velero.storageLocation }}
+    snapshotVolumes: {{ .Values.backup.velero.snapshotVolumes }}
+    {{- if .Values.backup.velero.snapshotVolumes }}
+    volumeSnapshotLocations: [{{ .Values.backup.velero.snapshotLocation }}]
+    {{- end }}
+    hooks:
+      resources:
+        - name: postgres-checkpoint
+          includedNamespaces:
+            - {{ .Release.Namespace }}
+          labelSelector:
+            matchLabels:
+              app: postgres
+          pre:
+            - exec:
+                container: postgres
+                command: ["psql", "-U", "ne", "-d", "neutron", "-c", "CHECKPOINT"]
+                onError: Continue
+                timeout: 30s
+{{- end }}

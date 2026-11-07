@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: ne-api
+description: The first-party ne-api Deployment (NE-103a image, core profile).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

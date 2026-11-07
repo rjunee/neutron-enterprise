@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "channels": [
+    {"id": "C0000PUB", "name": "general", "is_channel": true, "is_private": false},
+    {"id": "C0000PRIV", "name": "priv-team", "is_channel": true, "is_private": true},
+    {"id": "G0000MPIM", "name": "mpim-x", "is_mpim": true},
+    {"id": "C0000QTYPE", "name": "mystery"}
+  ],
+  "response_metadata": {"next_cursor": "CURSPAGE2"}
+}

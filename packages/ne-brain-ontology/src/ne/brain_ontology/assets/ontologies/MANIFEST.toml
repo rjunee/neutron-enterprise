@@ -1,0 +1,110 @@
+# Vendored ontology corpus manifest — NE-085-spike (2026-07-09).
+# BFO-2020 (CC-BY-4.0) + Common Core Ontologies v2.1 (BSD-3-Clause), pinned
+# and vendored OFFLINE (C2 no-egress / C11 hash-pinned). Parsed by
+# ne.brain_ontology.ontology.load_manifest (stdlib tomllib). Field names are
+# load-bearing — keep in sync with the pydantic models in ontology.py.
+# Triple counts are EXACT (rdflib Graph parse; pyoxigraph agrees) and guard
+# against truncated vendoring. sha256 is over the raw committed bytes.
+
+[bfo]
+upstream_repo = "https://github.com/BFO-ontology/BFO-2020"
+pin = "dd89f4a193038b66ef0e891d546c05a5b477f40f"
+license = "CC-BY-4.0"
+license_evidence = "In-artifact dcterms:license <https://creativecommons.org/licenses/by/4.0/> in bfo-core.ttl + repo README (\u00a7License 'CC BY 4.0'). Repo has NO LICENSE file (GitHub license=null)."
+role = "upper"
+
+[[bfo.files]]
+upstream_path = "21838-2/owl/bfo-core.ttl"
+local_path = "bfo/bfo-core.ttl"
+sha256 = "a7f0385eb859e707fa81bad532ff252427dc3490e3896a929332016fc53d9ece"
+triples = 1014
+
+[cco]
+upstream_repo = "https://github.com/CommonCoreOntology/CommonCoreOntologies"
+pin = "v2.1"
+pin_commit = "25cc29d0b815323a1181355d074a0c768a6d35b8"
+license = "BSD-3-Clause"
+license_evidence = "LICENSE at tag v2.1: BSD-3-Clause, Copyright (c) 2017 CUBRC, INC."
+role = "mid"
+
+[[cco.files]]
+upstream_path = "src/cco-modules/AgentOntology.ttl"
+local_path = "cco/AgentOntology.ttl"
+sha256 = "40c6c91d1153a8c5679347357ad3b40776e9a63fa07c5ec829cff5ba7f737947"
+triples = 1223
+
+[[cco.files]]
+upstream_path = "src/cco-modules/ArtifactOntology.ttl"
+local_path = "cco/ArtifactOntology.ttl"
+sha256 = "690f336f12f664a2b6ab0210d8fdbf479569965e998537ed4d39780606340896"
+triples = 3523
+
+[[cco.files]]
+upstream_path = "src/cco-modules/CurrencyUnitOntology.ttl"
+local_path = "cco/CurrencyUnitOntology.ttl"
+sha256 = "b75ccbf859179db244b5443cabc6c1e8fd4adf8dad537f87853b9c6d6160085c"
+triples = 529
+
+[[cco.files]]
+upstream_path = "src/cco-modules/EventOntology.ttl"
+local_path = "cco/EventOntology.ttl"
+sha256 = "759cfba341da1d8663783f7514c8bf341dbc15c47d4e20e81b1dc809fda094d3"
+triples = 2212
+
+[[cco.files]]
+upstream_path = "src/cco-modules/ExtendedRelationOntology.ttl"
+local_path = "cco/ExtendedRelationOntology.ttl"
+sha256 = "d0d1924cec07586500680c7a4139c81bf1687127de5442b03d44395bd476e213"
+triples = 575
+
+[[cco.files]]
+upstream_path = "src/cco-modules/FacilityOntology.ttl"
+local_path = "cco/FacilityOntology.ttl"
+sha256 = "3de8f06ca8f517455d4b8cfd624848c3cd55dae911867003cb229e1332f1e75d"
+triples = 562
+
+[[cco.files]]
+upstream_path = "src/cco-modules/GeospatialOntology.ttl"
+local_path = "cco/GeospatialOntology.ttl"
+sha256 = "7231f51e5d3a207ba5ae0879ea6bfabb2f1f5d9d7623e20676d7f7643f5e5fa3"
+triples = 463
+
+[[cco.files]]
+upstream_path = "src/cco-modules/InformationEntityOntology.ttl"
+local_path = "cco/InformationEntityOntology.ttl"
+sha256 = "c314c2e59f2d169a378cb11321c8e68a5c48acdf8dacbc83a2b9a01a18e41a5c"
+triples = 1784
+
+[[cco.files]]
+upstream_path = "src/cco-modules/QualityOntology.ttl"
+local_path = "cco/QualityOntology.ttl"
+sha256 = "1df66e3c45bbfbd3db901b8ae33fdcfb2a3398be174062910d53fd1ffd3712e9"
+triples = 626
+
+[[cco.files]]
+upstream_path = "src/cco-modules/TimeOntology.ttl"
+local_path = "cco/TimeOntology.ttl"
+sha256 = "4d2a74087ddf2a2317e1826ef2dce8ba828ab9350f5e0bbd94b2ee3220c457b5"
+triples = 447
+
+[[cco.files]]
+upstream_path = "src/cco-modules/UnitsOfMeasureOntology.ttl"
+local_path = "cco/UnitsOfMeasureOntology.ttl"
+sha256 = "393779c6f8eecec15857e9b9a0e71a8f7579a4638df2412935a6f75af55dcae3"
+triples = 976
+
+# Self-authored operational-alignment ontology (NE-085b) — NOT third-party
+# (Apache-2.0, no upstream pin). It types the operational entities
+# against the vendored CCO/BFO corpus; loaded into the ValidatingTripleStore at
+# startup alongside BFO+CCO. sha256/triples guard the committed bytes.
+[ne]
+upstream_repo = "https://github.com/rjunee/neutron-enterprise"
+pin = "self-authored (NE-085b)"
+license = "Apache-2.0"
+role = "alignment"
+
+[[ne.files]]
+upstream_path = "ne/operational-alignment.ttl"
+local_path = "ne/operational-alignment.ttl"
+sha256 = "61f8ac8e7eb0d00efdbb842ea95096b6a20befdf7b592d035972b44de926df12"
+triples = 67

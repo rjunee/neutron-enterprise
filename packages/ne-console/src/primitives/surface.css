@@ -1,0 +1,87 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * SURFACE ENTER/EXIT GRAMMAR — motion design §4.1, under law 4
+ * (styles/primitives.css). ONE vocabulary for every surface that opens over the
+ * work: the detail pane (and therefore the span pane, the decision pane, the
+ * source pane — they are all <DetailPane>), and popovers.
+ *
+ * WHAT IT IS FOR. A surface that simply appears costs the reader their place:
+ * the eye has to re-find where it was reading and work out what the new thing
+ * is about. A pane that arrives from the edge it belongs to reads as detail OF
+ * the row it came from; a popover that pops in place reads as an annotation
+ * rather than a page change. That is the whole claim — origin and belonging —
+ * and it is spent in 180ms, once, when the operator asked for the surface.
+ *
+ * LAW COMPLIANCE, clause by clause:
+ *  cl. 1  Every rule here is triggered by an operator action (open the pane,
+ *         hover/focus the hash). Nothing loops; a screen at rest runs none of it.
+ *  cl. 3  transform + opacity ONLY, in both the keyframes and the base rules.
+ *  cl. 4  --ease-damped, the one curve. No overshoot: a pane that bounces past
+ *         its edge is a pane that has to be read twice.
+ *  cl. 5  Durations are --motion-rod (pane) and --motion-snap (popover, and
+ *         EVERY exit). §3's asymmetry rule: leaving is never slower than
+ *         arriving, because exits are on the operator's critical path.
+ *  cl. 6  NOTHING here is a base state. The base rules do not hide the surface:
+ *         if animation never runs — reduced motion, a screenshot, an old engine,
+ *         CSS that failed to load — the surface renders whole and legible, and
+ *         its content (the pane title, the full hash) is the static co-signal.
+ *         There is no fill-mode on the enter animations for the same reason: a
+ *         retained transform is also a retained compositor layer on an idle
+ *         console, which cl. 1 spends nothing on.
+ *  cl. 7  No application state waits on any of this. See primitives/surface.ts.
+ */
+
+/* Pane: arrives from the edge it is anchored to. 8px is the whole distance —
+ * enough to read as travel, too little to read as a slide-in. */
+@keyframes ne-surface-pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--space-8));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Popover: pops in place. 2% is a settle, not a zoom. */
+@keyframes ne-surface-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Every exit is the same fade. A surface leaving does not need to explain
+ * where it went — the operator just sent it there. */
+@keyframes ne-surface-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.ne-surface-pane {
+  animation: ne-surface-pane-in var(--motion-rod) var(--ease-damped);
+}
+
+.ne-surface-pop {
+  animation: ne-surface-pop-in var(--motion-snap) var(--ease-damped);
+}
+
+/* `forwards` is load-bearing here and only here: without it the surface snaps
+ * back to full opacity for the frame between the animation ending and React
+ * dropping the node. The enter animations deliberately carry no fill. */
+.ne-surface-exit {
+  animation: ne-surface-out var(--motion-snap) var(--ease-damped) forwards;
+  /* A surface on its way out must never eat a click meant for what is behind
+   * it. This is the exit's correctness property, not its styling. */
+  pointer-events: none;
+}

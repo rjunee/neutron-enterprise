@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+[project]
+name = "ne-model-export"
+version = "0.1.0"
+description = "Isolated build-time ONNX export + parity-gate tool (NE-TEI-ONNX)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-envbuild",
+]
+
+[project.scripts]
+ne-model-export = "ne.model_export.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.model_export"
+namespace = true
+
+[tool.uv.sources]
+ne-envbuild = { workspace = true }

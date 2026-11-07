@@ -1,0 +1,17 @@
+Neutron Enterprise — ne-secrets
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+SOPS / v3.13.2 current, invoked as an external binary via subprocess (not
+distributed with this package; no code embedded) / MPL-2.0 /
+https://github.com/getsops/sops
+
+OpenBao / 2.5.5 dev-pin (deploy/compose/dev), 2.6.x current GA, external
+service accessed over HTTP (not distributed with this package; no code
+embedded) / MPL-2.0 / https://openbao.org
+
+No third-party code is embedded in this package. Both components above are
+invoked/consumed at runtime as an external binary (SOPS) or an external
+service (OpenBao); this package's own dependency is limited to the internal
+ne-contracts workspace package.

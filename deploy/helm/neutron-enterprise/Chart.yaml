@@ -1,0 +1,61 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: neutron-enterprise
+description: >-
+  Neutron Enterprise production Kubernetes tier (NE-071a foundation + NE-071b
+  hardening + NE-071c full-platform parity) — the core-profile services (ne-api,
+  ne-worker, postgres, keycloak, opa) plus the brain services (qdrant, tei-embed,
+  tei-rerank) reproduced 1:1 from deploy/compose/pilot/compose.yaml as
+  Helm-managed manifests, the default-OFF obs (otel-collector) and serve (vllm)
+  profiles, and the default-OFF NetworkPolicy/OpenShift-Route/backup surface.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.31.0-0"
+dependencies:
+  - name: ne-api
+    version: 0.1.0
+    repository: "file://charts/ne-api"
+    condition: profiles.core
+  # NE-103c durable worker rides the CORE profile (SPEC §5 row overrides design
+  # §8's 'agents' placement — see deploy/compose/pilot/compose.yaml ne-worker
+  # comment): ne-api ships NE_API_TURN_EXECUTION=enqueue, so its executor must
+  # co-start or enqueued turns park with no consumer.
+  - name: ne-worker
+    version: 0.1.0
+    repository: "file://charts/ne-worker"
+    condition: profiles.core
+  - name: postgres
+    version: 0.1.0
+    repository: "file://charts/postgres"
+    condition: profiles.core
+  - name: keycloak
+    version: 0.1.0
+    repository: "file://charts/keycloak"
+    condition: profiles.core
+  - name: opa
+    version: 0.1.0
+    repository: "file://charts/opa"
+    condition: profiles.core
+  # NE-071c brain services — qdrant + tei ride the DEFAULT deploy (ne-api
+  # retrieval backends), gated on profiles.brain (default-TRUE; the sealed/
+  # air-gap off-switch — see values.yaml profiles.brain rationale).
+  - name: qdrant
+    version: 0.1.0
+    repository: "file://charts/qdrant"
+    condition: profiles.brain
+  - name: tei
+    version: 0.1.0
+    repository: "file://charts/tei"
+    condition: profiles.brain
+  # NE-071c observability — otel-collector ONLY, default-OFF.
+  - name: obs
+    version: 0.1.0
+    repository: "file://charts/obs"
+    condition: profiles.obs
+  # NE-071c serving — vllm (gpu|cpu), default-OFF, GPU-gated, render-only in CI.
+  - name: vllm
+    version: 0.1.0
+    repository: "file://charts/vllm"
+    condition: profiles.serve.enabled

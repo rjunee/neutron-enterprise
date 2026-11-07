@@ -1,0 +1,27 @@
+Neutron Enterprise — ne-worker
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  dbos               / >=2.26.0,<3   / MIT / https://github.com/dbos-inc/dbos-transact-py
+    (durable-execution engine: the worker launches DBOS-Postgres, executes chat
+    turns as durable workflows, and streams frames. NO new third-party dependency
+    is added by this package — dbos is ALREADY a runtime dependency of ne-runtime
+    (same pin), so its MIT license is already NOTICEd there and already covered by
+    `ne check licenses`; this package merely declares its now-direct import.)
+  sqlalchemy         / >=2.0.51,<2.1 / MIT / https://github.com/sqlalchemy/sqlalchemy
+  pydantic           / >=2.13.4,<3   / MIT / https://github.com/pydantic/pydantic
+  pydantic-settings  / >=2.14.2,<3   / MIT / https://github.com/pydantic/pydantic-settings
+  anyio              / >=4,<5        / MIT / https://github.com/agronholm/anyio
+  ne-api             (workspace)     / Apache-2.0
+  ne-runtime         (workspace)     / Apache-2.0
+  ne-contracts       (workspace)     / Apache-2.0
+  ne-events          (workspace)     / Apache-2.0
+
+Test-only (dependency-group "dev"):
+  httpx              / >=0.28.1,<1   / BSD-3-Clause / https://github.com/encode/httpx
+    (the scripted OPA MockTransport in the CI subprocess-boot seams.)
+
+No new third-party runtime dependency is introduced by ne-worker: it composes
+already-locked workspace packages plus the already-pinned dbos.

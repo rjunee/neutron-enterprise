@@ -1,0 +1,358 @@
+/* Copyright (c) 2026 Ryan Junee.
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * NE-WORKFLOWS. The standard list geometry (toolbar + table), then the selected
+ * workflow's contract panel: what it reads, what it writes, the run control and
+ * the run's own report. Everything resolves through styles/tokens.css, so light
+ * and dark are one declaration set and nothing here themes a colour of its own.
+ *
+ * No transitions and no keyframes: nothing on this screen arrives by motion. */
+
+.ne-workflows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+/* --------------------------- the contract panel -------------------------- */
+
+.ne-workflows__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  min-width: 0;
+}
+
+.ne-workflows__title {
+  margin: 0;
+  color: var(--text);
+  font: var(--type-section);
+}
+
+.ne-workflows__desc {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--text-dim);
+  font: var(--type-body);
+}
+
+/* Reads and writes side by side: the whole permission contract in one glance,
+ * and — because the run control sits below them — read before it is pressed. */
+.ne-workflows__grants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-32);
+}
+
+.ne-workflows__grant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ne-workflows__grantlabel {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-label);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.ne-workflows__grantnone {
+  margin: 0;
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+.ne-workflows__tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-workflows__tool {
+  font: var(--type-cell-mono);
+  color: var(--text);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------ the control ------------------------------ */
+
+.ne-workflows__run {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.ne-workflows__subjectlabel {
+  color: var(--text-dim);
+  font: var(--type-label);
+}
+
+.ne-workflows__subjects {
+  width: 64px;
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--text);
+  font: var(--type-cell);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-workflows__subjects:focus-visible {
+  outline: 2px solid var(--cherenkov);
+  outline-offset: 1px;
+}
+
+/* ------------------------------- the wait -------------------------------- */
+
+.ne-workflows__running {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-workflows__runningline {
+  margin: 0;
+  color: var(--text);
+  font: var(--type-cell);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-workflows__runninghint {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+/* Why the control is closed on a workflow that is not the one running. Dim,
+   like the hint above it: it explains a state, it does not announce an event. */
+.ne-workflows__busy {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+/* ------------------------------ the result ------------------------------- */
+
+.ne-workflows__result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+/* The presenter harness is three calm records, not one activity feed: the
+ * governed trace, the model's server-recorded stated intents, and the terminal
+ * result. Each segment owns its heading and stays visually still. */
+.ne-workflows__segment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+  padding: var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+}
+
+.ne-workflows__segment h3,
+.ne-workflows__segment h4,
+.ne-workflows__segment p {
+  margin: 0;
+}
+
+.ne-workflows__segmenthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.ne-workflows__segmenthead > p {
+  color: var(--text-dim);
+  font: var(--type-small);
+}
+
+.ne-workflows__intents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-workflows__intent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+  gap: var(--space-8) var(--space-16);
+  min-width: 0;
+  padding: var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-workflows__intenttext {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--text);
+  font: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+.ne-workflows__stepid {
+  color: var(--text-dim);
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.ne-workflows__traceerror {
+  color: var(--text-dim);
+  font: var(--type-cell);
+}
+
+.ne-workflows__intentfacts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-12);
+  margin: 0;
+}
+
+.ne-workflows__intentfacts > div {
+  min-width: 0;
+}
+
+.ne-workflows__intentfacts dt {
+  color: var(--text-dim);
+  font: var(--type-label);
+}
+
+.ne-workflows__intentfacts dd {
+  margin: var(--space-4) 0 0;
+  color: var(--text);
+  font: var(--type-cell);
+  overflow-wrap: anywhere;
+}
+
+.ne-workflows__intentrefs {
+  grid-column: 1 / -1;
+  color: var(--text-dim);
+  font: var(--type-small);
+  overflow-wrap: anywhere;
+}
+
+.ne-workflows__trace .ne-trace__body,
+.ne-workflows__trace .ne-trace__tree {
+  min-width: 0;
+}
+
+/* DetailPane owns an inline resizable width. This local maximum keeps a trace
+ * detail opened at 390px inside the viewport without changing other screens. */
+.ne-workflows .ne-detail {
+  max-width: 100vw;
+}
+
+.ne-workflows__resulthead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+
+.ne-workflows__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-32);
+  margin: 0;
+}
+
+.ne-workflows__count {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ne-workflows__countlabel {
+  color: var(--text-dim);
+  font: var(--type-label);
+}
+
+.ne-workflows__countvalue {
+  margin: 0;
+  color: var(--text);
+  font: var(--type-mono-plate);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .ne-workflows__detail,
+  .ne-workflows__segment {
+    padding: var(--space-12);
+  }
+
+  .ne-workflows__run {
+    align-items: stretch;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  /* A served model label may be much wider than the viewport. Bind the shared
+   * filter to this row's flexible width so its intrinsic select size cannot
+   * widen the workflow detail card. */
+  .ne-workflows__run .ne-filter {
+    flex: 1 1 14rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-workflows__run .ne-filter__select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ne-workflows__intent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ne-workflows__intentfacts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Compose with the shared Trace mobile row: rail + flexible content. Keep
+   * this higher-specificity rule truthful so import order cannot revive the
+   * removed waterfall's fixed-width kind column at presenter width. */
+  .ne-workflows__trace .ne-trace__span {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  /* Secondary lane/duration facts remain in the selected detail pane. Hide
+   * their owning cell as a unit; an empty third grid item must not survive. */
+  .ne-workflows__trace .ne-trace__spanmeta {
+    display: none;
+  }
+}
+
+/* 015A0-ENFORCEMENT — the withheld run's one sentence, where the answer was. */
+.ne-workflows__withheld {
+  color: var(--text-secondary);
+  font: var(--type-body);
+}

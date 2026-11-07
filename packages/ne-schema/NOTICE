@@ -1,0 +1,12 @@
+Neutron Enterprise — ne-schema
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  pydantic / >=2.13.4,<3 / MIT / https://github.com/pydantic/pydantic
+
+Build-time only (isolated hash-pinned codegen venv — NOT distributed, NOT in the
+platform lock/SBOM; see README "Isolated codegen env"):
+  linkml         / 1.11.1 / Apache-2.0 / https://github.com/linkml/linkml
+  linkml-runtime / 1.11.1 / CC0-1.0    / https://github.com/linkml/linkml-runtime

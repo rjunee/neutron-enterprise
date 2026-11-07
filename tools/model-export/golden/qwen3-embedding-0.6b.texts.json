@@ -1,0 +1,20 @@
+{
+  "texts": [
+    "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: What is the leave and PTO policy for the Legal department?",
+    "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: How long is the Legal incident response SLA?",
+    "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: What is the daily per-diem cap under the travel and expense policy?",
+    "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: When must new hires complete security training?",
+    "The office is closed on public holidays.",
+    "Invoices are due within 30 days.",
+    "This policy governs practices within the Legal department and applies to all Acme Corporation employees covered by its scope. Questions about this policy should be directed to the Legal department lead.",
+    "Employees requesting reimbursement for travel expenses must submit itemized receipts within two weeks of the trip's completion, and any expense exceeding the standard per-diem requires prior written approval from a department lead.",
+    "The 2026 Leave and PTO Policy governs practices within the Legal department and applies to all Acme Corporation employees covered by its scope. Non-compliance with this policy is handled per standard HR procedure, and questions should be directed to the Legal department lead responsible for policy administration.",
+    "All new hires across every department must complete the mandatory security awareness training module within thirty calendar days of their start date, and managers are responsible for confirming completion before granting access to production systems or customer data.",
+    "Die Mitarbeiter müssen innerhalb von 30 Tagen nach ihrem Einstellungsdatum eine Sicherheitsschulung abschließen.",
+    "Los empleados deben completar la capacitación de seguridad dentro de los 30 días posteriores a la fecha de contratación.",
+    "员工必须在入职后30天内完成安全培训。",
+    "Les employés doivent suivre une formation de sécurité dans les 30 jours suivant leur date d'embauche.",
+    "The Legal incident response SLA is 4 hours for urgent issues.",
+    "The 2025 travel policy caps daily per-diem at $85."
+  ]
+}

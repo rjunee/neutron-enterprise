@@ -1,0 +1,26 @@
+Neutron Enterprise — ne-acme-seed
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+pydantic / 2.13.4 / MIT / https://docs.pydantic.dev
+pydantic-settings / 2.14.2 / MIT / https://docs.pydantic.dev/latest/concepts/pydantic_settings
+  (used transitively via the ne-connect settings base classes)
+httpx / 0.28.1 / BSD-3-Clause / https://www.python-httpx.org (TEST-ONLY — the
+  seeder src never imports httpx; the tests build httpx.MockTransport recording
+  transports so CI never touches a live tenant)
+
+First-party workspace dependencies (Apache-2.0, in-tree):
+ne-acme, ne-connect
+
+EGRESS-BY-DESIGN — NOT SHIPPED PRODUCT:
+This tool is an egress-by-design DEV utility, deliberately housed under tools/
+and OUTSIDE the shipped ne-connect product package. It pushes data INTO the
+M365/Salesforce/Slack dev tenants so the read-only connectors can pull it back
+(the NE-077 LIVE gate). The ne-connect C2 egress guardian
+(packages/ne-connect/tests/test_c2_egress_guardian.py) deliberately does NOT
+cover this tool — it pins the outbound-HTTP surface of the SHIPPED product only.
+The seeder's egress rides exclusively through subclasses of the connector
+clients (inheriting their SSRF / host-allowlist / air-gap / guard-before-token
+guarantees); it adds no write verbs to packages/ne-connect. This tool MUST NEVER
+be shipped to a customer runtime. It seeds ONLY the committed, RFC-2606-safe
+tools/acme synthetic corpus (all @acme.example / +1-555-01XX).

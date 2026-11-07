@@ -1,0 +1,15 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix ex:   <http://example.org/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+# Minimal SHACL shape for the NE-085-spike walking skeleton: every ex:Person
+# must carry exactly one xsd:string rdfs:label.
+ex:PersonShape a sh:NodeShape ;
+    sh:targetClass ex:Person ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+    ] .

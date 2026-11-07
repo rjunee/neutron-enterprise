@@ -1,0 +1,29 @@
+{
+  "schema": "ne-inference-target-registry-v1",
+  "targets": [
+    {
+      "target_id": "local-vllm-cpu",
+      "display_name": "Local CPU vLLM",
+      "adapter_id": "compose-vllm-cpu-v1",
+      "resource_id": "compose:vllm-cpu",
+      "served_models": ["qwen3-0.6b"],
+      "secret_refs": [],
+      "capabilities": ["status", "start", "stop"],
+      "deadlines_s": {"status": 100, "start": 240, "stop": 60},
+      "cooldown_s": 5,
+      "reconcile_s": 120
+    },
+    {
+      "target_id": "private-vast-gpu",
+      "display_name": "Private GPU rig",
+      "adapter_id": "vast-private-rig-v1",
+      "resource_id": "provider:vast-private-rig",
+      "served_models": ["qwen3.6-35b-a3b"],
+      "secret_refs": ["vast-api-key", "vast-ssh-private-key"],
+      "capabilities": ["status", "start", "stop"],
+      "deadlines_s": {"status": 120, "start": 900, "stop": 360},
+      "cooldown_s": 15,
+      "reconcile_s": 10
+    }
+  ]
+}

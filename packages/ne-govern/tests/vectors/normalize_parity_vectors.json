@@ -1,0 +1,16 @@
+{
+  "_comment": "Part A is copied VERBATIM from ne.brain_ontology.verified.routing's own test expectations (packages/ne-brain-ontology/tests/test_verified_routing.py:215-236) — it pins that ne.govern.grounding.normalize stays in LOCKSTEP with the U1 pinned pipeline BY VECTORS, never by import (C3: ne-govern may not import ne-brain-ontology). If U1's pipeline ever changes, these vectors must be re-synced here deliberately. Part B is G1's own pinned addition: the Unicode-Cf strip (defeats zero-width/format-char evasion) plus the deliberate non-fold of a homoglyph.",
+  "vectors": [
+    {"text": "List every account", "tokens": ["list", "every", "account"]},
+    {"text": "ＬＩＳＴ  every account!!!", "tokens": ["list", "every", "account"]},
+    {"text": "list\tEVERY   account", "tokens": ["list", "every", "account"]},
+    {"text": "  list, every; account.  ", "tokens": ["list", "every", "account"]},
+    {"text": "don't", "tokens": ["dont"]},
+    {"text": "don’t", "tokens": ["dont"]},
+    {"text": "ﬁle", "tokens": ["file"]},
+    {"text": "ac​me", "tokens": ["acme"]},
+    {"text": "ac‍me", "tokens": ["acme"]},
+    {"text": "a­cme", "tokens": ["acme"]},
+    {"text": "Аcme", "tokens": ["аcme"]}
+  ]
+}

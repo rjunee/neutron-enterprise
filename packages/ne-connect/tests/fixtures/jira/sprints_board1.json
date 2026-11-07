@@ -1,0 +1,26 @@
+{
+  "values": [
+    {
+      "id": 501,
+      "name": "Sprint 1",
+      "goal": "Ship login fixes",
+      "state": "closed",
+      "startDate": "2026-01-01T00:00:00.000Z",
+      "endDate": "2026-01-14T00:00:00.000Z",
+      "originBoardId": 1
+    },
+    {
+      "id": 502,
+      "name": "Sprint 2",
+      "goal": "Ship dark mode",
+      "state": "active",
+      "startDate": "2026-01-15T00:00:00.000Z",
+      "endDate": "2026-01-28T00:00:00.000Z",
+      "originBoardId": 1
+    }
+  ],
+  "isLast": true,
+  "startAt": 0,
+  "maxResults": 50,
+  "total": 2
+}

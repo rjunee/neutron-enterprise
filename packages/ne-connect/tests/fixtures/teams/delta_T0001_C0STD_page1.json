@@ -1,0 +1,24 @@
+{
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/teams/T0001/channels/C0STD/messages/delta?$skiptoken=STDP2",
+  "value": [
+    {
+      "id": "m1",
+      "messageType": "message",
+      "createdDateTime": "2026-06-01T10:00:00Z",
+      "lastModifiedDateTime": "2026-06-01T10:05:00Z",
+      "subject": null,
+      "replyCount": 1,
+      "body": { "contentType": "text", "content": "Standard channel message one." },
+      "from": { "user": { "id": "29:user-ada", "displayName": "Ada Lovelace" } }
+    },
+    {
+      "id": "m2",
+      "messageType": "message",
+      "createdDateTime": "2026-06-01T11:00:00Z",
+      "lastModifiedDateTime": "2026-06-01T11:00:00Z",
+      "subject": "Weekly sync",
+      "body": { "contentType": "text", "content": "Standard channel message two." },
+      "from": { "user": { "id": "29:user-bob", "displayName": "Bob" } }
+    }
+  ]
+}

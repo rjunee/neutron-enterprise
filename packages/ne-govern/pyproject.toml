@@ -1,0 +1,66 @@
+[project]
+name = "ne-govern"
+version = "0.1.0"
+description = "Policy decision point, deterministic guardrails, and PII controls."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-contracts",
+    "ne-events",
+    "ne-schema",
+    "ne-envbuild",
+    # The C2 AIR_GAP fail-closed guard on the isolated presidio venv builder now
+    # comes from the stdlib-only leaf ne-net (NE-CKC10 / P2-23 consolidation); the
+    # interim ne-brain edge was removed.
+    "ne-net",
+    "httpx>=0.28.1,<1",
+    # Durable, atomic guardrail state (NE-070H): SqlAlchemySpendLedger +
+    # SqlAlchemySlidingWindowCounter over Core SQL. Same pin already carried
+    # platform-wide by ne-runtime/ne-events/ne-audit (MIT).
+    "sqlalchemy>=2.0.51,<2.1",
+]
+
+[project.optional-dependencies]
+# The cedarpy-backed "cedar" PolicyDecisionPoint alternate (NE-092) — an
+# OPTIONAL extra, never a [project.dependencies] runtime dep: an OPA-only
+# deployment must not ship Cedar. Install `ne-govern[cedar]` to select it.
+cedar = ["cedarpy>=4.8.6,<5"]
+
+[project.entry-points."ne.plugins.policy_decision_point"]
+opa = "ne.govern.pdp:GovernedPdp"
+cedar = "ne.govern.cedar.pdp:CedarGovernedPdp"
+
+[project.entry-points."ne.plugins.redactor"]
+presidio = "ne.govern.redaction.presidio_backend:PresidioRedactor"
+regex = "ne.govern.redaction.regex_backend:RegexRedactor"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.govern"
+namespace = true
+
+[tool.uv.sources]
+ne-contracts = { workspace = true }
+ne-events = { workspace = true }
+ne-schema = { workspace = true }
+ne-envbuild = { workspace = true }
+ne-net = { workspace = true }
+ne-audit = { workspace = true }
+
+[dependency-groups]
+# psycopg is TEST-ONLY: the live-Postgres concurrency proof
+# (tests/test_guardrail_concurrency_postgres.py) runs the atomic reservation
+# against real Postgres. Same pin already accepted in-workspace via ne-events /
+# ne-connect (LGPL-3.0, C4 case-by-case, dev/test-group only).
+dev = [
+    "ne-audit",
+    "psycopg[binary]>=3.3.4,<4",
+    # cedarpy is the OPTIONAL [cedar] PDP alternate (NE-092); dev-group so the
+    # OPA-vs-Cedar parity swap suite runs in CI under `uv sync --all-packages` —
+    # NEVER a [project.dependencies] runtime dep: an OPA-only deployment must
+    # not ship Cedar.
+    "cedarpy>=4.8.6,<5",
+]

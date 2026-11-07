@@ -1,0 +1,27 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Scheduled pilot backup (oneshot, driven by ne-backup.timer). Install by copying
+# this unit + the timer into /etc/systemd/system/ and editing the commented paths
+# below to your bundle + destination, then: systemctl enable --now ne-backup.timer
+#
+# C12: no secret literals here. The customer KEK is read from the bundle
+# SecretStore by ne-backup itself; it never appears in a unit, an env, or a log.
+[Unit]
+Description=Neutron Enterprise pilot backup (DB-native + object, customer-key encrypted)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Edit these to your deployment (kept out of the shipped unit so no host data is committed):
+# Environment=NE_BACKUP_BUNDLE=/opt/neutron/bundle
+# Environment=NE_BACKUP_DEST=/mnt/customer-backups
+# WorkingDirectory=/opt/neutron/neutron-enterprise
+ExecStart=/opt/neutron/neutron-enterprise/deploy/backup/run-backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+{
+  "type": "conversationUpdate",
+  "id": "act-cu-1",
+  "serviceUrl": "https://smba.trafficmanager.net/amer/",
+  "channelId": "msteams",
+  "from": { "id": "29:user-ada", "aadObjectId": "aad-ada" },
+  "conversation": { "id": "a:conv1" },
+  "recipient": { "id": "28:bot-app-id" },
+  "membersAdded": [ { "id": "28:bot-app-id" } ]
+}

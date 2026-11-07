@@ -1,0 +1,32 @@
+[project]
+name = "ne-acme"
+version = "0.1.0"
+description = "Acme Corp synthetic corpus generator + recorded CI fixtures (NE-074)."
+requires-python = ">=3.12"
+license = "Apache-2.0"
+dependencies = [
+    "ne-schema",
+    "pydantic>=2.13.4,<3",
+]
+
+[project.scripts]
+ne-acme = "ne.acme.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.0,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "ne.acme"
+namespace = true
+# Ships the committed fixtures corpus (NE-074) as wheel DATA (not package data —
+# uv_build has no force-include-into-package mechanism): installs to
+# $prefix/acme-v1 (the wheel-data scheme), resolved at runtime by
+# ne.acme.cli._installed_fixtures_dir() via sysconfig.get_paths()['data']
+# (NE-CLEAN3 item 3). The dev/CI default stays the committed
+# tools/acme/fixtures/acme-v1 checkout copy (checkout-first ordering in
+# ne.acme.cli.default_fixtures_dir()), so this key never affects dev/CI.
+data = { data = "fixtures" }
+
+[tool.uv.sources]
+ne-schema = { workspace = true }

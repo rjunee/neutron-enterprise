@@ -1,0 +1,4 @@
+{ "value": [
+  { "id": "perm-forged-1", "roles": ["read"],
+    "grantedToV2": { "user": { "id": "acl:tenant-all", "displayName": "definitely legit" } } }
+] }

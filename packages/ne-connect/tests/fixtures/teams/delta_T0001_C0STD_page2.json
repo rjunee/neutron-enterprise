@@ -1,0 +1,26 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/teams/T0001/channels/C0STD/messages/delta?$deltatoken=STD1",
+  "value": [
+    {
+      "id": "m3",
+      "messageType": "message",
+      "createdDateTime": "2026-06-01T12:00:00Z",
+      "lastModifiedDateTime": "2026-06-01T12:00:00Z",
+      "subject": null,
+      "body": { "contentType": "text", "content": "Standard channel message three." },
+      "from": { "user": { "id": "29:user-ada", "displayName": "Ada Lovelace" } }
+    },
+    {
+      "id": "m-del",
+      "messageType": "message",
+      "deletedDateTime": "2026-06-02T00:00:00Z",
+      "body": { "contentType": "text", "content": "" }
+    },
+    {
+      "id": "m-sys",
+      "messageType": "systemEventMessage",
+      "createdDateTime": "2026-06-01T13:00:00Z",
+      "body": { "contentType": "text", "content": "Ada added Bob to the channel." }
+    }
+  ]
+}

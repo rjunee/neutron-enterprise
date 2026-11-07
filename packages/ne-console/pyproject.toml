@@ -1,0 +1,20 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# packages/ne-console is the Neutron Enterprise web console — a TypeScript/React
+# SPA built with Vite, NOT a Python package. This pyproject exists only so the
+# root `packages/*` uv workspace glob resolves it as a non-package (virtual)
+# member; the root [tool.uv.workspace] config is a shared file we must not edit,
+# and a bare directory under packages/ breaks `uv lock` repo-wide ("Workspace
+# member … is missing a pyproject.toml"). This is the exact precedent
+# tools/supply-chain already uses. The frontend toolchain (npm/tsc/eslint/
+# prettier/vitest) and the npm C4 license gate own this package's real gate.
+[project]
+name = "ne-console"
+version = "0.1.0"
+description = "Neutron Enterprise web console (TypeScript/React SPA; not a Python package — stub so the root packages/* workspace glob resolves; root pyproject is a shared file we must not edit)"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+
+[tool.uv]
+package = false

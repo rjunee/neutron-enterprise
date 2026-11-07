@@ -1,0 +1,4 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/teams/T0001/channels/C0PRIV/messages/delta?$deltatoken=PRIV2",
+  "value": []
+}

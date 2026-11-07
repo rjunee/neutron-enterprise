@@ -1,0 +1,61 @@
+[
+  {
+    "before": null,
+    "after": {
+      "id": 10,
+      "name": "Gil Synthetic",
+      "email": "gil@synthetic.example",
+      "acl_group": "g-eng"
+    },
+    "source": {
+      "connector": "postgresql",
+      "db": "appdb",
+      "schema": "public",
+      "table": "customers",
+      "lsn": 2001
+    },
+    "op": "c",
+    "ts_ms": 1720000010000
+  },
+  {
+    "before": {
+      "id": 10,
+      "name": "Gil Synthetic",
+      "email": "gil@synthetic.example",
+      "acl_group": "g-eng"
+    },
+    "after": {
+      "id": 10,
+      "name": "Gil Renamed-Synthetic",
+      "email": "gil@synthetic.example",
+      "acl_group": "g-eng"
+    },
+    "source": {
+      "connector": "postgresql",
+      "db": "appdb",
+      "schema": "public",
+      "table": "customers",
+      "lsn": 2002
+    },
+    "op": "u",
+    "ts_ms": 1720000010500
+  },
+  {
+    "before": {
+      "id": 10,
+      "name": "Gil Renamed-Synthetic",
+      "email": "gil@synthetic.example",
+      "acl_group": "g-eng"
+    },
+    "after": null,
+    "source": {
+      "connector": "postgresql",
+      "db": "appdb",
+      "schema": "public",
+      "table": "customers",
+      "lsn": 2003
+    },
+    "op": "d",
+    "ts_ms": 1720000011000
+  }
+]

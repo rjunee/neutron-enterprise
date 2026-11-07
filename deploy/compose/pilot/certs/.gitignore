@@ -1,0 +1,6 @@
+# Operator-provisioned TLS material lands here for the customcerts Caddyfile.
+# NEVER commit real key material (C12).
+tls.crt
+tls.key
+*.pem
+*.key

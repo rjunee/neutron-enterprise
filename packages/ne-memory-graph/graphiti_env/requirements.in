@@ -1,0 +1,30 @@
+# Graphiti temporal-memory sidecar (isolated, hash-pinned venv — C4).
+#
+# graphiti-core drags the openai SDK (C3), the neo4j driver, AND posthog telemetry
+# (default ON — forced OFF in service.py, C1). The whole closure lives ONLY in this
+# out-of-process sidecar venv and NEVER enters the platform uv.lock (proven by
+# packages/ne-memory-graph/tests/test_no_graph_closure_in_lock.py and the
+# `memory-graph-sidecar-out-of-process` import-linter contract).
+#
+# Pin: graphiti-core==0.29.2 (Apache-2.0; PyPI JSON verified 2026-07-09). It drags
+# neo4j (Apache-2.0 AND Python-2.0), openai (Apache-2.0 — ALREADY legitimately in
+# the platform lock via litellm, so the lock-grep test does NOT assert its absence),
+# posthog (MIT — telemetry force-disabled), numpy, pydantic, python-dotenv, tenacity.
+# The Neo4j-CE SERVER (GPLv3) is a DEV/TEST docker container only, never a Python
+# dep, never bundled — the AGE-driver cutover is NE-083c. Re-verified 2026-07-09.
+#
+# fastapi/uvicorn run the sidecar HTTP surface (loopback-bound). They are ALSO in
+# the platform lock via ne-api, but here they live in the sidecar venv.
+#
+# Compile with (NEVER hand-edit requirements.txt):
+#   uv pip compile packages/ne-memory-graph/graphiti_env/requirements.in --universal \
+#       --python-version 3.12 --generate-hashes \
+#       -o packages/ne-memory-graph/graphiti_env/requirements.txt
+# psycopg — the AGE driver's Postgres execution surface (NE-083c). LGPL-3.0-only,
+# sidecar-venv-only here, but ALSO legitimately in the platform uv.lock via
+# ne-brain-graph (C4 posture settled at NE-081) — so the lock-grep test does NOT
+# assert its absence. Pinned to the same platform floor: psycopg[binary]>=3.3.4,<4.
+graphiti-core==0.29.2
+fastapi
+uvicorn
+psycopg[binary]>=3.3.4,<4

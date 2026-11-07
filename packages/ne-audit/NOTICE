@@ -1,0 +1,36 @@
+Neutron Enterprise — ne-audit
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+(none embedded — no third-party source is vendored or distributed in this package)
+
+External services / extensions consumed at runtime (not distributed):
+- pgAudit — PostgreSQL License — https://www.pgaudit.org/
+  Consumed as an optional PostgreSQL server extension for statement-level database
+  audit (defense in depth). It is an external database extension, not code shipped
+  with this package.
+
+--- Test/dev infrastructure — NOT distributed with this package ---
+
+CloudNativePG PostgreSQL operand image / ghcr.io/cloudnative-pg/postgresql:
+  18.4-standard-trixie (digest
+  sha256:4e4ac3fb2c914cfb44f80f0b8be8aa550e83b80bf5220df49c3a8780c1f79bc8) /
+  recipes Apache-2.0 (CNCF CloudNativePG project "postgres-containers"),
+  contents Debian trixie-slim + PostgreSQL 18.4 + pgaudit 18.0 (all
+  PostgreSQL License) / https://github.com/cloudnative-pg/postgres-containers
+  External SERVICE CONTAINER used ONLY by CI's live-postgres job to obtain a
+  pgAudit-capable Postgres server for
+  packages/ne-audit/tests/test_pgaudit_live.py. NOT embedded, NOT
+  distributed with this package, and NEVER part of a shipped deployment
+  profile — production deployments configure their own pgAudit-capable
+  Postgres via `shared_preload_libraries='pgaudit'`. Chosen over
+  bitnami/postgresql (Broadcom removed free versioned tags Aug-Sep 2025 —
+  provenance/maintenance hazard) and over apt-installing pgaudit onto the
+  official postgres image at CI time (an unpinned layer, which would violate
+  this repo's digest-pinning discipline).
+
+Attribution:
+- Audit-chain test designs (chain verification, tamper detection, group-commit
+  durability, concurrent-append) are informed by the ABI versionstore test suite
+  (MIT License, Copyright (C) 2025 Naas.ai). No ABI code is included — only the test
+  SHAPES were used as a checklist.

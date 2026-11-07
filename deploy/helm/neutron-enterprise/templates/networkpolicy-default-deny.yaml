@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# C2 network posture — the default-deny baseline (design §1.7). An empty
+# podSelector selects EVERY pod in the namespace; declaring both policyTypes
+# with no ingress/egress rules denies all traffic in both directions. The
+# explicit allows (templates/networkpolicy-allow.yaml) re-open only the required
+# lanes. Gated behind networkPolicy.enabled (default false) — renders NOTHING by
+# default so the byte-parity guardians stay green. Requires a NetworkPolicy-
+# enforcing CNI to have any effect.
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neutron-default-deny
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+{{- end }}

@@ -1,0 +1,13 @@
+{
+  "type": "event_callback",
+  "event_id": "Ev00000002",
+  "team_id": "T00000000",
+  "api_app_id": "A0CHAT0000",
+  "event": {
+    "type": "app_mention",
+    "channel": "C0CHATPUB0",
+    "user": "U0ADA00000",
+    "text": "<@U0BOT00000> what is the deployment status?",
+    "ts": "1720000000.000300"
+  }
+}

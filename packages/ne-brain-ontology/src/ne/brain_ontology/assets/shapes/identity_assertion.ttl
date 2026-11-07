@@ -1,0 +1,36 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# PER-WRITE curated shape (NE-085b). Makes the property-graph->RDF lift's SAME_AS
+# reification genuinely SHACL-validated rather than vacuously passed: a lifted
+# nea:IdentityAssertion resource must carry exactly one IRI same_as_left, exactly
+# one IRI same_as_right, and exactly one xsd:string source_ref (sh:closed, so no
+# stray predicates). Evaluable on a delta + its CBD closure -> runs on EVERY write
+# through the gateway.
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix nea:  <https://neutron.enterprise/schema/alignment/> .
+
+nea:IdentityAssertionShape a sh:NodeShape ;
+    sh:targetClass nea:IdentityAssertion ;
+    sh:closed true ;
+    sh:ignoredProperties ( rdf:type ) ;
+    sh:property [
+        sh:path nea:same_as_left ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path nea:same_as_right ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path nea:source_ref ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .

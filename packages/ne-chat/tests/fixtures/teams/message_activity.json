@@ -1,0 +1,13 @@
+{
+  "type": "message",
+  "id": "act-1",
+  "serviceUrl": "https://smba.trafficmanager.net/amer/",
+  "channelId": "msteams",
+  "from": { "id": "29:user-ada", "aadObjectId": "aad-ada", "name": "Ada Lovelace" },
+  "conversation": { "id": "a:conv1", "conversationType": "channel" },
+  "recipient": { "id": "28:bot-app-id", "name": "Governed Bot" },
+  "text": "<at>Governed Bot</at> what is the status?",
+  "entities": [
+    { "type": "mention", "text": "<at>Governed Bot</at>", "mentioned": { "id": "28:bot-app-id" } }
+  ]
+}

@@ -1,0 +1,20 @@
+# Isolated Presidio env (C4 / SPEC §11 heavy-ML-closure principle): presidio's
+# spaCy + en_core_web_lg NER-model closure is the heavy-scientific-Python class
+# the platform lock (uv.lock) MUST NOT carry (C4 license-gate false-positive
+# exposure + sovereign-deploy bloat). It is confined here
+# (packages/ne-govern/.presidio-venv) and NEVER enters the platform lock/SBOM.
+# Same isolation pattern as packages/ne-brain/parser_env (docling). Compile with:
+#
+#   uv pip compile packages/ne-govern/presidio_env/requirements.in \
+#       --universal --python-version 3.12 --generate-hashes \
+#       --override packages/ne-govern/presidio_env/overrides.txt \
+#       -o packages/ne-govern/presidio_env/requirements.txt
+#
+# overrides.txt exists to lift presidio-anonymizer 2.2.363's stale cryptography<47
+# ceiling so the compile takes the GHSA-537c-gmf6-5ccf fix (>=48.0.1); see
+# overrides.txt for the full rationale and the unpin trigger.
+#
+# NEVER hand-edit requirements.txt.
+presidio-analyzer==2.2.363
+presidio-anonymizer==2.2.363
+en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.8.0/en_core_web_lg-3.8.0-py3-none-any.whl

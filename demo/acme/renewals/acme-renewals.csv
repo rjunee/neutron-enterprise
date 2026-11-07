@@ -1,0 +1,20 @@
+renewal_id,account,contract_end,annual_value_usd,seats,owner_email,status,notes
+RNW-1001,Cascade Aerospace Inc,2026-11-30,84000,120,l.navarro@acme.example,active,Multi-year uplift agreed
+RNW-1002,Bluepeak Robotics Ltd,2026-09-15,42000,55,p.okafor@acme.example,renewing,
+RNW-1003,Cobalt Metals Inc,2026-09-30,45000,50,d.kaplan@acme.example,active,
+RNW-1004,Summit Analytics GmbH,2027-01-31,150000,210,l.navarro@acme.example,active,Expansion to EU region
+RNW-1005,Redshift Foods LLC,2026-08-31,27500,30,d.kaplan@acme.example,lapsed,Churn risk on pricing
+RNW-1006,Harbor Ventures Inc,2026-10-01,64000,80,p.okafor@acme.example,active,
+RNW-1007,Meridian Logistics Ltd,ASAP,58000,70,d.kaplan@acme.example,renewing,Customer wants early renewal
+RNW-1008,Granite Dynamics Ltd,2027-03-31,98000,140,d.kaplan@acme.example,active,Signed at Q1 QBR
+RNW-1009,Meridian Robotics Inc,2026-12-15,56000,65,l.navarro@acme.example,renewing,
+RNW-1010,Harbor Metals LLC,2026-10-15,N/A,35,p.okafor@acme.example,renewing,Value TBC after usage review
+RNW-1011,Cascade Analytics GmbH,2026-09-30,31000,40,p.okafor@acme.example,active,
+,Bluepeak Aerospace Ltd,2026-12-31,39000,45,l.navarro@acme.example,active,Added at offsite
+RNW-1012,Amberfield Foods LLC,2026-10-31,22000,25,d.kaplan@acme.example,lapsed,No response since May
+RNW-1013,Silverline Analytics GmbH,2027-01-15,52000,60,d.kaplan@acme.example,renewing ,Renewal packet sent
+RNW-1014,Redshift Systems GmbH,2027-02-28,73000,95,l.navarro@acme.example,active,
+RNW-1015,Summit Aerospace Inc,2026-08-20,18000
+RNW-1016,Harbor Analytics GmbH,2026-11-15,45500,60,p.okafor@acme.example,renewing,Waiting on legal
+RNW-1003,Cobalt Metals Inc,2026-09-30,47500,50,d.kaplan@acme.example,active,Updated value after true-up
+RNW-1017,Granite Systems GmbH,2026-12-01,29000,32,j.muñoz@acme.example,active,

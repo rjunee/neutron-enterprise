@@ -1,0 +1,11 @@
+# Override linkml's `jsonschema[format]` extra (which pulls rfc3987, GPLv3+) with
+# `jsonschema[format-nongpl]` so the codegen env contains ZERO GPL distributions
+# (rfc3987 is dropped; format validation uses rfc3986-validator / rfc3987-syntax,
+# both non-GPL). Enforces SPEC §2 C4 (no in-process GPL) even though the codegen
+# env never enters the platform lock. Pinned + hashed so it is usable both in
+# `uv pip compile` and `uv pip install --require-hashes` (which require every
+# override to be ==-pinned and hashed). Hashes match jsonschema==4.26.0 in
+# requirements.txt.
+jsonschema[format-nongpl]==4.26.0 \
+    --hash=sha256:0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326 \
+    --hash=sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce

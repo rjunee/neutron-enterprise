@@ -1,0 +1,385 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# DEV STACK ONLY — well-known dev credentials, never for pilot/prod (NE-070).
+#
+# Local development compose profile for Neutron Enterprise. Brings up the
+# SPEC §3 infra services needed for day-to-day dev work: Postgres, Qdrant,
+# Keycloak, OPA, TEI (embeddings + reranker), OpenBao (dev mode), and an
+# OTel collector. Langfuse (v3) plus its ops subsystem (ClickHouse, Valkey,
+# SeaweedFS) is an OPTIONAL profile — see the "langfuse" profile services
+# below — per SPEC §3.3. Use `ne dev up` / `ne dev up --langfuse` rather than
+# invoking `docker compose` directly; see deploy/compose/dev/README.md.
+#
+# Image provenance (exact tags, licenses, verification dates) is recorded in
+# deploy/compose/dev/README.md — do not bump a tag here without updating that
+# table.
+
+name: ne-dev
+
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: nedev
+      POSTGRES_PASSWORD: nedev
+      POSTGRES_DB: neutron
+    ports:
+      - "5432:5432"
+    volumes:
+      # PostgreSQL 18 images moved the data mount point to
+      # /var/lib/postgresql (no longer .../data) — see README.md.
+      - pg-data:/var/lib/postgresql
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nedev -d neutron"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.2
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      # The qdrant image has no curl; use the bash /dev/tcp trick instead.
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: nedev
+      KC_DB_PASSWORD: nedev
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # Health endpoint lives on the management port (9000), not 8080.
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/9000'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  opa:
+    image: openpolicyagent/opa:1.18.2-debug
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--disable-telemetry"
+      - "/policies"
+    volumes:
+      - ./opa/policies:/policies:ro
+    ports:
+      - "8181:8181"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8181/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  tei-embed:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3
+    command: ["--model-id", "Qwen/Qwen3-Embedding-0.6B"]
+    environment:
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    ports:
+      - "8085:80"
+    volumes:
+      - tei-embed-cache:/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/80'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  tei-rerank:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.3
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3"]
+    environment:
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    ports:
+      - "8086:80"
+    volumes:
+      - tei-rerank-cache:/data
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/80'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  openbao:
+    image: openbao/openbao:2.6.3
+    command: ["server", "-dev"]
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: ne-dev-root
+      BAO_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    healthcheck:
+      test: ["CMD", "bao", "status", "-address=http://127.0.0.1:8200"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.155.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    # No healthcheck: this image is distroless and has no shell/wget/curl to
+    # probe with. Compose `--wait` treats it as healthy once it is running.
+
+  # --- Langfuse profile (optional, SPEC §3.3) --------------------------------
+  # Langfuse v3 + its ops subsystem (ClickHouse, Valkey, SeaweedFS). Started
+  # only with `ne dev up --langfuse` / `docker compose --profile langfuse ...`.
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8.26.11-alpine
+    profiles: ["langfuse"]
+    environment:
+      CLICKHOUSE_DB: langfuse
+      CLICKHOUSE_USER: nedev
+      CLICKHOUSE_PASSWORD: nedev
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  valkey:
+    image: valkey/valkey:8.1.10-alpine
+    profiles: ["langfuse"]
+    command: ["valkey-server", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.37
+    profiles: ["langfuse"]
+    command:
+      - "server"
+      - "-dir=/data"
+      - "-s3"
+      - "-s3.config=/etc/seaweedfs/s3-config.json"
+    volumes:
+      - seaweedfs-data:/data
+      - ./seaweedfs/s3-config.json:/etc/seaweedfs/s3-config.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://127.0.0.1:9333/cluster/status"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  langfuse-s3-init:
+    image: chrislusf/seaweedfs:4.37
+    profiles: ["langfuse"]
+    restart: "no"
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "echo 's3.bucket.create -name langfuse' | weed shell -master seaweedfs:9333 || true"
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker:3.205.0
+    profiles: ["langfuse"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://nedev:nedev@postgres:5432/langfuse
+      SALT: ne-dev-salt
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000001"
+      TELEMETRY_ENABLED: "false"
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_USER: nedev
+      CLICKHOUSE_PASSWORD: nedev
+      CLICKHOUSE_DB: langfuse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      REDIS_CONNECTION_STRING: redis://valkey:6379
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://seaweedfs:8333
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: us-east-1
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: nedev
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: nedevsecret
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://seaweedfs:8333
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: us-east-1
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: nedev
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: nedevsecret
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+
+  langfuse-web:
+    image: langfuse/langfuse:3.205.0
+    profiles: ["langfuse"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://nedev:nedev@postgres:5432/langfuse
+      SALT: ne-dev-salt
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000001"
+      TELEMETRY_ENABLED: "false"
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_USER: nedev
+      CLICKHOUSE_PASSWORD: nedev
+      CLICKHOUSE_DB: langfuse
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      REDIS_CONNECTION_STRING: redis://valkey:6379
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://seaweedfs:8333
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: us-east-1
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: nedev
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: nedevsecret
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://seaweedfs:8333
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: us-east-1
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: nedev
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: nedevsecret
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ne-dev-nextauth-secret
+    ports:
+      - "3000:3000"
+
+  # --- worm profile (NE-S3-OBJECTSTORE, optional) ----------------------------
+  # TEST/DEV INFRASTRUCTURE ONLY. MinIO is AGPL-3.0 and its upstream community
+  # repo went into maintenance mode Dec 2025 / was archived 2026-04-25 — it is
+  # NEVER part of a shipped profile and is NEVER embedded in the product. It
+  # exists solely so the `s3` ObjectStore adapter's Object Lock (WORM)
+  # conformance/live tests (packages/ne-storage/tests/test_s3_conformance.py,
+  # test_s3_worm_live.py) have a real COMPLIANCE-mode-capable S3 endpoint to
+  # run against locally. Production deployments point NE_STORAGE_S3_* at the
+  # customer's own S3 / S3-compatible WORM storage — see
+  # packages/ne-storage/README.md. Started only with `docker compose --profile
+  # worm up -d minio` (or `ne dev up --worm`, once wired). SeaweedFS (the
+  # existing Langfuse-profile S3 gateway, above) is NOT a substitute here: its
+  # COMPLIANCE-mode Object Lock accepts a retention write but does not
+  # actually block deletes (seaweedfs/seaweedfs#8350, #7194) — using it for
+  # this lane would make the WORM proof vacuous.
+  minio:
+    image: coollabsio/minio@sha256:69b55a1c1c5dc285ce04db96689f5b2102317fc77a50680a1874ca6efd1c87f9
+    profiles: ["worm"]
+    command: ["server", "/data1", "/data2", "/data3", "/data4"]
+    environment:
+      MINIO_ROOT_USER: ne-test
+      MINIO_ROOT_PASSWORD: ne-test-secret
+      MINIO_UPDATE: "off"
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio-data1:/data1
+      - minio-data2:/data2
+      - minio-data3:/data3
+      - minio-data4:/data4
+    healthcheck:
+      # This image ships `mc` but no curl (its Dockerfile copies only the
+      # minio and mc binaries); `mc ready local` is upstream MinIO's own
+      # compose healthcheck.
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # --- rebac profile (NE-087 O-4, optional) ----------------------------------
+  # OpenFGA fine-grained-sharing sidecar for local dev. Started only with
+  # `ne dev up --rebac`. Dev-only well-known creds (never pilot/prod). The dev
+  # tier pins tags exactly (not digests) per its EXPECTED_IMAGES guardian.
+  openfga-migrate:
+    image: openfga/openfga:v1.18.3
+    profiles: ["rebac"]
+    command: ["migrate"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://nedev:nedev@postgres:5432/openfga?sslmode=disable
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  openfga:
+    image: openfga/openfga:v1.18.3
+    profiles: ["rebac"]
+    command: ["run", "--playground-enabled=false", "--metrics-enabled=false"]
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://nedev:nedev@postgres:5432/openfga?sslmode=disable
+      OPENFGA_AUTHN_METHOD: preshared
+      # Dev-only well-known token (8081/8085/8086/8181/8200 already taken → 8087).
+      OPENFGA_AUTHN_PRESHARED_KEYS: nedev-openfga-token
+    ports:
+      - "8087:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openfga-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=127.0.0.1:8081"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+volumes:
+  pg-data:
+  qdrant-data:
+  tei-embed-cache:
+  tei-rerank-cache:
+  clickhouse-data:
+  seaweedfs-data:
+  minio-data1:
+  minio-data2:
+  minio-data3:
+  minio-data4:

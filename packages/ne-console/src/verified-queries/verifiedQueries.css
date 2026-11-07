@@ -1,0 +1,391 @@
+/* Copyright (c) 2026 Ryan Junee. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+.ne-verified-queries__create {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-4);
+}
+
+.ne-verified-queries__create > span {
+  color: var(--text-dim);
+  font-size: var(--type-label);
+}
+
+.ne-verified-queries__layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.34fr) minmax(0, 1fr);
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.ne-verified-queries__catalog,
+.ne-verified-queries__workspace,
+.ne-verified-queries__query,
+.ne-verified-queries__results {
+  min-width: 0;
+}
+
+.ne-verified-queries__catalog {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.ne-verified-queries__catalog .ne-toolbar {
+  padding: var(--space-8);
+}
+
+.ne-verified-queries__catalog-list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-8);
+  list-style: none;
+}
+
+.ne-verified-queries__catalog-list button {
+  display: grid;
+  width: 100%;
+  gap: var(--space-4);
+  padding: var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ne-verified-queries__catalog-list button:hover,
+.ne-verified-queries__catalog-list button:focus-visible,
+.ne-verified-queries__catalog-list button.is-selected {
+  border-color: var(--cherenkov);
+}
+
+.ne-verified-queries__catalog-list small,
+.ne-verified-queries__query > p,
+.ne-verified-queries__field span {
+  color: var(--text-dim);
+}
+
+.ne-verified-queries__workspace {
+  display: grid;
+  align-content: start;
+  gap: var(--space-16);
+}
+
+.ne-verified-queries__query,
+.ne-verified-queries__results {
+  padding: var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-verified-queries__query h2,
+.ne-verified-queries__query h3,
+.ne-verified-queries__results h2 {
+  margin: 0 0 var(--space-8);
+  color: var(--text);
+}
+
+.ne-verified-queries__summary,
+.ne-verified-queries__provenance,
+.ne-verified-queries__query details dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-8);
+}
+
+.ne-verified-queries__summary div,
+.ne-verified-queries__provenance div,
+.ne-verified-queries__query details dl div {
+  min-width: 0;
+}
+
+.ne-verified-queries__summary dt,
+.ne-verified-queries__provenance dt,
+.ne-verified-queries__query details dt {
+  color: var(--text-dim);
+  font-size: var(--type-label);
+}
+
+.ne-verified-queries__summary dd,
+.ne-verified-queries__provenance dd,
+.ne-verified-queries__query details dd {
+  margin: var(--space-4) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.ne-verified-queries__form {
+  display: grid;
+  gap: var(--space-12);
+  margin-top: var(--space-16);
+}
+
+.ne-verified-queries__field {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ne-verified-queries__field input:not([type="checkbox"]),
+.ne-verified-queries__field select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-8);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--ground);
+  color: var(--text);
+}
+
+.ne-verified-queries__citation {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ne-verified-queries__citation code {
+  overflow-wrap: anywhere;
+  color: var(--text-dim);
+}
+
+.ne-verified-queries__replay {
+  padding: var(--space-8) var(--space-12);
+  border-left: var(--space-4) solid var(--green);
+  background: var(--green-tint);
+}
+
+.ne-verified-queries__replay--diverged {
+  border-left-color: var(--red);
+  background: var(--red-tint);
+}
+
+@media (max-width: 48rem) {
+  .ne-verified-queries__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ne-verified-queries__catalog-list {
+    max-height: 18rem;
+    overflow-y: auto;
+  }
+
+  .ne-verified-queries__query,
+  .ne-verified-queries__results {
+    padding: var(--space-12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ne-verified-queries__catalog-list button {
+    transition: none;
+  }
+}
+
+/* NE-KG-MULTIKEY list-arg form (bounded repeatable input). */
+.ne-verified-queries__field--list {
+  display: grid;
+  gap: var(--space-8);
+  margin: 0;
+  padding: var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.ne-verified-queries__field--list legend {
+  padding: 0 var(--space-4);
+}
+
+.ne-verified-queries__list-hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--type-label);
+}
+
+.ne-verified-queries__list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.ne-verified-queries__unsupported {
+  padding: var(--space-12);
+  border-left: var(--space-4) solid var(--amber);
+  background: var(--panel-raised);
+}
+
+.ne-verified-queries__unsupported ul {
+  margin: var(--space-8) 0 0;
+  padding-left: var(--space-16);
+}
+
+/* The two-store signpost + view toggle. */
+.ne-verified-queries__signpost {
+  margin: 0 0 var(--space-12);
+  color: var(--text-dim);
+  max-width: 70rem;
+}
+
+.ne-verified-queries__views {
+  display: flex;
+  gap: var(--space-8);
+  margin-bottom: var(--space-12);
+}
+
+.ne-verified-queries__views button {
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ne-verified-queries__views button.is-selected {
+  border-color: var(--cherenkov);
+}
+
+/* The governed Tier-3 record browser. */
+.ne-t3-browser {
+  display: grid;
+  gap: var(--space-16);
+}
+
+.ne-t3-browser__classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-t3-browser__classes button {
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ne-t3-browser__classes button:hover,
+.ne-t3-browser__classes button:focus-visible,
+.ne-t3-browser__classes button.is-selected {
+  border-color: var(--cherenkov);
+}
+
+.ne-t3-browser__panel {
+  padding: var(--space-16);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  min-width: 0;
+}
+
+.ne-t3-browser__panel h3 {
+  margin: 0 0 var(--space-8);
+}
+
+.ne-t3-browser__records {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-t3-browser__records button {
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel-raised);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-mono, monospace);
+  overflow-wrap: anywhere;
+}
+
+.ne-t3-browser__records button:hover,
+.ne-t3-browser__records button:focus-visible {
+  border-color: var(--cherenkov);
+}
+
+.ne-t3-browser__fields {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ne-t3-browser__fields th,
+.ne-t3-browser__fields td {
+  padding: var(--space-8);
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.ne-t3-browser__fields th[scope="row"],
+.ne-t3-browser__fields td code {
+  font-family: var(--font-mono, monospace);
+  font-weight: normal;
+  color: var(--text-dim);
+}
+
+.ne-t3-browser__note {
+  margin: var(--space-8) 0 0;
+  color: var(--text-dim);
+  font-size: var(--type-label);
+}
+
+/* The two-graphs callout on the operational surfaces (Ontology / Graph). */
+.ne-t3-callout {
+  margin: 0 0 var(--space-16);
+  padding: var(--space-12) var(--space-16);
+  border: 1px solid var(--rule);
+  border-left: var(--space-4) solid var(--cherenkov);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.ne-t3-callout p {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.ne-t3-callout p strong {
+  color: var(--text);
+}
+
+.ne-t3-callout__classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ne-t3-callout__classes a {
+  display: inline-block;
+  padding: var(--space-4) var(--space-8);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.ne-t3-callout__classes a:hover,
+.ne-t3-callout__classes a:focus-visible {
+  border-color: var(--cherenkov);
+}
+
+.ne-verified-queries__description {
+  color: var(--text);
+  max-width: 70rem;
+}

@@ -1,0 +1,41 @@
+{
+  "as_of_date": "2026-08-18",
+  "corpus_version": "meridian-v1",
+  "counts": {
+    "artifacts": 12,
+    "auto_loans": 10,
+    "complaints": 3,
+    "customers": 15,
+    "debit_cards": 15,
+    "deposit_accounts": 15,
+    "fee_postings": 5,
+    "households": 10,
+    "operational_accounts": 10,
+    "operational_documents": 12,
+    "operational_people": 15,
+    "operational_tickets": 19,
+    "payment_schedules": 10,
+    "reg_e_disputes": 6,
+    "servicing_notes": 10,
+    "servicing_tickets": 10
+  },
+  "generator": "ne-meridian 0.1.0",
+  "seed": 4830,
+  "sha256": {
+    "assets/complaint-escalation-playbook-2026.md": "225dddcab6f8d885fbeff3e0b6275b283789d22c935622639d285e7679bac796",
+    "assets/consumer-auto-collections-policy-2025.md": "87ff316309e1f30cd89468b3fd56752ac9db3c8ee2607104d59ecbaca0a0d199",
+    "assets/consumer-auto-collections-policy-2026.md": "82757c1f91b6b09bb80f5b6f5cb063636ef15ceec7eb0a4699da85269b2220cf",
+    "assets/debit-card-dispute-handling-sop-v3.docx": "5fda94fdd39231b969cd00150c6db2876b2bfc594c849061ce0f61b60944fc91",
+    "assets/debit-card-dispute-handling-sop-v4.docx": "76211678616cab2f22766d1ee60a03e943f67362a1c5d536ad8c79acec994d5a",
+    "assets/disaster-county-reference-2026.csv": "02191bef45426c75c9500332bfccc2051ed607834f46f5d7ad262b9288af0cec",
+    "assets/disaster-hardship-response-sop-2026.md": "53c073ceafa2ac7cde258e7c211ce9677061966f05ca437395487ba3e3b09970",
+    "assets/fee-schedule-2026.json": "5f46b351482d1c74d4280895ebe6aa7359d6d6b8e6d6f856563ade6d019f58f5",
+    "assets/reg-dd-disclosure-2026.pdf": "89eab44cd991b5e566ad1fdff6088009e635f0836e74fc0fe5da79c2e77473b0",
+    "assets/reg-e-operations-bulletin-2025.md": "9bdf5112e929eec07ec4b76fd887b698c5728c6774cea19a28af86e303364d59",
+    "assets/reg-e-operations-bulletin-2026.md": "fb6d1e61d4a3c7aacb5609a75d938de131c51080898c9973b9b1e2c80c82f2df",
+    "assets/servicing-note-quality-standard-2026.md": "f3bc61225fbc8e88b692f86558ea224bef864d2ddb99add1df36392493946a06",
+    "banking.json": "6b2890227a6913064fb4315cb3a5cfb13f1305814226edb2774412266e3c77b2",
+    "ground_truth.json": "342f172013956cb69f363dc369be0794577b5d7a53ce4aefe3cde1067be142e1",
+    "records.json": "67b288862b6852ca4b73bc06870db91caf9e5f12fbd7e4533684657dd7025b3e"
+  }
+}

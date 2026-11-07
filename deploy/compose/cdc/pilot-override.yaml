@@ -1,0 +1,30 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# OPT-IN CDC wiring for the PILOT project (NE-084). The pilot compose.yaml itself
+# is NEVER edited (the exact-match guardian would fail); instead this override is
+# LAYERED on when a customer enables the CDC lane:
+#
+#   docker compose -f ../pilot/compose.yaml -f pilot-override.yaml \
+#     --profile core --profile brain up -d
+#
+# It adds the three CDC settings to BOTH ne-api AND ne-worker with IDENTICAL
+# values — the composed config_hash covers ApiSettings, so the two ne-app
+# processes MUST see the same CDC config or their hashes fork (the pilot
+# worker-env-superset parity, design §6.2/Q5). NE_API_CDC_WEBHOOK_SECRET is a
+# SecretStr (masked from the hash); NE_API_CDC_TABLES is the governed table map;
+# NE_API_CDC_QUARANTINE_PATH is the lane path (tmpfs caveat in README — losing a
+# lane record loses inspectability, never safety).
+
+services:
+  ne-api:
+    environment:
+      NE_API_CDC_WEBHOOK_SECRET: ${NE_CDC_WEBHOOK_SECRET:?set from your secret store — see README.md}
+      NE_API_CDC_TABLES: ${NE_CDC_TABLES:?set the governed per-table map — see README.md}
+      NE_API_CDC_QUARANTINE_PATH: /tmp/ne-cdc-quarantine.sqlite
+
+  ne-worker:
+    environment:
+      NE_API_CDC_WEBHOOK_SECRET: ${NE_CDC_WEBHOOK_SECRET:?set from your secret store — see README.md}
+      NE_API_CDC_TABLES: ${NE_CDC_TABLES:?set the governed per-table map — see README.md}
+      NE_API_CDC_QUARANTINE_PATH: /tmp/ne-cdc-quarantine.sqlite

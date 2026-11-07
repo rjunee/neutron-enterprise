@@ -1,0 +1,74 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# grounding_number_words.txt — the ng-2 closed number-word lexicon (GateProfile
+# PROFILE_NG2, ne.govern.grounding). Spelled numbers are DERIVED through the
+# same NumberFact/F3 machinery as digit numerals — they are NEVER prompt-exempt
+# and NEVER allowlistable (hygiene screens enforce disjointness from core and
+# extended). These bytes are folded into PROFILE_NG2.version (steward review).
+#
+# Format, one entry per line:
+#   'word canonical'  -> mapped cardinal/ordinal (e.g. 'one 1', 'third 3'):
+#                        grounds iff that canonical numeral has an F3-grounded
+#                        fact this turn, exactly like the digit form.
+#   'word'            -> bare magnitude/vague word (hundred/million/dozen/...):
+#                        ALWAYS numeral-unparseable (a bare magnitude refuses at
+#                        every tier).
+# Blanks and '#' comment lines ignored.
+
+one 1
+two 2
+three 3
+four 4
+five 5
+six 6
+seven 7
+eight 8
+nine 9
+ten 10
+eleven 11
+twelve 12
+thirteen 13
+fourteen 14
+fifteen 15
+sixteen 16
+seventeen 17
+eighteen 18
+nineteen 19
+twenty 20
+thirty 30
+forty 40
+fifty 50
+sixty 60
+seventy 70
+eighty 80
+ninety 90
+first 1
+second 2
+third 3
+fourth 4
+fifth 5
+sixth 6
+seventh 7
+eighth 8
+ninth 9
+tenth 10
+hundred
+hundreds
+thousand
+thousands
+million
+millions
+billion
+billions
+trillion
+trillions
+dozen
+dozens
+couple
+pair
+twice
+double
+triple
+half
+quarter

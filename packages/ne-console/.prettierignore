@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+*.tsbuildinfo
+# Vendored fonts: woff2 binaries + OFL license texts + provenance README are not
+# prettier's business (they are committed static assets, not source).
+src/assets/fonts/
+# Vendored upstream source (d3-force + siblings): kept byte-comparable to
+# upstream plus the recorded import rewrites — not our formatting surface.
+src/vendor/
+
+# Approved design renders — committed reference artefacts, not our formatting surface.
+# Reformatting them would rewrite the specification the redesign is built against.
+design/

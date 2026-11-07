@@ -1,0 +1,7 @@
+{
+  "value": [
+    {"@odata.type": "#microsoft.graph.user", "id": "u-ada", "displayName": "Ada Lovelace"},
+    {"@odata.type": "#microsoft.graph.group", "id": "g-sub", "displayName": "Platform Sub-team"},
+    {"@odata.type": "#microsoft.graph.device", "id": "dev-1", "displayName": "Kiosk device"}
+  ]
+}

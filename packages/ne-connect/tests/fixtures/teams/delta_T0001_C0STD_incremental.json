@@ -1,0 +1,14 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/teams/T0001/channels/C0STD/messages/delta?$deltatoken=STD2",
+  "value": [
+    {
+      "id": "m-new",
+      "messageType": "message",
+      "createdDateTime": "2026-06-05T09:00:00Z",
+      "lastModifiedDateTime": "2026-06-05T09:00:00Z",
+      "subject": null,
+      "body": { "contentType": "text", "content": "A freshly created standard message." },
+      "from": { "user": { "id": "29:user-bob", "displayName": "Bob" } }
+    }
+  ]
+}

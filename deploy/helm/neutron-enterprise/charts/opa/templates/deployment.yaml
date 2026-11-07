@@ -1,0 +1,89 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Deployment reproduction of deploy/compose/pilot/compose.yaml's opa service:
+# same --disable-telemetry args (C2), same policies bundle.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  labels:
+    app: opa
+    app.kubernetes.io/name: opa
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+        app.kubernetes.io/name: opa
+        app.kubernetes.io/part-of: neutron-enterprise
+    spec:
+      securityContext:
+        {{- include "neutron.podSecurityContext" (dict "uid" 1000 "gid" 1000 "openshift" .Values.global.openshift) | nindent 8 }}
+      containers:
+        - name: opa
+          image: {{ include "neutron.imageRef" (dict "registry" .Values.global.imageRegistry "repository" .Values.image.repository "tag" .Values.image.tag "digest" .Values.image.digest) }}
+          args:
+            - "run"
+            - "--server"
+            - "--addr=0.0.0.0:8181"
+            - "--disable-telemetry"
+            - "/policies"
+          ports:
+            - name: http
+              containerPort: 8181
+          securityContext:
+            {{- include "neutron.containerSecurityContext" (dict "readOnlyRootFilesystem" true) | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            # subPath (NOT a directory mount) — a plain ConfigMap directory
+            # mount creates kubelet's `..data`/`..<timestamp>` symlink farm,
+            # which OPA's directory loader walks as THREE distinct paths to
+            # the SAME file, producing a `multiple default rules` conflict
+            # (verified live against a local kind cluster, NE-071a
+            # pre-flight). subPath bind-mounts just the one file, avoiding
+            # the symlink structure entirely.
+            - name: policies
+              mountPath: /policies/ne_system.rego
+              subPath: ne_system.rego
+              readOnly: true
+            # NE-PILOT-OPA-BUNDLE: the REAL ne-govern rego bundle, stamped by
+            # `ne k8s render`/`ne k8s up` into .Values.governBundle.files. One
+            # subPath mount per file (never a directory mount — same kubelet
+            # `..data` symlink-farm hazard as the placeholder mount above).
+            # Default-empty renders NO extra mounts (byte-identical today).
+            {{- range $key, $spec := .Values.governBundle.files }}
+            - name: govern-policies
+              mountPath: /policies/{{ $spec.path }}
+              subPath: {{ $key }}
+              readOnly: true
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: policies
+          configMap:
+            name: opa-policies
+        {{- if .Values.governBundle.files }}
+        - name: govern-policies
+          configMap:
+            name: opa-govern-policies
+        {{- end }}

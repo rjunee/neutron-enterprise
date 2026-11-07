@@ -1,0 +1,34 @@
+# Versioned judge rubric index (SPEC §5 NE-024 judge policy).
+#
+# Rubrics live in git as versioned prompt-template files. ANY change to a
+# template's text requires a NEW version file (e.g. _v2.md), a bump of the
+# matching [[rubric]] entry here, and a calibration re-run — enforced downstream
+# by content-hash matching in calibration artifacts (ne.eval.calibration).
+
+[[rubric]]
+id = "faithfulness_statements"
+version = "v1"
+file = "faithfulness_statements_v1.md"
+description = "Decompose an answer into atomic factual statements."
+response_schema = '{"statements": ["..."]}'
+
+[[rubric]]
+id = "faithfulness_verdicts"
+version = "v1"
+file = "faithfulness_verdicts_v1.md"
+description = "Verdict (0/1) per statement: is it supported by the contexts?"
+response_schema = '{"verdicts": [{"statement": "...", "verdict": 0|1, "reason": "..."}]}'
+
+[[rubric]]
+id = "context_precision"
+version = "v1"
+file = "context_precision_v1.md"
+description = "Verdict (0/1): was this single context useful for the reference answer?"
+response_schema = '{"verdict": 0|1, "reason": "..."}'
+
+[[rubric]]
+id = "context_recall"
+version = "v1"
+file = "context_recall_v1.md"
+description = "Attribution (0/1) per reference-answer statement to the contexts."
+response_schema = '{"classifications": [{"statement": "...", "attributed": 0|1, "reason": "..."}]}'

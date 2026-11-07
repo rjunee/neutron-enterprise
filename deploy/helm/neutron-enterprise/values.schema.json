@@ -1,0 +1,399 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "neutron-enterprise umbrella chart values",
+  "description": "NE-071a fail-closed schema: refuses to render without the C11 first-party digest pin and the C-CKC12 config_hash promotion stamp.",
+  "type": "object",
+  "required": [
+    "global",
+    "agentPrivatePayloadRotation"
+  ],
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": [
+        "hostname",
+        "configHash",
+        "image",
+        "agentRegistry",
+        "skillBundle"
+      ],
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "minLength": 1,
+          "description": "REQUIRED \u2014 the console/API Ingress vhost."
+        },
+        "configHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "REQUIRED \u2014 the composed NE-CKC12 platform config_hash (bare 64-hex sha256), stamped by `ne k8s render`."
+        },
+        "agentTransport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["generation", "emptyBootstrap"],
+          "properties": {
+            "generation": {
+              "type": "string",
+              "enum": ["", "agent-transport-v1"]
+            },
+            "emptyBootstrap": {"type": "boolean"}
+          }
+        },
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "description": "REQUIRED \u2014 the C11 first-party push digest from `ne release push`."
+            }
+          }
+        },
+        "agentRegistry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mountPath"
+          ],
+          "properties": {
+            "mountPath": {
+              "type": "string",
+              "const": "/etc/neutron/agents/registry.toml"
+            }
+          }
+        },
+        "skillBundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mountPath"
+          ],
+          "properties": {
+            "mountPath": {
+              "type": "string",
+              "const": "/etc/neutron/skills"
+            }
+          }
+        }
+      }
+    },
+    "postgres": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "keycloak": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "opa": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "description": "NE-071c service-set toggles. brain (qdrant+tei) rides the default deploy; obs (otel-collector) and serve (vllm) are default-OFF.",
+      "properties": {
+        "brain": {
+          "type": "boolean"
+        },
+        "obs": {
+          "type": "boolean"
+        },
+        "serve": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "qdrant": {
+      "type": "object",
+      "description": "NE-071c brain \u2014 qdrant vector store (default deploy).",
+      "properties": {
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "tei": {
+      "type": "object",
+      "description": "NE-071c brain \u2014 text-embeddings-inference (embed + rerank; shared image pin).",
+      "properties": {
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "obs": {
+      "type": "object",
+      "description": "NE-071c observability \u2014 otel-collector ONLY (default-OFF).",
+      "properties": {
+        "image": {
+          "type": "object",
+          "required": [
+            "repository",
+            "tag",
+            "digest"
+          ],
+          "properties": {
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "vllm": {
+      "type": "object",
+      "description": "NE-071c serving \u2014 vllm gpu|cpu (default-OFF, GPU-gated). Both mode images are digest-pinned.",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "gpu",
+            "cpu"
+          ]
+        },
+        "gpu": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "object",
+              "required": [
+                "repository",
+                "tag",
+                "digest"
+              ],
+              "properties": {
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                }
+              }
+            }
+          }
+        },
+        "cpu": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "type": "object",
+              "required": [
+                "repository",
+                "tag",
+                "digest"
+              ],
+              "properties": {
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "description": "NE-071b C2 network posture \u2014 default-deny + least-privilege allows (default-OFF).",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "description": "NE-071b OpenShift Route as the Ingress alternative (default-OFF).",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "backup": {
+      "type": "object",
+      "description": "NE-071b optional pg_dumpall backup CronJob + PVC (default-OFF).",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "schedule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "keep": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "velero": {
+          "type": "object",
+          "description": "NE-071d Velero Schedule templating (default-OFF); references the terraform-provisioned Velero, never installs it.",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "namespace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "storageLocation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "snapshotVolumes": {
+              "type": "boolean"
+            },
+            "snapshotLocation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "dbSnapshotExclusionConfirmed": {
+              "type": "boolean"
+            },
+            "profile": {
+              "type": "string",
+              "minLength": 1
+            },
+            "profiles": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "schedule": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "ttl": {
+                    "type": "string",
+                    "pattern": "^[0-9]+h[0-9]+m[0-9]+s$"
+                  }
+                },
+                "required": [
+                  "schedule",
+                  "ttl"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "agentPrivatePayloadRotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "generation",
+        "bundlePath",
+        "ttlSecondsAfterFinished"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "generation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bundlePath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ttlSecondsAfterFinished": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

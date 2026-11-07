@@ -1,0 +1,48 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# The Caddy replacement (design §1.9): one Ingress, two hosts — the console/API
+# vhost (ne-api serves both, per the NE-103a image) and the Keycloak vhost.
+# NO cert-manager/ACME dependency — customer-provided TLS Secret only (C2).
+# Suppressed when route.enabled=true — the OpenShift Route (templates/route.yaml)
+# is the mutually-exclusive alternative front door on that platform.
+{{- if and .Values.profiles.core (not .Values.route.enabled) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neutron-enterprise
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  {{- if .Values.global.ingress.className }}
+  ingressClassName: {{ .Values.global.ingress.className }}
+  {{- end }}
+  {{- if .Values.global.ingress.tls.secretName }}
+  tls:
+    - hosts:
+        - {{ .Values.global.hostname }}
+        - {{ include "neutron.keycloakHost" . }}
+      secretName: {{ .Values.global.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.global.hostname }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ne-api
+                port:
+                  number: 8000
+    - host: {{ include "neutron.keycloakHost" . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+{{- end }}

@@ -1,0 +1,56 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/drive-1/root/delta?$deltatoken=DELTA1TOKEN",
+  "value": [
+    {
+      "id": "item-anon",
+      "name": "Public Brochure.pdf",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Public%20Brochure.pdf",
+      "lastModifiedDateTime": "2026-06-03T08:00:00Z",
+      "size": 5120,
+      "eTag": "\"etag-anon-v1\"",
+      "file": { "mimeType": "application/pdf" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    },
+    {
+      "id": "item-org",
+      "name": "All Hands Notes.docx",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/All%20Hands%20Notes.docx",
+      "lastModifiedDateTime": "2026-06-04T09:15:00Z",
+      "size": 8192,
+      "eTag": "\"etag-org-v1\"",
+      "file": { "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    },
+    {
+      "id": "item-everyone",
+      "name": "Company Policy.pdf",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Company%20Policy.pdf",
+      "lastModifiedDateTime": "2026-06-05T10:45:00Z",
+      "size": 9001,
+      "eTag": "\"etag-everyone-v1\"",
+      "file": { "mimeType": "application/pdf" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    },
+    {
+      "id": "item-q-unresolvable",
+      "name": "Legacy Group Doc.docx",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Legacy%20Group%20Doc.docx",
+      "lastModifiedDateTime": "2026-06-06T12:00:00Z",
+      "size": 4096,
+      "eTag": "\"etag-unres-v1\"",
+      "file": { "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    },
+    {
+      "id": "item-q-forged",
+      "name": "Suspicious.docx",
+      "webUrl": "https://contoso.sharepoint.com/sites/eng/Shared%20Documents/Suspicious.docx",
+      "lastModifiedDateTime": "2026-06-07T13:00:00Z",
+      "size": 666,
+      "eTag": "\"etag-forged-v1\"",
+      "file": { "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      "parentReference": { "path": "/drives/drive-1/root:/Shared Documents" }
+    },
+    { "id": "del-1", "deleted": { "state": "deleted" } }
+  ]
+}

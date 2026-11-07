@@ -1,0 +1,488 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# C2 network posture — the explicit least-privilege allows layered on top of the
+# default-deny baseline (templates/networkpolicy-default-deny.yaml). Selectors
+# use the `app: <name>` pod label every subchart already sets. Gated behind
+# networkPolicy.enabled AND profiles.core (the app pods only exist on core);
+# renders NOTHING by default.
+#
+# SPEC row scopes the APP surface as "ingress→ne-api:8000 only" — that is the
+# only *external* ingress lane opened here. The keycloak:8080 ingress-controller
+# allow is REQUIRED by the chart's own auth vhost (design §1.7): the browser
+# hits the Keycloak Route/Ingress for the OIDC login redirect, so severing it
+# would break login. Documented likewise in deploy/helm/README.md.
+#
+# NO frontier/443 egress lane is opened in this unit — the pilot model menu is
+# in-VPC vllm only; perimeter FQDN egress control is NE-072 (README note).
+#
+# NE-071c C2 × brain PREFLIGHT: because no internet/443 egress lane is opened,
+# on an ENFORCING CNI this default-deny baseline severs the first-boot
+# HuggingFace weight download the TEI pods perform when tei.hfOffline="0" — a
+# fresh brain install would then hang un-Ready. This is deliberately NOT
+# render-blocked (the objects are inert on a non-enforcing CNI, where TEI
+# downloads fine; a hard fail would be wrong there). The operational contract:
+# under enforcement, pre-stage the embed/rerank cache PVCs and set
+# tei.hfOffline="1", or set profiles.brain=false. See deploy/helm/README.md.
+{{- if and .Values.networkPolicy.enabled .Values.profiles.core }}
+# (1) allow-dns — every pod may resolve DNS (kube-dns/CoreDNS on 53). No `to`
+#     selector: DNS egress is allowed to any destination (the resolver lives in
+#     kube-system; pinning it by selector is brittle across distros).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+# (2) allow-ne-api — ingress ONLY from the ingress controller on 8000 (the SPEC
+#     "ingress→ne-api:8000 only" lane); egress to the governed backends.
+#     qdrant/tei-*/vllm land in later profiles (brain/serve) — the selectors are
+#     forward-compatible no-ops until those pods exist.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ne-api
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: ne-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.ingressControllerNamespaceLabels | nindent 14 }}
+      ports:
+        - port: 8000
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: keycloak
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: opa
+      ports:
+        - port: 8181
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: qdrant
+      ports:
+        - port: 6333
+          protocol: TCP
+    # NE-071c: tei listens on POD port 8080 (the non-root adaptation — the pod
+    # can't bind :80; the Service maps 80→8080). A NetworkPolicy matches the
+    # DESTINATION POD port post-Service-DNAT, so this MUST be 8080 — port 80
+    # would silently sever retrieval when enforcement is on.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tei-embed
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tei-rerank
+      ports:
+        - port: 8080
+          protocol: TCP
+    # NE-071c otel-collector (obs profile) — OTLP gRPC 4317 + HTTP 4318. A
+    # harmless no-op when obs is off (the pod doesn't exist), same
+    # forward-compatible pattern as the vllm selector below.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: otel-collector
+      ports:
+        - port: 4317
+          protocol: TCP
+        - port: 4318
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: vllm
+      ports:
+        - port: 8000
+          protocol: TCP
+---
+# (3) allow-ne-worker — NO ingress (nothing may dial the worker; it has no
+#     inbound surface). Egress to the SAME governed set as ne-api: the durable
+#     executor runs GOVERNED turns, so it must reach OPA (the PDP chokepoint,
+#     C6) and the model/vector/embed backends — SPEC's "ne-worker↔postgres" is
+#     the MINIMUM, not an exclusive list (design §1.7 "ne-worker→same set");
+#     severing OPA would break the no-bypass guarantee.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ne-worker
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: ne-worker
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: keycloak
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: opa
+      ports:
+        - port: 8181
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: qdrant
+      ports:
+        - port: 6333
+          protocol: TCP
+    # NE-071c: tei listens on POD port 8080 (the non-root adaptation — the pod
+    # can't bind :80; the Service maps 80→8080). A NetworkPolicy matches the
+    # DESTINATION POD port post-Service-DNAT, so this MUST be 8080 — port 80
+    # would silently sever retrieval when enforcement is on.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tei-embed
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tei-rerank
+      ports:
+        - port: 8080
+          protocol: TCP
+    # NE-071c otel-collector (obs profile) — OTLP gRPC 4317 + HTTP 4318. A
+    # harmless no-op when obs is off (the pod doesn't exist), same
+    # forward-compatible pattern as the vllm selector below.
+    - to:
+        - podSelector:
+            matchLabels:
+              app: otel-collector
+      ports:
+        - port: 4317
+          protocol: TCP
+        - port: 4318
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: vllm
+      ports:
+        - port: 8000
+          protocol: TCP
+---
+# (4) allow-keycloak — ingress 8080 from the ingress controller (the OIDC login
+#     vhost) AND from ne-api/ne-worker (in-network JWKS + token fetch); egress
+#     to postgres (Keycloak's own DB).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-keycloak
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.ingressControllerNamespaceLabels | nindent 14 }}
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 8080
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+# (5) allow-postgres — ingress 5432 from every legitimate DB client: ne-api,
+#     ne-worker, keycloak, and (when backup.enabled) the ne-backup CronJob pod.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+                  - keycloak
+                  - ne-backup
+      ports:
+        - port: 5432
+          protocol: TCP
+---
+# (6) allow-opa — ingress 8181 (the PDP query port) from ne-api + ne-worker.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-opa
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: opa
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 8181
+          protocol: TCP
+---
+# (7) allow-ne-backup — egress to postgres:5432 only (the pg_dumpall target).
+#     UNCONDITIONAL row (not gated on backup.enabled): the podSelector matches
+#     only the ne-backup CronJob pods, which exist ONLY when backup.enabled, so
+#     this policy is a harmless no-op otherwise and keeps the allow set complete
+#     regardless of the backup flag's independent lifecycle.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ne-backup
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: ne-backup
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - port: 5432
+          protocol: TCP
+{{- if .Values.profiles.brain }}
+---
+# (8) NE-071c allow-qdrant — ingress 6333 (the vector-store query port) from
+#     ne-api + ne-worker. Gated on profiles.brain (the pods only exist there).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-qdrant
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: qdrant
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 6333
+          protocol: TCP
+---
+# (9) NE-071c allow-tei-embed — ingress on the POD port 8080 (the non-root
+#     adaptation; NOT 80 — see the egress note in allow-ne-api) from ne-api +
+#     ne-worker.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-tei-embed
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: tei-embed
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 8080
+          protocol: TCP
+---
+# (10) NE-071c allow-tei-rerank — same shape as allow-tei-embed (pod port 8080).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-tei-rerank
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: tei-rerank
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 8080
+          protocol: TCP
+{{- end }}
+{{- if .Values.profiles.obs }}
+---
+# (11) NE-071c allow-otel-collector — ingress on OTLP gRPC 4317 + HTTP 4318 from
+#     ne-api + ne-worker (obs profile). Gated on profiles.obs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-otel-collector
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: otel-collector
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 4317
+          protocol: TCP
+        - port: 4318
+          protocol: TCP
+{{- end }}
+{{- if .Values.profiles.serve.enabled }}
+---
+# (12) NE-071c allow-vllm — ingress 8000 (the OpenAI-compatible serve port) from
+#     ne-api + ne-worker (serve profile). Gated on profiles.serve.enabled.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-vllm
+  labels:
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  podSelector:
+    matchLabels:
+      app: vllm
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ne-api
+                  - ne-worker
+      ports:
+        - port: 8000
+          protocol: TCP
+{{- end }}
+{{- end }}

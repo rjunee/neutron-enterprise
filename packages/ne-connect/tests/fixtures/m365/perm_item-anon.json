@@ -1,0 +1,4 @@
+{ "value": [
+  { "id": "perm-anon-1", "roles": ["read"],
+    "link": { "scope": "anonymous", "type": "view", "webUrl": "https://contoso.sharepoint.com/:b:/s/eng/anon" } }
+] }

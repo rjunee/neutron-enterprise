@@ -1,0 +1,13 @@
+Neutron Enterprise — ne-permissions-rebac
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+openfga-sdk 0.10.4 — Apache License 2.0 — https://github.com/openfga/python-sdk —
+the official OpenFGA Python SDK, confined to ne.permissions_rebac._client (the C3
+chokepoint). Its transitive dependencies (aiohttp, opentelemetry-api,
+python-dateutil, urllib3) arrive through the platform uv.lock and are covered by
+the platform license gate (all permissive); they are already lock-resident for
+other packages. The SDK's opentelemetry-api usage is passive instrumentation with
+no exporter configured (no emission, C1). This attribution satisfies Apache-2.0
+§4(d).

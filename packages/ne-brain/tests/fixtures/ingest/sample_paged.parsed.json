@@ -1,0 +1,57 @@
+{
+  "schema_version": "ne.parsed_document/1",
+  "document_id": "sample-paged",
+  "source_name": "sample_paged.pdf",
+  "source_format": "pdf",
+  "blocks": [
+    {
+      "kind": "heading",
+      "text": "Alpha Section",
+      "level": 1,
+      "page": 1
+    },
+    {
+      "kind": "paragraph",
+      "text": "This paragraph lives entirely on the first page of the synthetic document and exercises the single-page metadata path for the structural chunker.",
+      "level": null,
+      "page": 1
+    },
+    {
+      "kind": "heading",
+      "text": "Beta Section",
+      "level": 1,
+      "page": 2
+    },
+    {
+      "kind": "paragraph",
+      "text": "This paragraph lives entirely on the second page of the synthetic document, exercising the single-page metadata path again but for page two instead of page one.",
+      "level": null,
+      "page": 2
+    },
+    {
+      "kind": "heading",
+      "text": "Gamma Section",
+      "level": 1,
+      "page": 1
+    },
+    {
+      "kind": "paragraph",
+      "text": "This first paragraph of the Gamma section starts on page one, just before a page break occurs inside the section.",
+      "level": null,
+      "page": 1
+    },
+    {
+      "kind": "paragraph",
+      "text": "This second paragraph of the Gamma section continues after the page break, so it carries page two provenance while staying under the same heading.",
+      "level": null,
+      "page": 2
+    },
+    {
+      "kind": "table",
+      "text": "| Metric | Value |\n|--------|-------|\n| Pages  | 2     |",
+      "level": null,
+      "page": 2
+    }
+  ],
+  "metadata": {}
+}

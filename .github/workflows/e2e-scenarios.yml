@@ -1,0 +1,167 @@
+name: e2e-scenarios
+
+# The demo-scenario E2E suite (e2e/scenarios) against a LIVE deployment.
+#
+# ⛔ DELIBERATELY NOT IN THE PR LANE — and it must never become a required
+# check. A full run takes ~25-45 minutes of serial wall time, spends real
+# frontier-API money, and exercises measured-nondeterministic model behaviour.
+# The precedent is no-egress.yml's Phase C (NE-CI-NOEGRESS-VLLM-FLAKE): a slow,
+# nondeterministic job on a REQUIRED gate trains reviewers to distrust the
+# gate, so it belongs on cron + manual dispatch, where a red run is a signal
+# someone asked for, not noise in a PR.
+#
+# Invocation lanes:
+#   * workflow_dispatch — on demand before a demo or a release
+#     (gh workflow run e2e-scenarios.yml [-f mutating=true]).
+#   * schedule — weekly, Monday 10:23 UTC = 03:23 PDT, chosen so the cron
+#     fires while the owner (UTC-7) is asleep and can never collide with his
+#     evening work or a live demo; the odd minute dodges GitHub's :00
+#     scheduling pile-up. Read-only lane only (the mutating lane sends real
+#     email and permanently advances the SOP's version history; it is
+#     dispatch-only, always a deliberate human act).
+#
+# Preflight (e2e/preflight.py, owner-mandated 2026-08-29): before any model
+# dollar is spent the run is SKIPPED — visibly, with the deciding reason in
+# the job summary — unless BOTH hold:
+#   1. the demo is up (https://<host>/ returns a NON-EMPTY 200; an empty 200
+#      is the known Caddy wrong-Host-header signature and counts as down);
+#   2. an EXTERNAL GPU lane is connected. The GPU's address is not stable, so
+#      no IP is hardcoded anywhere: the deployment's own governed surface
+#      (GET /v1/models/serving) reports where the private lane routes and what
+#      that endpoint actually serves; the gate requires probe state ok, the
+#      served model identity to MATCH the configured litellm target (a
+#      vllm-cpu fallback serves a different model and fails this), and a
+#      non-loopback, non-in-compose endpoint host. cpu-vllm is far too slow —
+#      running against it would manufacture timeout "regressions".
+# The gates apply to cron AND dispatch alike: a run that would only produce
+# noise is not worth forcing, whoever asked for it.
+#
+# Reaching the deployment: the suite needs network reach to the target's API
+# and Keycloak ports plus the persona credentials, provided as repo secrets
+# (NE_E2E_API_BASE, NE_E2E_KEYCLOAK_BASE, NE_E2E_OPS_USER, NE_E2E_OPS_PASSWORD,
+# NE_E2E_APPROVER_USER, NE_E2E_APPROVER_PASSWORD; optional NE_E2E_CONSOLE_BASE
+# when the console origin is not https://<api-host>/, and NE_E2E_GRAPH_* for
+# S8's live SharePoint edit). If the deployment is not reachable from
+# GitHub-hosted runners, run e2e/run.sh on the box instead — that is the
+# primary invocation; this workflow is the scheduler around it.
+#
+# Refused ≠ empty: when the secrets are not configured the run is SKIPPED with
+# an explicit notice (visibly "skipped", never a vacuous green "passed").
+
+on:
+  workflow_dispatch:
+    inputs:
+      mutating:
+        description: "Also run the mutating lane (S5 real email send, S8 live SOP edit)"
+        type: boolean
+        default: false
+      allow_cold:
+        description: "Bypass the m365 warmth gate (suite debugging ONLY — answers may be stale)"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "23 10 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-scenarios
+  cancel-in-progress: false # a live run mid-scenario should finish, not be torn down
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Checkout (for e2e/preflight.py)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Demo-up + external-GPU gate (skip, never burn, when either is absent)
+        id: check
+        env:
+          NE_E2E_API_BASE: ${{ secrets.NE_E2E_API_BASE }}
+          NE_E2E_KEYCLOAK_BASE: ${{ secrets.NE_E2E_KEYCLOAK_BASE }}
+          NE_E2E_OPS_USER: ${{ secrets.NE_E2E_OPS_USER }}
+          NE_E2E_OPS_PASSWORD: ${{ secrets.NE_E2E_OPS_PASSWORD }}
+          NE_E2E_CONSOLE_BASE: ${{ secrets.NE_E2E_CONSOLE_BASE }}
+          NE_E2E_INSECURE_TLS: "1"
+        run: |
+          # Exit codes from e2e/preflight.py — three outcomes, never collapsed:
+          #   0 proceed · 3 SKIP (reason on stdout) · anything else = the
+          #   preflight itself is broken and this job goes RED for a human.
+          set +e
+          output="$(python3 e2e/preflight.py 2>&1)"
+          code=$?
+          set -e
+          echo "$output"
+          {
+            echo "## e2e-scenarios preflight"
+            echo '```'
+            echo "$output"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -eq 0 ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "**Verdict: PROCEED** — demo up and an external GPU lane is connected." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$code" -eq 3 ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            reason="$(printf '%s\n' "$output" | grep '^SKIP:' | head -1)"
+            echo "**Verdict: SKIPPED, not run** — ${reason#SKIP: }" >> "$GITHUB_STEP_SUMMARY"
+            echo "_A skip is not a pass: the suite spent nothing and proved nothing this cycle._" >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=e2e-scenarios skipped::${reason#SKIP: }"
+          else
+            echo "**Verdict: preflight BROKEN (exit $code)** — this is a failure, not a skip." >> "$GITHUB_STEP_SUMMARY"
+            exit "$code"
+          fi
+
+  e2e:
+    needs: preflight
+    if: needs.preflight.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+
+      - name: Sync (locked)
+        run: uv sync --all-packages --locked
+
+      - name: Offline self-test of the suite's assertion machinery
+        run: uv run pytest e2e/scenarios/test_00_selftest.py -q
+
+      - name: Run the scenario suite (serial — never parallelise this)
+        env:
+          NE_E2E_API_BASE: ${{ secrets.NE_E2E_API_BASE }}
+          NE_E2E_KEYCLOAK_BASE: ${{ secrets.NE_E2E_KEYCLOAK_BASE }}
+          NE_E2E_OPS_USER: ${{ secrets.NE_E2E_OPS_USER }}
+          NE_E2E_OPS_PASSWORD: ${{ secrets.NE_E2E_OPS_PASSWORD }}
+          NE_E2E_APPROVER_USER: ${{ secrets.NE_E2E_APPROVER_USER }}
+          NE_E2E_APPROVER_PASSWORD: ${{ secrets.NE_E2E_APPROVER_PASSWORD }}
+          NE_E2E_GRAPH_TENANT_ID: ${{ secrets.NE_E2E_GRAPH_TENANT_ID }}
+          NE_E2E_GRAPH_CLIENT_ID: ${{ secrets.NE_E2E_GRAPH_CLIENT_ID }}
+          NE_E2E_GRAPH_CLIENT_SECRET: ${{ secrets.NE_E2E_GRAPH_CLIENT_SECRET }}
+          NE_E2E_GRAPH_DRIVE_ID: ${{ secrets.NE_E2E_GRAPH_DRIVE_ID }}
+          NE_E2E_INSECURE_TLS: "1"
+          # The mutating lane NEVER runs on cron — only an explicit dispatch
+          # input turns it on (it sends a real email and permanently advances
+          # the SOP version history).
+          NE_E2E_MUTATING: ${{ github.event_name == 'workflow_dispatch' && inputs.mutating && '1' || '0' }}
+          NE_E2E_ALLOW_COLD: ${{ github.event_name == 'workflow_dispatch' && inputs.allow_cold && '1' || '0' }}
+          NE_E2E_RESULTS_DIR: e2e-results
+        run: |
+          uv run pytest e2e/scenarios -p no:cacheprovider -ra \
+            --junit-xml e2e-results/junit.xml
+
+      - name: Upload transcripts + flake ledger (always)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: e2e-scenario-results
+          path: e2e-results/
+          if-no-files-found: warn
+          retention-days: 30

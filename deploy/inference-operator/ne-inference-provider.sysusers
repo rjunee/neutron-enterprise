@@ -1,0 +1,3 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+u neutron-inference-provider 10002 "Neutron inference provider broker" /var/lib/neutron/inference-provider /usr/sbin/nologin

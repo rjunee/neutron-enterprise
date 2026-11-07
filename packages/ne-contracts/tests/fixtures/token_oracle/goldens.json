@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "generated_date": "2026-07-21",
+    "qwen_tokenizer": {
+      "repo": "Qwen/Qwen3-0.6B",
+      "file": "tokenizer.json",
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+    },
+    "o200k": {
+      "tiktoken_version": "0.13.0",
+      "encoding": "o200k_base"
+    },
+    "tokenizers_version": "0.23.1",
+    "chosen_bytes_per_token": 1.5,
+    "per_call_overhead": 8,
+    "headroom_at_generation": 1.1,
+    "per_class_min_margin": {
+      "latin": 3.4872,
+      "cjk": 2.7619,
+      "emoji": 2.1333,
+      "code": 1.662,
+      "uri": 1.2378
+    }
+  },
+  "samples": [
+    {
+      "id": "latin-0",
+      "script_class": "latin",
+      "text": "The quarterly review confirmed that the northeast region exceeded its revenue target by eleven percent, driven largely by renewals in the mid-market segment and two strategic enterprise wins.",
+      "actual_tokens": {
+        "qwen3": 32,
+        "o200k_base": 32
+      }
+    },
+    {
+      "id": "latin-1",
+      "script_class": "latin",
+      "text": "Please reconcile the outstanding invoices against the purchase orders before Friday; the finance team needs the aged-receivables summary for the board deck and cannot close the month without it.",
+      "actual_tokens": {
+        "qwen3": 35,
+        "o200k_base": 35
+      }
+    },
+    {
+      "id": "latin-2",
+      "script_class": "latin",
+      "text": "Our onboarding flow now provisions a sandbox tenant automatically, so new customers can evaluate the connector suite against their own data within minutes rather than waiting on a manual environment.",
+      "actual_tokens": {
+        "qwen3": 33,
+        "o200k_base": 32
+      }
+    },
+    {
+      "id": "latin-3",
+      "script_class": "latin",
+      "text": "Escalation policy: if a governed tool call is refused twice in a single session, the agent must surface the typed error to the operator and stop retrying rather than silently degrading output.",
+      "actual_tokens": {
+        "qwen3": 39,
+        "o200k_base": 38
+      }
+    },
+    {
+      "id": "cjk-0",
+      "script_class": "cjk",
+      "text": "本季度的经营评审确认华东区域的营业收入超过既定目标百分之十一，主要得益于中端市场的续约以及两笔重要的企业级新签合同。",
+      "actual_tokens": {
+        "qwen3": 33,
+        "o200k_base": 42
+      }
+    },
+    {
+      "id": "cjk-1",
+      "script_class": "cjk",
+      "text": "请在周五之前完成未结算发票与采购订单的核对；财务团队需要账龄应收汇总表用于董事会材料，否则本月无法顺利结账。",
+      "actual_tokens": {
+        "qwen3": 34,
+        "o200k_base": 42
+      }
+    },
+    {
+      "id": "cjk-2",
+      "script_class": "cjk",
+      "text": "四半期のレビューにより、北東地域が売上目標を十一パーセント上回ったことが確認されました。中堅市場の更新と二件の大型契約が主な要因です。",
+      "actual_tokens": {
+        "qwen3": 46,
+        "o200k_base": 51
+      }
+    },
+    {
+      "id": "cjk-3",
+      "script_class": "cjk",
+      "text": "新しいオンボーディング手順ではサンドボックス環境を自動的に払い出すため、顧客は自社データでコネクタ群を数分で評価できるようになります。",
+      "actual_tokens": {
+        "qwen3": 44,
+        "o200k_base": 50
+      }
+    },
+    {
+      "id": "emoji-0",
+      "script_class": "emoji",
+      "text": "Great work team! 🎉🎉 shipping the new dashboard today 🚀 — grab a coffee ☕ and let's celebrate 🥳 before the next sprint kicks off.",
+      "actual_tokens": {
+        "qwen3": 36,
+        "o200k_base": 34
+      }
+    },
+    {
+      "id": "emoji-1",
+      "script_class": "emoji",
+      "text": "family trip recap 👨‍👩‍👧‍👦 we hiked 🥾, camped ⛺, and watched the sunset 🌅 — best weekend in months, already planning the next one 😄.",
+      "actual_tokens": {
+        "qwen3": 48,
+        "o200k_base": 47
+      }
+    },
+    {
+      "id": "emoji-2",
+      "script_class": "emoji",
+      "text": "status: 🔴 blocked on infra, 🟡 review pending, 🟢 tests green — will 🇺🇸 sync at 9 and 🇯🇵 sync at 5 so both regions are covered 👍.",
+      "actual_tokens": {
+        "qwen3": 46,
+        "o200k_base": 45
+      }
+    },
+    {
+      "id": "emoji-3",
+      "script_class": "emoji",
+      "text": "she said 👋🏽 hello and waved 🙋🏾‍♀️ from across the room; the whole crew 🧑🏻‍💻🧑🏽‍🔧🧑🏿‍🚀 showed up for the launch party 🎊🎈🎂.",
+      "actual_tokens": {
+        "qwen3": 53,
+        "o200k_base": 60
+      }
+    },
+    {
+      "id": "code-0",
+      "script_class": "code",
+      "text": "def input_budget(window: int, out: int, margin: int) -> int:\n    if out + margin >= window:\n        raise ValueError(\"budget must be positive\")\n    return window - out - margin",
+      "actual_tokens": {
+        "qwen3": 42,
+        "o200k_base": 43
+      }
+    },
+    {
+      "id": "code-1",
+      "script_class": "code",
+      "text": "SELECT ?account (COUNT(?order) AS ?orders)\nWHERE { ?account a :Account ; :placed ?order . }\nGROUP BY ?account\nORDER BY DESC(?orders)\nLIMIT 25",
+      "actual_tokens": {
+        "qwen3": 41,
+        "o200k_base": 40
+      }
+    },
+    {
+      "id": "code-2",
+      "script_class": "code",
+      "text": "{\"stage\": \"runtime-trim\", \"estimated_tokens\": 31000, \"input_budget\": 27648, \"context_window\": 32768, \"dropped_turns\": 12, \"model\": \"qwen3-0.6b\", \"lane\": \"deployed\"}",
+      "actual_tokens": {
+        "qwen3": 71,
+        "o200k_base": 61
+      }
+    },
+    {
+      "id": "code-3",
+      "script_class": "code",
+      "text": "curl -sS -X POST \"$GATEWAY/v1/chat/completions\" -H \"authorization: Bearer $TOKEN\" -d @payload.json | jq '.usage.prompt_tokens'",
+      "actual_tokens": {
+        "qwen3": 40,
+        "o200k_base": 40
+      }
+    },
+    {
+      "id": "uri-0",
+      "script_class": "uri",
+      "text": "urn:ne:entity:acct-00042 | Acme Corporation | 17 placed orders\nurn:ne:entity:acct-00043 | Beacon Logistics | 4 placed orders\nurn:ne:entity:acct-00044 | Corveto Holdings | 29 placed orders\nurn:ne:entity:acct-00045 | Delphi Materials | 8 placed orders",
+      "actual_tokens": {
+        "qwen3": 93,
+        "o200k_base": 78
+      }
+    },
+    {
+      "id": "uri-1",
+      "script_class": "uri",
+      "text": "urn:ne:entity:order-10231 | acct-00042 | 2026-05-14 | fulfilled\nurn:ne:entity:order-10232 | acct-00042 | 2026-05-19 | fulfilled\nurn:ne:entity:order-10233 | acct-00043 | 2026-06-02 | pending\nurn:ne:entity:order-10234 | acct-00044 | 2026-06-11 | cancelled",
+      "actual_tokens": {
+        "qwen3": 143,
+        "o200k_base": 103
+      }
+    },
+    {
+      "id": "uri-2",
+      "script_class": "uri",
+      "text": "https://graph.internal/sparql?query=SELECT%20%3Facct%20%3Fname%20WHERE%20%7B%20%3Facct%20a%20%3AAccount%20%3B%20rdfs%3Alabel%20%3Fname%20%7D%20ORDER%20BY%20%3Fname%20LIMIT%2050&format=application%2Fsparql-results%2Bjson",
+      "actual_tokens": {
+        "qwen3": 119,
+        "o200k_base": 102
+      }
+    },
+    {
+      "id": "uri-3",
+      "script_class": "uri",
+      "text": "urn:ne:entity:acct-00042\nurn:ne:entity:acct-00043\nurn:ne:entity:acct-00044\nurn:ne:entity:order-10231\nurn:ne:entity:order-10232\nurn:ne:entity:policy-acl-eu-west",
+      "actual_tokens": {
+        "qwen3": 82,
+        "o200k_base": 67
+      }
+    }
+  ]
+}

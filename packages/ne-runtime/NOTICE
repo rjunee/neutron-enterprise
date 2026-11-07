@@ -1,0 +1,39 @@
+Neutron Enterprise — ne-runtime
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+
+Runtime:
+  pydantic-ai-slim   / >=2.5.0,<3    / MIT        / https://github.com/pydantic/pydantic-ai
+    (installed WITHOUT provider extras — all model calls route through the frozen
+    ne.contracts ModelGateway; no provider SDK is imported, C3)
+  dbos               / >=2.26.0,<3   / MIT        / https://github.com/dbos-inc/dbos-transact-py
+  sqlalchemy         / >=2.0.51,<2.1 / MIT        / https://github.com/sqlalchemy/sqlalchemy
+  cronsim            / >=2.7,<3      / BSD-3-Clause / https://github.com/cuu508/cronsim
+    (cron expression evaluation for the CronScheduler; zero transitive deps, UTC
+    semantics; NE-034 cron-as-isolated-agent scheduling)
+  opentelemetry-api  / >=1.43,<2     / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+    (approval-latency metrics; API only — the GenAI semconv stays exclusive to ne-obs, C3)
+  cryptography       / >=50,<51      / Apache-2.0 OR BSD-3-Clause / https://cryptography.io
+    (AES-256-GCM payload and DEK-envelope encryption for PRE-009A Agent Run private rows)
+  ne-obs             (workspace)     / Apache-2.0
+    (ne.obs config-hash attribute constant reused by the approval-latency metric)
+
+Test-only:
+  ne-audit           (workspace)     / Apache-2.0
+    (real PostgresAuditSink over SQLite for the no-mock-past-the-seam integration test)
+  ne-connect         (workspace)     / Apache-2.0
+    (NE-050: the real connector write clients — SalesforceWriteClient / GraphWriteClient /
+    SqlWriteClient — driven by the reference-action tests at the httpx-MockTransport/sqlite
+    seam; ne-runtime src NEVER imports ne.connect — the write-action seams are narrow
+    structural Protocols, so the C3/C5 src boundary stays intact)
+  httpx              / >=0.28.1,<1   / BSD-3-Clause / https://github.com/encode/httpx
+    (MockTransport-scripted OPA wire below the seam, dev-only)
+  opentelemetry-sdk  / >=1.43,<2     / Apache-2.0 / https://github.com/open-telemetry/opentelemetry-python
+    (in-memory metric reader for approval-latency assertions, dev-only)
+
+DBOS pulls psycopg + psycopg-binary (LGPL-3.0, dynamically linked, unmodified) and
+tzdata (Apache-2.0) — owner-approved case-by-case in tools/supply-chain/license-policy.toml.
+
+The full transitive dependency closure is covered by the lock-wide license gate
+(`ne check licenses` over uv.lock; C4/C11).

@@ -1,0 +1,236 @@
+# Neutron Enterprise — license gate policy (SPEC §2 C4)
+#
+# SPEC §2 C4 (verbatim):
+#   "License gates: BANNED — AGPL, SSPL, BUSL, FSL, fair-code, any non-commercial
+#    (NC) model weights. OUT-OF-PROCESS-ONLY — GPL. ALLOWED as a separate service
+#    — ELv2 (Elastic-2.0). CASE-BY-CASE — LGPL (static). FREE to embed —
+#    MIT / Apache-2.0 / BSD / MPL-2.0 / PSF."
+#
+# The BANNED class is NEVER overridable. An [[overrides]] entry that names a
+# package whose resolved license matches a banned pattern is itself a policy
+# error and fails the gate closed (exit 1). Everything the scanner cannot
+# positively classify as FREE (or an approved override) fails closed.
+#
+# Pattern matching is case-insensitive substring UNLESS noted. The `free` list is
+# matched by EXACT (case-sensitive) SPDX identifier. LGPL patterns are evaluated
+# BEFORE GPL patterns because "LGPL-3.0" contains the substring "GPL".
+
+[classes]
+# FREE to embed in-process — exact SPDX identifiers.
+free = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "MPL-2.0",
+    "PSF-2.0",
+    "Python-2.0",
+    "ISC",
+    "0BSD",
+    "Unlicense",
+    "Zlib",
+    "CC0-1.0",  # public-domain dedication; operand of numpy 2.5.0's License-Expression
+                # "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0" (verified PyPI JSON)
+    "MIT-CMU",  # pillow's License-Expression (12.3.0 and 13.0.0); the HPND/MIT-CMU permissive variant
+                # (verified PyPI JSON, exactly "MIT-CMU")
+    "CNRI-Python",  # regex 2026.6.28 License-Expression "Apache-2.0 AND CNRI-Python"
+                    # (litellm transitive, NE-010). OSI-approved permissive (python.org
+                    # historical license, BSD-style); the Apache-2.0 operand already free.
+    "BlueOak-1.0.0",  # NE-061 npm closure (lru-cache 11.5.1, minimatch 10.2.5 — isaacs/glob
+                      # ecosystem). The Blue Oak Model License 1.0.0: a modern MAXIMALLY-
+                      # permissive OSS license (explicit patent grant, NO copyleft/NC),
+                      # OSI-listed, on the Blue Oak Council permissive list. Same spirit as MIT.
+    "CC-BY-4.0",  # NE-061 npm closure (caniuse-lite 1.0.30001803 — BUILD-TIME browser-compat
+                  # DATA consumed by browserslist; never in the shipped runtime bundle).
+                  # Permissive ATTRIBUTION license: no copyleft, no ShareAlike, no NonCommercial
+                  # (contrast the BANNED CC-BY-NC/SA). Attribution satisfied via NOTICE.
+    "W3C-20150513",  # NE-085-spike (2026-07-09): owlrl 7.6.2 (pyshacl mandatory transitive).
+                     # W3C Software and Document Notice and License — OSI-approved, permissive,
+                     # no copyleft (https://opensource.org/license/w3c). Verified PyPI JSON
+                     # license field. Same dated-entry precedent as CC-BY-4.0/BlueOak/CNRI-Python.
+]
+
+# BANNED — never overridable (case-insensitive substring). Both the SPDX-id forms
+# and the SPELLED-OUT license names are covered, so e.g. "GNU AFFERO GPL 3.0",
+# "Server Side Public License", "Business Source License", and "PolyForm
+# Non-Commercial" all classify BANNED (not merely as their SPDX-id abbreviations).
+banned_patterns = [
+    "AGPL",
+    "Affero",
+    "SSPL",
+    "Server Side Public",
+    "BUSL",
+    "Business Source",
+    "FSL-",
+    "Fair Source",
+    "fair-code",
+    "Commons-Clause",
+    "CC-BY-NC",
+    "-NC",
+    "Non-Commercial",
+    "NonCommercial",
+    "Sustainable Use",
+    "RSAL",
+    "Elastic License 1",
+]
+
+# CASE-BY-CASE — LGPL static linking. Violation unless a matching
+# class="case-by-case-approved" override exists. Matched BEFORE GPL.
+case_by_case_patterns = ["LGPL"]
+
+# OUT-OF-PROCESS-ONLY — GPL. In-venv Python deps are by definition in-process,
+# so these fail unless a matching class="out-of-process-approved" override exists.
+out_of_process_only_patterns = ["GPL"]
+
+# ALLOWED only as a separately deployed service — ELv2. Fails for an in-venv dep
+# unless a matching class="separate-service-approved" override exists.
+separate_service_only = ["Elastic-2.0"]
+
+# Curated name -> SPDX map serving TWO verified purposes:
+#   1. Absent-metadata fallback for dists whose installed metadata is
+#      unresolvable (e.g. platform-gated deps never installed on the CI/build
+#      platform).
+#   2. UNKNOWN rescue: when a dist's metadata DOES resolve but the resulting
+#      string classifies UNKNOWN (a present-but-non-SPDX license name, e.g.
+#      "3-Clause BSD License"), a matching entry here supplies the
+#      human-verified SPDX id in its place (see ne.cli.licenses.resolve_license).
+# This is NEVER a policy escape hatch for banned/case-by-case licenses: the
+# rescue only fires when classify_license(...) == UNKNOWN, and banned-dominance
+# in resolve_license_from_metadata wins first (a banned signal in any metadata
+# source is returned, and reaches the classifier already BANNED, before any
+# [known] lookup is consulted) — enforced by tests in test_license_gate.py.
+[known]
+# cedarpy (NE-092: optional [cedar] PDP alternate for ne-govern, dev dep only —
+# never in the default runtime closure): no structured PyPI license metadata
+# (no license field/classifier/License-Expression); repo LICENSE verified
+# Apache-2.0 via GitHub.
+# https://github.com/k9securityio/cedar-py/blob/main/LICENSE
+cedarpy = "Apache-2.0"
+# colorama carries a `sys_platform == 'win32'` marker, so it is never installed
+# on the linux-amd64 CI runner (nor on macOS/Linux dev machines) and its metadata
+# cannot be resolved locally. Its published license is BSD-3-Clause.
+colorama = "BSD-3-Clause"
+# httpx2-jsfetch (2026-09-09, arrived with the httpx2 2.5.0 -> 2.12.0 advisory
+# bump): httpx2 2.12.0 splits its Emscripten transport into this package behind a
+# `sys_platform == 'emscripten'` marker, so — exactly like colorama above — it is
+# never installed on the linux-amd64 CI runner and its metadata cannot be
+# resolved locally. Verified from the sdist that uv.lock pins
+# (sha256:70a0e3ea...54c60): PKG-INFO carries `License-Expression: BSD-3-Clause`
+# and LICENSE.md is the standard 3-clause BSD text (Pydantic Services Inc. +
+# Encode OSS Ltd, the same grant httpx2/httpcore2 ship under).
+httpx2-jsfetch = "BSD-3-Clause"
+
+# NE-CKB1 (2026-07-03): transitive closure of qdrant-client + fastembed (NE-021),
+# each verified against upstream sources on 2026-07-03.
+# PyPI metadata literally says '3-Clause BSD License' (no License-Expression) —
+# real license is Google's standard BSD-3-Clause.
+# https://pypi.org/pypi/protobuf/json ; https://github.com/protocolbuffers/protobuf/blob/main/LICENSE
+# NE-CKB2: now also resolved directly by free-text normalization / embedded-text
+# detection in ne.cli.licenses; entry kept as belt-and-suspenders.
+protobuf = "BSD-3-Clause"
+# PyPI License field is the non-SPDX string 'Apache License' (plus a stray
+# "License :: Other/Proprietary License" classifier that maps to nothing);
+# repo LICENSE verified Apache-2.0 via GitHub API spdx_id.
+# https://github.com/qdrant/fastembed/blob/main/LICENSE
+# NE-CKB2: now also resolved directly by free-text normalization / embedded-text
+# detection in ne.cli.licenses; entry kept as belt-and-suspenders.
+fastembed = "Apache-2.0"
+# No structured PyPI license metadata (fields null/empty); repo LICENSE
+# verified MIT via GitHub API.
+# https://github.com/qdrant/py-rust-stemmers/blob/master/LICENSE
+py-rust-stemmers = "MIT"
+# win32-gated, never installed on CI/macOS/Linux (same situation as colorama).
+# PyPI License field 'PSF' + OSI classifier "Python Software Foundation License".
+pywin32 = "PSF-2.0"
+# win32-gated, never installed on CI/macOS/Linux. MIT verified via PyPI
+# classifier and GitHub API.
+# https://github.com/Delgan/win32-setctime/blob/master/LICENSE
+win32-setctime = "MIT"
+# greenlet: platform-conditional transitive dep of SQLAlchemy (NE-005), not
+# installed in every env, so its metadata is unresolvable locally (UNKNOWN).
+# Foundational MIT library (SPDX MIT; some CPython-derived files carry PSF).
+# https://github.com/python-greenlet/greenlet/blob/master/LICENSE
+greenlet = "MIT"
+# litellm transitive deps (NE-010) whose metadata resolves UNKNOWN, each verified:
+# multidict License field is free-text "Apache License 2.0" (not an SPDX id).
+# https://github.com/aio-libs/multidict/blob/master/LICENSE
+# NE-CKB2: now also resolved directly by free-text normalization / embedded-text
+# detection in ne.cli.licenses; entry kept as belt-and-suspenders.
+multidict = "Apache-2.0"
+# tiktoken License field carries the FULL MIT license TEXT (Copyright 2022 OpenAI),
+# which exceeds the clean-token filter. https://github.com/openai/tiktoken (MIT).
+# NE-CKB2: now also resolved directly by free-text normalization / embedded-text
+# detection in ne.cli.licenses; entry kept as belt-and-suspenders.
+tiktoken = "MIT"
+# tzdata (NE-033: DBOS → python-dateutil transitive): PyPI metadata license IS
+# "Apache-2.0" (verified PyPI JSON info.license + upstream https://github.com/python/tzdata
+# LICENSE), but resolves UNKNOWN (no OSI classifier / clean License-Expression for the
+# scanner to key on) — same class as the NE-CKB3 tzdata/orjson item. IANA tz database.
+tzdata = "Apache-2.0"
+# win-precise-time (NE-040: dlt transitive): win32-gated (sys_platform=='win32' and
+# py<3.13), so NEVER installed on the linux/macOS CI+build host → metadata unresolvable →
+# UNKNOWN, exactly the colorama/pywin32/win32-setctime class. MIT verified:
+# https://pypi.org/pypi/win-precise-time/json (license "MIT") +
+# https://github.com/zariiii9003/win-precise-time/blob/main/LICENSE
+win-precise-time = "MIT"
+# orjson (NE-040: dlt runtime transitive): License-Expression "MPL-2.0 AND
+# (Apache-2.0 OR MIT)" — a NESTED SPDX expression classify_license doesn't yet
+# recurse into (the queued NE-CKB3/NE-CKC9 parenthesized-AND/OR fix), so it resolves
+# UNKNOWN. ALL operands are permissive: MPL-2.0 is FREE-to-embed per C4 §2, Apache-2.0
+# and MIT both free. Governing license MPL-2.0 (verified PyPI JSON License-Expression +
+# https://github.com/ijl/orjson/blob/master/LICENSE-MPL-2.0). Safe UNKNOWN→FREE rescue.
+orjson = "MPL-2.0"
+
+# Per-package exceptions. BANNED licenses can NEVER be overridden here.
+# Each entry requires: name, version, class (one of
+# free | case-by-case-approved | out-of-process-approved | separate-service-approved),
+# a non-empty justification, approved_by, and date (ISO-8601).
+
+# NE-033 (2026-07-05): DBOS (MIT durable-workflow engine, owner-specified) REQUIRES
+# psycopg as its Postgres driver; psycopg 3.3.4 is LGPL-3.0 (case-by-case under C4).
+# Used unmodified as a dynamically-imported Python runtime dependency (import, not static
+# linking into our binary) — LGPL explicitly permits dynamic linking without extending
+# copyleft to the importing program. Owner-approved 2026-07-05.
+[[overrides]]
+name = "psycopg"
+version = "3.3.4"
+class = "case-by-case-approved"
+justification = "LGPL-3.0 Postgres driver, required (non-extra) dependency of DBOS Transact (MIT). Dynamically imported, used unmodified; LGPL permits dynamic linking without copyleft spread to ne-runtime. Standard DB-driver usage, no modified LGPL code distributed."
+approved_by = "owner@example.com"
+date = "2026-07-05"
+
+[[overrides]]
+name = "psycopg-binary"
+version = "3.3.4"
+class = "case-by-case-approved"
+justification = "LGPL-3.0 prebuilt C extension shipped with psycopg (same project/version as the psycopg override above). Dynamically loaded, unmodified; LGPL dynamic-linking exception applies. Owner-approved with psycopg."
+approved_by = "owner@example.com"
+date = "2026-07-05"
+
+# ---------------------------------------------------------------------------
+# [npm_known] — NE-061 npm C4 gate (tools/supply-chain/npm_license_gate.py).
+#
+# Same semantics as [known] above, for the npm dependency closure: a name ->
+# human-verified SPDX rescue that fires ONLY when a package's resolved license
+# classifies UNKNOWN, and NEVER for the banned class (a banned [npm_known] value
+# is a PolicyError). Policy.load ignores this table, so the Python `ne check
+# licenses` gate is unaffected. Every entry below is a classifier limitation or
+# an already-established-policy variant — NOT a new license family (those are
+# escalated to the owner, see NE-061 report). Each entry carries a verification
+# comment, mirroring the [known] discipline.
+[npm_known]
+# type-fest 5.8.0: PyPI-style License-Expression "(MIT OR CC0-1.0)". BOTH operands
+# are already FREE (MIT and CC0-1.0 in [classes].free); it resolves UNKNOWN only
+# because classify_license does not recurse into a fully-parenthesised expression
+# (the documented NE-CKB3 paren limitation — same class as the Python gate's
+# orjson [known] rescue). Verified: https://github.com/sindresorhus/type-fest
+# (LICENSE-MIT + LICENSE-CC0). Mapped to the unparenthesised free OR-expression.
+"type-fest" = "MIT OR CC0-1.0"
+# @csstools/color-helpers 6.1.0 & css-syntax-patches-for-csstree 1.1.6: license
+# "MIT-0" (MIT No Attribution — OSI-approved, strictly MORE permissive than MIT).
+# ne.cli.licenses already equates the "MIT No Attribution License (MIT-0)" trove
+# classifier to "MIT" (see _CLASSIFIER_TO_SPDX); this is that same established
+# policy applied to the bare SPDX id, NOT a new license family. Verified:
+# https://github.com/csstools/postcss-plugins (MIT-0 LICENSE files).
+"@csstools/color-helpers" = "MIT"
+"@csstools/css-syntax-patches-for-csstree" = "MIT"

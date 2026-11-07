@@ -1,0 +1,4 @@
+{
+  "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/drive-1/root/delta?$deltatoken=DELTA3TOKEN",
+  "value": []
+}

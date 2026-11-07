@@ -1,0 +1,45 @@
+Neutron Enterprise — ne-backup
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+click / 8.4.2 / BSD-3-Clause / https://palletsprojects.com/projects/click
+cryptography / 49.0.0 / Apache-2.0 OR BSD-3-Clause / https://cryptography.io
+httpx / 0.28.1 / BSD-3-Clause / https://www.python-httpx.org
+
+Derived third-party source (vendored under MIT with attribution):
+Portions of this package are derived from jupyter-naas/abi
+(https://github.com/jupyter-naas/abi) at commit
+4b0d12f3ed0e0dca5a892ce0042854be1a04d36c, file
+libs/naas-abi-cli/naas_abi_cli/cli/snapshot_runtime.py (and its test module),
+under the MIT License, Copyright (C) 2025 Naas.ai. The lifted material is the
+snapshot/restore hardening: the tar-traversal / symlink / hardlink escape guards,
+the drift-detection manifest, select_prunable / detect_drift, the managed-volume
+allowlist, the helper-container cold-tar-a-volume pattern, and the
+safety-snapshot-before-restore + partway-failure recovery orchestration shape.
+The following files carry a per-file derivation note in their header:
+  src/ne/backup/tarsafe.py
+  src/ne/backup/manifest.py
+  src/ne/backup/runner.py
+  src/ne/backup/volumes.py
+  src/ne/backup/runtime.py
+  tests/test_tar_guards.py
+  tests/test_manifest.py
+
+MIT License (jupyter-naas/abi):
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

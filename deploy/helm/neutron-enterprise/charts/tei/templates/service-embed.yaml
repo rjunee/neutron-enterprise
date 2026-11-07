@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Ryan Junee.
+# SPDX-License-Identifier: Apache-2.0
+#
+# ClusterIP `tei-embed` — port 80 → targetPort 8080. The Service exposes 80 so
+# NE_API_TEI_URL=http://tei-embed:80 stays byte-identical to compose; the pod
+# actually listens on 8080 (the non-root PORT adaptation — see
+# statefulset-embed.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: tei-embed
+  labels:
+    app: tei-embed
+    app.kubernetes.io/name: tei-embed
+    app.kubernetes.io/part-of: neutron-enterprise
+spec:
+  type: ClusterIP
+  selector:
+    app: tei-embed
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

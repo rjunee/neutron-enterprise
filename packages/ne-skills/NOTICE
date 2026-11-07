@@ -1,0 +1,20 @@
+Neutron Enterprise — ne-skills
+Copyright (c) 2026 Ryan Junee.
+
+Third-party components used by this package (name / version / license / homepage):
+pyyaml / 6.0.3 / MIT / https://pyyaml.org/wiki/PyYAML
+sqlalchemy / 2.0.51 / MIT / https://github.com/sqlalchemy/sqlalchemy
+pydantic / 2.11.x / MIT / https://github.com/pydantic/pydantic
+anyio / 4.x / MIT / https://github.com/agronholm/anyio
+
+NOTE: pyyaml (MIT) parses the SKILL.md YAML frontmatter (ne/skills/packio.py),
+used unmodified via `yaml.safe_load` ONLY (never `yaml.load` — no arbitrary-object
+construction). It is ALREADY pinned+hash-verified in the workspace uv.lock via
+sibling packages (it is in the closure), so declaring it a direct dep of ne-skills
+adds NO new lock entry and the C4 Python license gate needs no policy edit.
+
+NOTE: sqlalchemy (MIT) backs the registry tables + SQL-core reads/writes
+(ne/skills/registry.py); pydantic (MIT) backs the frozen contract models +
+SkillsSettings; anyio (MIT) offloads the sync SQL work off the event loop in the
+tool handlers + substrate. All three are already pinned+hash-verified in the
+workspace uv.lock via sibling packages, so none adds a new lock entry.
