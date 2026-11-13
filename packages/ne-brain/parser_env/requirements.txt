@@ -166,7 +166,7 @@ cuda-bindings==13.3.1 \
 cuda-pathfinder==1.6.0 \
     --hash=sha256:1503af579d8379c24bdd65528379bc57039b0455be9f5f9686cf8e473a1fce51
     # via cuda-bindings
-cuda-toolkit==13.0.3.0 \
+cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.3.0 \
     --hash=sha256:d693caaa261214ddd7dbb60d68e71cbed884e68c2be7509778f3051da0b91c3f
     # via torch
 defusedxml==0.7.1 \
@@ -186,8 +186,8 @@ doclang==0.9.0 \
 docling==2.148.0 \
     --hash=sha256:67629e8a639846b75903a5a619987140835207420ee8b4ba8e725f170031931d \
     --hash=sha256:b8882757b2d58e522986515a2ad5a7e70fcbad7c0bd51a8064261cc675b22417
-    # via -r packages/ne-brain/parser_env/requirements.in
-docling-core==2.106.0 \
+    # via -r requirements.in
+docling-core[chunking]==2.106.0 \
     --hash=sha256:6d7615f7e8e50593239f5dc87a769badc4e3ef5d9753b0a08585e185ba0d7b7f \
     --hash=sha256:bad9feb0c33184ad53951ae74c3d3f01e18291f9bdc60beecfb61f2e4e3d790a
     # via
@@ -230,7 +230,7 @@ docling-parse==7.24.2 \
     --hash=sha256:f2f5cd3988bdb530e512c9519caba6cf1871ef12a17a32d54324f3f3952a62e8 \
     --hash=sha256:ffa9590295286f45d2b9d093ac02cc184ea846b3d8ddb5fe3f0387092f4b3de8
     # via docling-slim
-docling-slim==2.148.0 \
+docling-slim[standard]==2.148.0 \
     --hash=sha256:16362e06a3c5f0e56a86a55aac6abcd24b3b92eddc1199c0a929afc0749d1505 \
     --hash=sha256:34d5fe75db98f0be9a4d4fe1560afb10685cb3ba3ec8171dfb3d13d97b1c4a96
     # via docling
@@ -577,7 +577,7 @@ mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
     --hash=sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba
     # via markdown-it-py
-mpire==2.10.2 \
+mpire[dill]==2.10.2 \
     --hash=sha256:d627707f7a8d02aa4c7f7d59de399dec5290945ddf7fbd36cbb1d6ebb37a51fb \
     --hash=sha256:f66a321e93fadff34585a4bfa05e95bd946cf714b442f51c529038eb45773d97
     # via semchunk
@@ -1529,7 +1529,7 @@ rtree==1.4.1 \
     --hash=sha256:efe125f416fd27150197ab8521158662943a40f87acab8028a1aac4ad667a489 \
     --hash=sha256:f155bc8d6bac9dcd383481dee8c130947a4866db1d16cb6dff442329a038a0dc
     # via docling-slim
-safetensors==0.8.0 \
+safetensors[numpy,torch]==0.8.0 \
     --hash=sha256:040070828e36dc8e122178bbbd5830ff9e97920affb84cbe0f46442497bed358 \
     --hash=sha256:096ec1a98435df7beb08853bb5aa9081a84f23d0adc67ed1a0a10550f608373f \
     --hash=sha256:2ddf52eac562eda224f99acfa7889d02968c1fd59a5b011ae7d8137c37e9c02d \
@@ -1598,10 +1598,6 @@ semchunk==3.2.5 \
     --hash=sha256:ee15e9a06a69a411937dd8fcf0a25d7ef389c5195863140436872a02c95b0218 \
     --hash=sha256:fd09cc5f380bd010b8ca773bd81893f7eaf11d37dd8362a83d46cedaf5dae076
     # via docling-core
-setuptools==84.2.1 \
-    --hash=sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc \
-    --hash=sha256:ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2
-    # via torch
 shapely==2.1.2 \
     --hash=sha256:0036ac886e0923417932c2e6369b6c52e38e0ff5d9120b90eef5cd9a5fc5cae9 \
     --hash=sha256:01d0d304b25634d60bd7cf291828119ab55a3bab87dc4af1e44b07fb225f188b \
@@ -1671,9 +1667,9 @@ six==1.17.0 \
     # via
     #   python-dateutil
     #   rapidocr
-soupsieve==2.9.1 \
-    --hash=sha256:4f4477399246b7a0c720a88ca2454b11cd6bb9ae4c9d170140786e916776c14c \
-    --hash=sha256:c33e6605bbc71dd628b00c632d58ae607c22bade247e52553928f83bbb75b4ba
+soupsieve==4.0 \
+    --hash=sha256:5e7494bfce90e06676cfb4c5c2cf22243e98e5cf24646bb1ecdda46d318550a0 \
+    --hash=sha256:ccd6470b256394ac44b08b86fd94b30a17d335a5335c8a3d15565f7b03d3c8cf
     # via beautifulsoup4
 sympy==1.14.0 \
     --hash=sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517 \
@@ -1775,7 +1771,7 @@ transformers==5.16.1 \
     --hash=sha256:17b0eac726ddc55e84ac58946063e0c6d37fd000c456b581f050ea0f4e822869 \
     --hash=sha256:2f2d5b98a5ad3718713653734298fa620754ed683702a635ebb587df3ed29c7e
     # via
-    #   -r packages/ne-brain/parser_env/requirements.in
+    #   -r requirements.in
     #   docling-core
     #   docling-ibm-models
 tree-sitter==0.26.0 \
@@ -1890,7 +1886,6 @@ typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
     --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
     # via
-    #   anyio
     #   beautifulsoup4
     #   docling-core
     #   huggingface-hub
@@ -1900,7 +1895,6 @@ typing-extensions==4.16.0 \
     #   python-docx
     #   python-oxmsg
     #   python-pptx
-    #   referencing
     #   torch
     #   typing-inspection
 typing-inspection==0.4.2 \
